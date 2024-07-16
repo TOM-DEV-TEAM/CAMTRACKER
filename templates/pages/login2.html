@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACM TRACK</title>
+    <style>
+        html {
+            background: #6696cc;
+        }
+        
+        .body-content {
+            padding-top: 20vh;
+        }
+        
+        .container {
+            width: 350px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: auto;
+            border: 2px solid White;
+            border-radius: 15px;
+            background: white;
+        }
+        
+        .logo {
+            margin-bottom: 15px;
+            margin-top: 0px;
+            padding-top: 0;
+        }
+        
+        .logo img {
+            height: 75%;
+            width: 75%; /* Ajustez cette valeur en fonction de vos besoins */
+            border-radius: 50%; /* Pour rendre l'image ronde */
+            display: block;
+            margin: 0 auto; /* Pour centrer l'image */
+        }
+        
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-item {
+            margin: 5px;
+            padding-bottom: 10px;
+            display: flex;
+        }
+        
+        .form-item label {
+            display: block;
+            padding: 2px;
+            font-size: 20px;
+            width: 100px;
+        }
+        
+        .form-item input {
+            width: 320px;
+            height: 35px;
+            border: 2px solid #e1dede69;
+            border-radius: 20px;
+            background: #e1dede69;
+            color: grey;
+        }
+        
+        .form-btns {
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+            padding: 10px 0;
+        }
+        
+        .form-btns button {
+            margin: auto;
+            font-size: 20px;
+            padding: 5px 15px;
+            border: 2px solid;
+            border-radius: 15px;
+            color: white;
+            background: #178cc6;
+            width: 280px;
+            cursor: pointer;
+        }
+        
+        .options {
+            padding-top: 15px;
+            margin: auto;
+        }
+        
+        .options a {
+            text-decoration: none;
+            color: black;
+            margin: 0 40px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+
+        }
+        .options a:hover {
+            color: grey;
+ 
+        }
+        
+        p {
+            text-align: center;
+            font-size: 10px;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="body-content">
+
+        <div class="container">
+            <div class="logo">
+
+                <!--<img src="https://mindbodyshe.com/wp-content/uploads/2018/07/samples-of-logo-designs-sample-of-company-logo-design-ngo-logo-design-samples.jpg " alt="Company Logo" srcset="">-->
+                 <img class="img-fluid" src="/static/assets/images/logotom.png " alt="Company Logo" srcset="">
+            </div>
+            <div class="login-form">
+                <form action="/seconnecter/" method="POST">
+                    <div class="form-item">
+                        <!-- <label for="userName">Username:</label> -->
+                        <input type="text" name="email" id="userName" placeholder="VotreEmail">
+                    </div>
+                    <div class="form-item">
+                        <!-- <label for="passWord">Password:</label> -->
+                        <input type="password" name="password" id="passWord" placeholder="Mot de Passe">
+                    </div>
+
+                    <div class="form-btns">
+
+                        <button type="submit">Se Connecter</button>
+                        <!--<div class="options">
+                            <a href="#">Sign Up</a>
+                            <a href="#">Forget Password?</a>
+                        </div>-->
+
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
+
+</body>
+
+</html>

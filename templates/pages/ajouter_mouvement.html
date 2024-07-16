@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulaire Centré</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+<form method="POST" action="{% url 'ajoutmouvement' util.id_user %}" enctype="multipart/form-data">
+
+        {% csrf_token %}
+        <div class="text-center mb-4">
+            <p style="color: #000; font-size: 25px;">AJOUTER UNE ENTREE</p>
+        </div>
+        <!-- Champs du formulaire Django -->
+         {{ form.non_field_errors }}
+        <div class="form-group mb-4">
+            <label for="id_camion">Camion</label>
+               {% if camions %}
+        <select name="camion" class="form-control form-control-lg">
+            <option value="">CAMION</option>
+            {% for camion in camions %}
+                <option value="{{ camion.id_cam }}">{{ camion.immatriculation }}</option>
+            {% endfor %}
+        </select>
+    {% endif %}
+        </div>
+        <div class="form-group mb-4">
+            <label for="camion">Chauffeur</label>
+            <input type="text" name="chauffeur"  class="form-control form-control-lg" placeholder="CHAUFFEUR" required />
+        </div>
+                            <div class="form-group mb-4">
+            <label for="camion">Permis</label>
+            <input type="text" name="permis"  class="form-control form-control-lg" placeholder="PERMIS" required />
+        </div>
+                                <div class="form-group mb-4">
+            <label for="camion">Remorque</label>
+            <input type="text" name="remorque"  class="form-control form-control-lg" placeholder="REMORQUE" required />
+        </div>
+                                <div class="form-group mb-4">
+                                    <label for="camion">Statut</label>
+                                    <select  name="statut_entree"  class="form-control form-control-lg"  >
+                                        <option value="">STATUT</option>
+                                        <option value="1">CHARGE</option>
+                                        <option value="0">DECHARGE</option>
+                                    </select>
+                            </div>
+        <!-- Actions du formulaire -->
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-lg">Valider</button>
+        </div>
+    </form>

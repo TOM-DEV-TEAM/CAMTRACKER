@@ -1,0 +1,229 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block breadcrumbs %}{% endblock breadcrumbs %}
+
+{% block content %}
+
+
+    <!-- [ rating list ] end-->
+    <div class="col-xl-8 col-md-12 m-b-30">
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Fonction pour obtenir la valeur du cookie CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    // Fonction pour déterminer si la méthode de requête est sûre pour CSRF
+    function csrfSafeMethod(method) {
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    // Configuration globale des requêtes AJAX pour inclure le jeton CSRF
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+    // Fonction pour récupérer et afficher les mouvements depuis l'API Django
+    $(document).ready(function() {
+        function fetchMouvements() {
+            let paragraph = document.getElementById('p1');
+
+// Récupérer le texte du paragraphe
+let textContent = paragraph.textContent;
+            $.ajax({
+                url: "{% url 'liste_mouvements' id_user=util.id_user %}",  // URL de l'API Django pour récupérer les mouvements
+                method: "GET",
+                success: function(data) {
+                    var tableBody = $('#mouvements-table tbody');
+                    tableBody.empty();
+                    data.mouvements.forEach(function(mouvement_list) {
+
+                        var camionvoyage = mouvement_list.camion.immatriculation ? mouvement_list.camion.immatriculation : 'vide';
+
+
+                        var row = `<tr>
+
+
+
+
+                            <td>${camionvoyage}</td>
+                             <td>${mouvement_list.camion.transporteur}</td>
+                              <td>${mouvement_list.remorque}</td>
+                            <td>${mouvement_list.chauffeur.fullname}</td>
+                            <td>${mouvement_list.chauffeur.permis}</td>
+                            <td>
+                            <a class="label theme-bg text-white f-12"  class="btn btn-info btn-lg"
+                                       data-id="${mouvement_list.id_mvt}"
+                                       data-utilisateur-id="${textContent}"
+                                       href="#!"
+                                       data-toggle="modal"
+                                       data-target="#editModal">
+                                       ENTREE
+                                    </a>
+                            </td>
+                        </tr>`;
+
+                        tableBody.append(row);
+                    });
+
+                    // Ré-attacher le gestionnaire de clic pour le bouton "SORTIE"
+                    tableBody.off('click', '.sortie-dp-btn').on('click', '.sortie-dp-btn', function() {
+                        var idMvt = $(this).data('id');
+                        var utilisateurId = $(this).data('utilisateur-id');
+                        // Redirection vers la page d'ajout de fin de mouvement après avoir cliqué sur "SORTIE"
+                        window.location.href = `/ajoutsortie/${idMvt}/${utilisateurId}`;
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erreur de récupération des mouvements:', error);
+                }
+            });
+        }
+
+        fetchMouvements();
+        setInterval(fetchMouvements, 1000);
+    });
+</script>
+
+
+        <h3 class="modal-title" id="editModalLabel">Entrees Camions</h3>
+
+        <div class="container  ">
+        <div class="table-responsive">
+         <table id="mouvements-table" class="table table-striped table-hover">
+                    <thead class="thead-light">
+                        <tr>
+
+                            <th scope="col">Camion</th>
+                            <th scope="col">Transporteur </th>
+                            <th scope="col">Remorque </th>
+                            <th scope="col">Chauffeur</th>
+                             <th scope="col">Permis </th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+           </table>
+        </div>
+        </div>
+
+
+
+
+
+
+</div>
+    <div class="container">
+  <!--<h2>Modal Example</h2>
+   Trigger the modal with a button
+  <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>
+
+  <!-- Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Entree Camion</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="post" action="{% url 'entree_camion' %}">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+
+                    <!-- Champ caché pour ID Mouvement -->
+                    <input type="hidden" id="idMvt" name="id_mvt">
+
+                    <!-- Champ caché pour ID Utilisateur -->
+                    <input type="hidden" id="utilisateurId" name="id_user">
+
+                    <div class="form-group mb-4">
+                                    <label for="camion">Mission</label>
+                                    <select  name="mission"  class="form-control form-control-lg"  >
+                                        <option value=""></option>
+
+
+<option value="Transfert-Vide">Transfert-Vide</option>
+<option value="Transfert-Import">Transfert-Import</option>
+<option value="Appro-Vide">Appro-Vide</option>
+<option value="Livraison-Client">Livraison-Client</option>
+<option value="Posit-Client">Posit-Client</option>
+<option value="Retour-Export">Retour-Export</option>
+<option value="Retour-Livraison">Retour-Livraison</option>
+<option value="Transfert-Dépotage">Transfert-Dépotage</option>
+<option value="Retour-Dépotage">Retour-Dépotage</option>
+                                    </select>
+                            </div>
+
+
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+    </div>
+  </div>
+
+
+    </div>
+
+
+    <!-- Modal Bootstrap -->
+
+
+<!-- Inclure les scripts de Bootstrap et jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script>
+    $('#editModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); // Bouton qui a déclenché le modal
+        var idMvt = button.data('id'); // Extraire les informations des attributs data-*
+        var utilisateurId = button.data('utilisateur-id');
+
+        var modal = $(this);
+        modal.find('#idMvt').val(idMvt);
+        modal.find('#utilisateurId').val(utilisateurId);
+    });
+</script>
+<p  id="p1" STYLE="color: white">   {{ util.id_user }}</p>
+
+    </div>
+  </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+{% endblock content %}

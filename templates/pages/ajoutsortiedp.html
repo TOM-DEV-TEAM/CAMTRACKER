@@ -1,0 +1,18 @@
+<form method="POST" action="{% url 'ajoutsortie' id_mvt=mouvement.id_mvt id_user=util.id_user%}" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="text-center mb-4">
+        <p style="color: #000; font-size: 25px;">SORTIE CAMION</p>
+    </div>
+    <div class="form-group mb-4">
+        <label for="camion">Statut</label>
+        <select  name="statut_sortie"  class="form-control form-control-lg"  >
+            <option value="">STATUT</option>
+            <option value="1">CHARGE</option>
+            <option value="0">DECHARGE</option>
+        </select>
+    </div>
+
+    <div class="text-center">
+        <button type="submit" class="btn btn-primary btn-lg">Valider</button>
+    </div>
+</form>
