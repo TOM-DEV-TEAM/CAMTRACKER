@@ -32,6 +32,7 @@
             <thead>
               <tr>
                 <th>Prenom & Nom</th>
+                  <th>Matricule</th>
 
                   <th>email</th>
                   <th>Password</th>
@@ -47,6 +48,9 @@
                 <td>
                   <h6 class="m-0"><img class="rounded-circle m-r-10" style="width:40px;"
                       src="{% static 'assets/images/user/avatar-1.jpg' %}" alt="activity-user">{{ boite.fullname }}</h6>
+                </td>
+                  <td>
+                  <h6 class="m-0">{{ boite.matricule}}</h6>
                 </td>
 
 
@@ -65,8 +69,9 @@
                             data-email="{{ boite.email}}"
                             data-password="{{ boite.password }}"
                             data-poste="{{ boite.poste}}"
+                           data-matriculation="{{ boite.matricule }}"
                         >Modifier</a>
-                     <button class=" label btn btn-warning text-white f-12" data-toggle="modal" data-target="#confirmModal" data-id="{{ boite.id_user }}" data-status="{{ boite.status }}">
+                     <button class=" label btn btn-warning text-white f-12" data-toggle="modal" data-target="#confirmModal"  data-id="{{ boite.id_user }}" data-status="{{ boite.status }}">
                     {% if boite.status == 'active'  %}
                     Désactiver
                     {% else %}
@@ -118,7 +123,7 @@
         <label for="trans">Nom et Prenom:</label><br>
         <input type="text" id="trans" name="prenom" required class="form-control"><br>
               <div class="form-group">
-              <label for="trans">Matricule:</label><br>
+              <label for="trans">Matricule</label><br>
         <input type="text" id="trans" name="matricule" required class="form-control">
               </div>
               <div class="form-group">
@@ -191,6 +196,10 @@
                         <input type="text" class="form-control" id="trans" name="prenom" required>
                     </div>
                     <div class="form-group">
+              <label for="trans">Matricule:</label><br>
+        <input type="text" id="mat" name="matricule" required class="form-control">
+              </div>
+                    <div class="form-group">
                         <label for="trans">Email</label>
                         <input type="text" class="form-control" id="email" name="email" required>
                     </div>
@@ -240,6 +249,7 @@
         var email= button.data('email');
         var password = button.data('password');
         var poste = button.data('poste');
+        var matriculation = button.data('matriculation');
 
         var modal = $(this);
         modal.find('#boiteId').val(id);
@@ -248,6 +258,8 @@
         modal.find('#email').val(email);
         modal.find('#password').val(password);
         modal.find('#poste').val(poste);
+         modal.find('#mat').val(matriculation);
+
 
     });
 </script>

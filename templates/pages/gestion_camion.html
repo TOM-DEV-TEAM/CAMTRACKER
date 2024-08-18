@@ -37,9 +37,11 @@
          <table class="table table-hover" >
             <thead>
               <tr>
-                <th>IMMATRICULATION</th>
+                <th>Camion</th>
                 <th>Transporteur</th>
+                  {% if  util.poste == 'A0' or util.poste == 'A3' %}
                   <th>Type</th>
+                  {% endif %}
                   <th>Actions</th>
 
               </tr>
@@ -55,9 +57,10 @@
                  <td>
                   <h6 class="m-0">{{ boite.transporteur }}</h6>
                 </td>
+                     {% if  util.poste == 'A0' or util.poste == 'A3'%}
                      <td>
                   <h6 class="m-0">{{ boite.type }}</h6>
-                </td>
+                </td>{% endif %}
                  <td >
                         <a href="#!" class="label theme-bg text-white f-12" data-toggle="modal" data-target="#editModal" data-id="{{ boite.id_cam }}" data-immatriculation="{{ boite.immatriculation }}" data-transporteur="{{ boite.transporteur }}"
 data-type="{{ boite.type }}"
@@ -96,7 +99,7 @@ data-type="{{ boite.type }}"
         {% csrf_token %}
               <input type="hidden" name="id_user" value="{{ util.id_user }}">
                <div class="form-group">
-        <label for="imat">Imatriculation</label><br>
+        <label for="imat">Camion</label><br>
         <input type="text" id="imat" name="imat" required class="form-control">
                </div>
                <div class="form-group">
@@ -111,9 +114,15 @@ data-type="{{ boite.type }}"
                         <label for="type">Type</label><br>
                         <select id="type" name="type" required class="form-control">
                             <option value=""></option>
+                            {% if  util.poste == 'A0' or util.poste == 'A1' or util.poste == 'A3' %}
                             <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
+                        {% endif %}
+                                {% if  util.poste == 'A0' or util.poste == 'A2' or util.poste == 'A3' %}
                             <option value="VRAC">VRAC</option>
+                                    {% endif %}
+                                {% if  util.poste == 'A0' or util.poste == 'A3' %}
                             <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
+                            {% endif %}
                         </select>
                     </div>
 
@@ -149,7 +158,7 @@ data-type="{{ boite.type }}"
                     <input type="hidden" id="boiteId" name="boite_id">
                     <input type="hidden" name="id_user" value="{{ util.id_user }}">
                     <div class="form-group">
-                        <label for="immat">Immatriculation</label>
+                        <label for="immat">Camion</label>
                         <input type="text" class="form-control" id="immat" name="immat" required>
                     </div>
                     <div class="form-group">
@@ -160,9 +169,15 @@ data-type="{{ boite.type }}"
                         <label for="type">Type</label><br>
                         <select id="type" name="type" required class="form-control">
                             <option value=""></option>
+                            {% if  util.poste == 'A0' or util.poste == 'A1' or util.poste == 'A3' %}
                             <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
+                        {% endif %}
+                                {% if  util.poste == 'A0' or util.poste == 'A2' or util.poste == 'A3' %}
                             <option value="VRAC">VRAC</option>
+                                    {% endif %}
+                                {% if  util.poste == 'A0' or util.poste == 'A3' %}
                             <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
+                            {% endif %}
                         </select>
                     </div>
                      <div class="modal-footer">

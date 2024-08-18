@@ -1,7 +1,7 @@
 # forms.py
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from home.models import Utilisateurs, Mouvement1, Camion, Chaffeur
+from home.models import Utilisateurs, Mouvement1, Camion, Chaffeur, Transitaire
 from django.contrib.auth.forms import AuthenticationForm
 from .models import Utilisateurs
 
@@ -28,7 +28,13 @@ class SortieForm(forms.ModelForm):
 class ChauffeurForm(forms.ModelForm):
     class Meta:
         model = Chaffeur
-        fields = ['fullname', 'permis']
+        fields = ['fullname', 'permis','telephone']
+
+
+class TransitaireForm(forms.ModelForm):
+    class Meta:
+        model = Transitaire
+        fields = ['fullname','telephone']
 
 class CamionForm(forms.ModelForm):
     class Meta:

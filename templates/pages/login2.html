@@ -124,28 +124,33 @@
                  <img class="img-fluid" src="/static/assets/images/logotom.png " alt="Company Logo" srcset="">
             </div>
             <div class="login-form">
-                <form action="/seconnecter/" method="POST">
-                    <div class="form-item">
-                        <!-- <label for="userName">Username:</label> -->
-                        <input type="text" name="email" id="userName" placeholder="VotreEmail">
-                    </div>
-                    <div class="form-item">
-                        <!-- <label for="passWord">Password:</label> -->
-                        <input type="password" name="password" id="passWord" placeholder="Mot de Passe">
-                    </div>
+                    <form action="/seconnecter/" method="POST">
+        {% csrf_token %}
+        <div class="form-item">
+            <!-- <label for="userName">Username:</label> -->
+            <input type="text" name="email" id="userName" placeholder="VotreEmail">
+        </div>
+        <div class="form-item">
+            <!-- <label for="passWord">Password:</label> -->
+            <input type="password" name="password" id="passWord" placeholder="Mot de Passe">
+        </div>
 
-                    <div class="form-btns">
+        {% if messages %}
+        <div class="error-messages" style="color: red">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
 
-                        <button type="submit">Se Connecter</button>
-                        <!--<div class="options">
-                            <a href="#">Sign Up</a>
-                            <a href="#">Forget Password?</a>
-                        </div>-->
-
-
-                    </div>
-                </form>
-
+        <div class="form-btns">
+            <button type="submit">Se Connecter</button>
+            <!--<div class="options">
+                <a href="#">Sign Up</a>
+                <a href="#">Forget Password?</a>
+            </div>-->
+        </div>
+    </form>
             </div>
         </div>
     </div>

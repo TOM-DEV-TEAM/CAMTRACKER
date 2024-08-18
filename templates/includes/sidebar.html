@@ -7,7 +7,18 @@
         <div class="b-bg">
           <i class="feather icon-trending-up"></i>
         </div>
-        <span class="b-title">Cam Traker</span>
+          {% if  util.poste == 'A0' or util.poste == 'E0' or util.poste == 'S0'%}
+        <span class="b-title">DKLOG</span>
+          {% endif %}
+       {% if  util.poste == 'A1' or util.poste == 'E1' or util.poste == 'S1'%}
+        <span class="b-title">ICD TOM</span>
+          {% endif %}
+       {% if  util.poste == 'A2' or util.poste == 'E2' or util.poste == 'S2'%}
+        <span class="b-title">SACHERIE</span>
+          {% endif %}
+       {% if  util.poste == 'A3' or util.poste == 'E3' or util.poste == 'S3'%}
+        <span class="b-title">ZUD</span>
+          {% endif %}
       </a>
       <a class="mobile-menu" id="mobile-collapse" href="javascript:"><span></span></a>
     </div>
@@ -53,8 +64,8 @@
           <ul class="pcoded-submenu">
               <li class=""><a href="/liste_amion/{{ util.id_user }}" class=""><i class="fas fa-car"></i></span><span class="pcoded-mtext"> Camion</span></a></li>
             <!--<li class=""><a href="/liste_user/{{ util.id_user }}" class="">Utilisateurs</a></li>-->
-              <li class=""><a href="/liste_tt_mvt0/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext">Mouvement</span></a></li>
-               <li class=""><a href="/parametrage/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext">Parametres</span></a></li>
+              <li class=""><a href="/liste_tt_mvt0/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext"> Mouvement</span></a></li>
+               <li class=""><a href="/parametrage/{{ util.id_user }}" class=""><i class="bi bi-gear"></i></span><span class="pcoded-mtext"> Parametres</span></a></li>
           </ul>
         </li>
       {% endif %}
@@ -70,8 +81,8 @@
           <ul class="pcoded-submenu">
               <li class=""><a href="/liste_amion/{{ util.id_user }}" class=""><i class="fas fa-car"></i></span><span class="pcoded-mtext"> Camion</span></a></li>
             <!--<li class=""><a href="/liste_user/{{ util.id_user }}" class="">Utilisateurs</a></li>-->
-              <li class=""><a href="/liste_umvt/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext">Mouvement</span></a></li>
-              <li class=""><a href="/parametrage/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext">Parametres</span></a></li>
+              <li class=""><a href="/liste_umvt/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext"> Mouvement</span></a></li>
+              <li class=""><a href="/parametrage/{{ util.id_user }}" class=""><i class="bi bi-gear"></i></span><span class="pcoded-mtext"> Parametres</span></a></li>
 
           </ul>
         </li>
@@ -88,8 +99,25 @@
           <ul class="pcoded-submenu">
               <li class=""><a href="/liste_amion/{{ util.id_user }}" class=""><i class="fas fa-car"></i></span><span class="pcoded-mtext"> Camion</span></a></li>
             <!--<li class=""><a href="/liste_user/{{ util.id_user }}" class="">Utilisateurs</a></li>-->
-              <li class=""><a href="/liste_tt_mvt2/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext">Mouvement</span></a></li>
-               <li class=""><a href="/parametrage/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext">Parametres</span></a></li>
+              <li class=""><a href="/liste_tt_mvt2/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext"> Mouvement</span></a></li>
+               <li class=""><a href="/parametrage/{{ util.id_user }}" class=""><i class="bi bi-gear"></i></span><span class="pcoded-mtext"> Parametres</span></a></li>
+          </ul>
+        </li>
+      {% endif %}
+      {% if util.poste == 'A3' %}
+           <li class=""><a href="/index_admin_zud/{{ util.id_user }}" class=""><span class="pcoded-micon">
+               <i class="feather icon-grid"></i>
+           </span><span class="pcoded-mtext">Dashboard</span></a></li>
+        <li
+          data-username="Authentication Sign up Sign in reset password Change password Personal information profile settings map form subscribe"
+          class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i class="feather icon-user"></i>
+              </span><span class="pcoded-mtext">Administrateur</span></a>
+          <ul class="pcoded-submenu">
+              <li class=""><a href="/liste_amion/{{ util.id_user }}" class=""><i class="fas fa-car"></i></span><span class="pcoded-mtext"> Camion</span></a></li>
+            <!--<li class=""><a href="/liste_user/{{ util.id_user }}" class="">Utilisateurs</a></li>-->
+              <li class=""><a href="/liste_mvt_zud/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext"> Mouvement</span></a></li>
+               <li class=""><a href="/parametrage/{{ util.id_user }}" class=""><i class="bi bi-gear"></i></span><span class="pcoded-mtext"> Parametres</span></a></li>
           </ul>
         </li>
       {% endif %}
@@ -221,7 +249,7 @@
         {% endif %}
       {% if util.poste == 'S1' %}
        <li class="nav-item">
-          <a  href="/index2_view/{{ util.id_user }}" class="nav-link "><span class="pcoded-micon"><i
+          <a  href="/sortie_tom/{{ util.id_user }}" class="nav-link "><span class="pcoded-micon"><i
                 class="feather icon-zap text-c-green"></i></span><span class="pcoded-mtext">Sortie TOM</span></a>
         </li>
       {% endif %}
@@ -256,6 +284,19 @@
        <li class="nav-item">
           <a  href="/index3_view/{{ util.id_user }}" class="nav-link "><span class="pcoded-micon"><i
                 class="feather icon-zap text-c-green"></i></span><span class="pcoded-mtext">Sortie Sacherie</span></a>
+        </li>
+      {% endif %}
+       {% if util.poste == 'E3' %}
+
+       <li class="nav-item">
+          <a  href="/index_entree_zud/{{ util.id_user }}" class="nav-link "><span class="pcoded-micon"><i
+                class="feather icon-zap text-c-green"></i></span><span class="pcoded-mtext">Entrée ZUD</span></a>
+        </li>
+      {% endif %}
+      {% if util.poste == 'S3' %}
+       <li class="nav-item">
+          <a  href="/index_sortie_zud/{{ util.id_user }}" class="nav-link "><span class="pcoded-micon"><i
+                class="feather icon-zap text-c-green"></i></span><span class="pcoded-mtext">Sortie ZUD</span></a>
         </li>
       {% endif %}
 

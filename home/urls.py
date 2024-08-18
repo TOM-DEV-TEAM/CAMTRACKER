@@ -35,7 +35,7 @@ path('detail_urgent/<int:id>',detail_urgent, name='listeCamionud'),
   path('liste_mouvements/<int:id_user>', liste_mouvements, name='liste_mouvements'),
   path('ajoutmouvement/<int:id_user>/',ajoutmouvement, name='ajoutmouvement'),
   path('index1_view/<int:id_user>/',index1_view, name='index1_view'),
-  path('index2_view/<int:id_user>/', index2_view, name='index2_view'),
+  path('sortie_tom/<int:id_user>/', sortie_tom ,name='sortie_tom'),
   ######Gestion Sortie
    path('liste_mouvements1/<int:id_user>/', liste_mouvements1, name='liste_mouvements1'),
   path('liste_mouvementsdk1/<int:id_user>/', liste_mouvementsdk1, name='liste_mouvementsdk1'),
@@ -63,6 +63,7 @@ path('entree_camion',entree_camion, name='entree_camion'),
   path('sortie_decalog_view/<int:id_user>/', sortie_decalog_view, name='sortie_decalog_view'),
   path('ajouter_camion_dk_log/', ajouter_camion_dk_log, name='listeCamion_dk_log'),
   path('ajouter_chauffeur/', ajouter_chauffeur, name='ajouter_chauffeur'),
+    path('ajouter_transitaire/', ajouter_transitaire, name='ajouter_transitaire'),
   path('fetch_camion/', fetch_camion, name='fetch_camion'),
 path('fetch_chauffeur/', fetch_chauffeur, name='fetch_chauffeur'),
   ######Gestion
@@ -102,7 +103,24 @@ path('export_mouvement1/', views.export_mouvement1, name='export_mouvement1'),
 path('parametrage/<int:id>', liste_parametrage, name='listeParametrage'),
 path('ajouter_parametre/', ajouter_parametre, name='ajout_parametre'),
     path('modifier_parametre/', modifier_parametre, name='modifierparametre'),
+################################### REDIRECTION ZUD #############################
+path('index_entree_zud/<int:id>', index_entree_zud, name='index_entree_zud'),
+path('index_sortie_zud/<int:id>', index_sortie_zud, name='index_sortie_zud'),
+path('index_admin_zud/<int:id>', index_admin_zud, name='index_admin_zud'),
+path('liste_mouvements_entree_zud/<int:id_user>', liste_mouvements_entree_zud, name='liste_mouvements_entree_zud'),
+path('liste_mouvements_sortie_zud/<int:id_user>', liste_mouvements_sortie_zud, name='liste_mouvements_sortie_zud'),
+path('entree_zud',entree_zud, name='entree_zud'),
+    path('sortie_zud', sortie_zud, name='sortie_zud'),
+####detail ZUD
+path('liste_mvt_zud/<int:id_mvt>',tout_mouvement_zud, name='tout_mouvement_zud'),
 
+ path('detail_urgent_zud/<int:id>',detail_urgent_zud, name='detail_urgent_zud'),
 
-
+  path('detail_depassement_zud/<int:id>',detail_depassement_zud, name='detail_depassement_zud'),
+  path('detail_plus_30_zud/<int:id>',detail_plus_30_zud, name='detail_plus_30_zud'),
+  path('detail_moins_30_zud/<int:id>',detail_moins_30_zud, name='detail_moins_30_zud'),
+    path('liste_mouvements_suz/', liste_mouvements_zud, name='liste_mouvements_zud'),
+    ######Extraction
+path('export_mouvement4/', views.export_mouvement4, name='export_mouvement4'),
+path('modifier_mouvement4/', modifier_mouvement4, name='liste_mouvements2hfhfhgfhjj4'),
 ]

@@ -23,18 +23,22 @@
                  <thead class="thead-light">
                         <tr>
 
-                            <th scope="col">Statut Entree</th>
-                            <th scope="col">Statut Sortie</th>
+
 
                              <th scope="col">Mission</th>
                             <th scope="col">Camion</th>
                             <th scope="col">Remorque</th>
-                             <th scope="col">Transporteur </th>
-                            <th scope="col">Chauffeur</th>
+                            <th scope="col">Transporteur </th>
+                             <th scope="col">Chauffeur</th>
                             <th scope="col">Permis</th>
+
+
                              <th scope="col">Date Entrée </th>
+                            <th scope="col">Statut Entree</th>
+
                             <th scope="col">Pointeur Entrée</th>
                             <th scope="col">Date Sortie </th>
+                            <th scope="col">Statut Sortie</th>
 
                             <th scope="col">Pointeur Sortie</th>
                             <th scope="col">Action</th>
@@ -89,8 +93,7 @@
                             }
                         var row = `
                             <tr>
-                                <td>${statutText}</td>
-<td>${statutTextsortie}</td>
+
 <td>${mouvement_list.mission}</td>
                                 <td>${mouvement_list.camion.immatriculation}</td>
 
@@ -101,8 +104,11 @@
 <td>${mouvement_list.chauffeur.permis}</td>
 <td>${mouvement_list.date_entree}</td>
 <td>${mouvement_list.user_ert.fullname }</td>
+ <td>${statutText}</td>
+
 <td>${mouvement_list.date_sortie}</td>
 <td >${mouvement_list.user_srt.fullname }</td>
+<td>${statutTextsortie}</td>
 <td>
             <button  class="btn btn-primary btn-edit"
                 data-id="${mouvement_list.id_mvt}"

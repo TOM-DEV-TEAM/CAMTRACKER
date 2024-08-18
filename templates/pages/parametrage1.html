@@ -5,6 +5,16 @@
 
 {% block content %}
 
+    <style>
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+        }
+        .disabled-button {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+    </style>
 <div class="container">
     <nav class="navbar navbar-light bg-light">
     <div class="container-fluid">
@@ -24,9 +34,10 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>Entité</th>
+                    <!--<th>Entité</th>-->
                     <th>Type Camion</th>
-                    <th>Durée Maximum</th>
+                    <th>Délais Maximal (mns)</th>
+                     <th>Délais Urgent (mns)</th>
                     <th>Nombre Maximum</th>
                     <th>Actions</th>
                 </tr>
@@ -34,23 +45,21 @@
             <tbody>
                 {% for boite in boite %}
                 <tr>
-                    <td>
-                        <h6 class="m-0">
-                            <img class="rounded-circle m-r-10" style="width:40px;" src="{% static 'assets/images/goodlogo.png' %}" alt="activity-user">
-                            {{ boite.immatriculation }}
-                        </h6>
-                    </td>
+
                     <td>
                         <h6 class="m-0">{{ boite.type }}</h6>
                     </td>
                     <td>
-                        <h6 class="m-0">{{ boite.duree }} mns</h6>
+                        <h6 class="m-0">{{ boite.delais_maximal  }} mns</h6>
+                    </td>
+                     <td>
+                        <h6 class="m-0">{{ boite.delais_urgent }} mns</h6>
                     </td>
                     <td>
                         <h6 class="m-0">{{ boite.nbr_max }}</h6>
                     </td>
                     <td>
-                        <a href="#!" class="label theme-bg text-white f-12" data-toggle="modal" data-target="#editModal" data-id="{{ boite.id_para }}" data-duree="{{ boite.duree }}" data-nbr_max="{{ boite.nbr_max }}" data-type="{{ boite.type }}">Modifier</a>
+                        <a href="#!" class="label theme-bg text-white f-12" data-toggle="modal" data-target="#editModal" data-id="{{ boite.id_para }}" data-duree="{{ boite.duree }}" data-nbr_max="{{ boite.nbr_max }}" data-delais_urgent="{{ boite.delais_urgent }}" data-type="{{ boite.type }}" data-delais_maximal="{{ boite.delais_maximal }}" >Modifier</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -70,32 +79,43 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form action="/ajouter_parametre/" method="post">
-                        {% csrf_token %}
-                        <input type="hidden" id="boiteId" name="boite_id">
-                        <input type="hidden" name="id_user" value="{{ util.id_user }}">
-                        <div class="form-group">
-                            <label for="duree">DURÉE</label><br>
-                            <input type="number" id="duree" name="duree" required class="form-control"  min="1">
-                        </div>
-                        <div class="form-group">
-                            <label for="nbr_max">NOMBRE MAXIMUM DE CAMIONS</label><br>
-                            <input type="number" id="nbr_max" name="nbr_max" required class="form-control"  min="1">
-                        </div>
-                        <div class="form-group">
-                            <label for="type">Type</label><br>
-                            <select id="type" name="type" required class="form-control">
-                                <option value=""></option>
-                                <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
-                                <option value="VRAC">VRAC</option>
-                                <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
-                            </select>
-                        </div>
-                        <div class="modal-footer">
-                            <input type="submit" class="btn btn-primary" value="Enregistrer">
-                            <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
-                        </div>
-                    </form>
+                      <form id="addForm" action="/ajouter_parametre/" method="post">
+        {% csrf_token %}
+        <input type="hidden" id="boiteId" name="boite_id">
+        <input type="hidden" name="id_user" value="{{ util.id_user }}">
+        <div class="form-group">
+            <label for="add_delais_maximal">Delais Maximal (mns)</label><br>
+            <input type="number" id="add_delais_maximal" name="delais_maximal" required class="form-control" min="1">
+        </div>
+        <div class="form-group">
+            <label for="add_delais_urgent">Delais Urgent (mns)</label><br>
+            <input type="number" id="add_delais_urgent" name="delais_urgent" required class="form-control" min="1">
+            <span id="add_urgent-error" class="error-message"></span>
+        </div>
+        <div class="form-group">
+            <label for="nbr_max">Nombre Maximun de Camions</label><br>
+            <input type="number" id="nbr_max" name="nbr_max" required class="form-control" min="1">
+        </div>
+        <div class="form-group">
+            <label for="type">Type</label><br>
+            <select id="type" name="type" required class="form-control">
+                 <option value=""></option>
+                            {% if  util.poste == 'A0' or util.poste == 'A1' or util.poste == 'A3' %}
+                            <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
+                        {% endif %}
+                                {% if  util.poste == 'A0' or util.poste == 'A2' or util.poste == 'A3' %}
+                            <option value="VRAC">VRAC</option>
+                                    {% endif %}
+                                {% if  util.poste == 'A0' or util.poste == 'A3' %}
+                            <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
+                            {% endif %}
+            </select>
+        </div>
+        <div class="modal-footer">
+            <input type="submit" class="btn btn-primary" id="add_submit-button" value="Enregistrer" disabled>
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
+        </div>
+    </form>
                 </div>
             </div>
         </div>
@@ -112,31 +132,43 @@
                 </div>
                 <div class="modal-body">
                     <form id="editForm" method="post" action="/modifier_parametre/">
-                        {% csrf_token %}
-                        <input type="hidden" id="boiteId" name="boite_id">
-                        <input type="hidden" name="id_user" value="{{ util.id_user }}">
-                        <div class="form-group">
-                            <label for="duree">DURÉE</label><br>
-                            <input type="number" id="duree" name="duree" required class="form-control" min="1">
-                        </div>
-                        <div class="form-group">
-                            <label for="nbr_max">NOMBRE MAXIMUM DE CAMIONS</label><br>
-                            <input type="number" id="nbr_max" name="nbr_max" required class="form-control"  min="1">
-                        </div>
-                        <div class="form-group">
-                            <label for="type">Type</label><br>
-                            <select id="type" name="type" required class="form-control">
-                                <option value=""></option>
-                                <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
-                                <option value="VRAC">VRAC</option>
-                                <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
-                            </select>
-                        </div>
-                        <div class="modal-footer">
-                            <input type="submit" class="btn btn-primary" value="Enregistrer">
-                            <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
-                        </div>
-                    </form>
+        {% csrf_token %}
+        <input type="hidden" id="boiteId" name="boite_id">
+        <input type="hidden" name="id_user" value="{{ util.id_user }}">
+        <div class="form-group">
+            <label for="edit_delais_maximal">Delais Maximal (mns)</label><br>
+            <input type="number" id="edit_delais_maximal" name="delais_maximal" required class="form-control" min="1">
+        </div>
+        <div class="form-group">
+            <label for="edit_delais_urgent">Delais Urgent (mns)</label><br>
+            <input type="number" id="edit_delais_urgent" name="delais_urgent" required class="form-control" min="1">
+            <span id="edit_urgent-error" class="error-message"></span>
+        </div>
+        <div class="form-group">
+            <label for="nbr_max">Nombre Maximun de Camions</label><br>
+            <input type="number" id="nbr_max" name="nbr_max" required class="form-control" min="1">
+        </div>
+        <div class="form-group">
+            <label for="type">Type</label><br>
+            <select id="type" name="type" required class="form-control">
+                <option value=""></option>
+                            {% if  util.poste == 'A0' or util.poste == 'A1' or util.poste == 'A3' %}
+                            <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
+                        {% endif %}
+                                {% if  util.poste == 'A0' or util.poste == 'A2' or util.poste == 'A3' %}
+                            <option value="VRAC">VRAC</option>
+                                    {% endif %}
+                                {% if  util.poste == 'A0' or util.poste == 'A3' %}
+                            <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
+                            {% endif %}
+            </select>
+        </div>
+        <div class="modal-footer">
+            <input type="submit" class="btn btn-primary" id="edit_submit-button" value="Enregistrer" disabled>
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
+        </div>
+    </form>
+
                 </div>
             </div>
         </div>
@@ -150,16 +182,58 @@
     $('#editModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget); // Bouton qui a déclenché le modal
         var id = button.data('id'); // Extraire les informations des attributs data-*
-        var duree = button.data('duree');
+
         var nbr_max = button.data('nbr_max');
         var type = button.data('type');
+        var edit_delais_urgent=button.data('delais_urgent')
+        var add_delais_maximal=button.data('delais_maximal')
+
 
         var modal = $(this);
         modal.find('#boiteId').val(id);
-        modal.find('#duree').val(duree);
+
         modal.find('#nbr_max').val(nbr_max);
         modal.find('#type').val(type);
+        modal.find('#edit_delais_urgent').val(edit_delais_urgent);
+        modal.find('#edit_delais_maximal').val(add_delais_maximal);
     });
 </script>
+    <!--------Script gestion duree-------------->
+          <script>
+        function validateDelays(formPrefix) {
+            const delaisMaximal = parseInt(document.getElementById(formPrefix + '_delais_maximal').value);
+            const delaisUrgent = parseInt(document.getElementById(formPrefix + '_delais_urgent').value);
+            const errorMessage = document.getElementById(formPrefix + '_urgent-error');
+            const submitButton = document.getElementById(formPrefix + '_submit-button');
 
+            if (!isNaN(delaisMaximal) && !isNaN(delaisUrgent) && delaisUrgent >= delaisMaximal) {
+                errorMessage.textContent = 'Le délai urgent doit être inférieur au délai maximal.';
+                submitButton.disabled = true;
+                submitButton.classList.add('disabled-button');
+            } else {
+                errorMessage.textContent = '';
+                if (!isNaN(delaisMaximal) && !isNaN(delaisUrgent) && delaisUrgent < delaisMaximal) {
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('disabled-button');
+                } else {
+                    submitButton.disabled = true;
+                    submitButton.classList.add('disabled-button');
+                }
+            }
+        }
+
+        document.getElementById('add_delais_maximal').addEventListener('input', function() {
+            validateDelays('add');
+        });
+        document.getElementById('add_delais_urgent').addEventListener('input', function() {
+            validateDelays('add');
+        });
+
+        document.getElementById('edit_delais_maximal').addEventListener('input', function() {
+            validateDelays('edit');
+        });
+        document.getElementById('edit_delais_urgent').addEventListener('input', function() {
+            validateDelays('edit');
+        });
+    </script>
 {% endblock content %}

@@ -112,10 +112,9 @@
     </div>
     {% csrf_token %}
     {{ form.non_field_errors }}
-
     <div class="form-group mb-4">
         <label for="destination">Destination</label>
-        <select name="destination" class="form-control form-control-lg" id="destination-select">
+        <select name="destination" class="form-control form-control-lg" id="destination-select" required>
             <option value=""></option>
             <option value="icdtom">ICD TOM</option>
             <option value="sacherie">SACHERIE</option>
@@ -123,71 +122,86 @@
             <option value="icdcma">ICD CMA</option>
         </select>
     </div>
-
     <div class="form-row">
-        <div class="col-md-3 mb-3">
-            <label for="id_camion">Camion</label>
-            <select name="camion" class="form-control form-control-lg" id="camion-select">
-                <option value="" data-type="" data-transporteur=""></option>
-
-            </select>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <label for="type">Type</label>
-            <input type="text" name="type" id="type" class="form-control form-control-lg" placeholder="" readonly />
-        </div>
-
-        <div class="col-md-3 mb-3">
+    <div class="col-md-3 mb-3">
+        <label for="camion-select">Camion</label>
+        <select name="camion" class="form-control form-control-lg" id="camion-select" required>
+            <option value="" data-type="" data-transporteur=""></option>
+        </select>
+    </div>
+    <div class="col-md-3 mb-3">
+        <label for="type">Type</label>
+        <input type="text" name="type" id="type" class="form-control form-control-lg" placeholder="" readonly />
+    </div>
+    <div class="col-md-3 mb-3">
             <label for="transporteur">Transporteur</label>
             <input type="text" name="transporteur" id="transporteur" class="form-control form-control-lg" placeholder="" readonly />
         </div>
+    <div class="col-md-3 mb-3">
+        <label>&nbsp;</label> <!-- Utilisez un label vide pour aligner verticalement le bouton -->
+        <button type="button" class="btn btn-info btn-block" data-toggle="modal" data-target="#myModalajoutcamion">
+            <i class="fas fa-plus-circle"></i>
+        </button>
+    </div>
+</div>
 
-        <div class="col-md-3 mb-3">
-            <label for="addCamion" style="color: whitesmoke">Ajouter Camion</label>
-            <!--<a class="btn btn-info form-control" id="addCamion">
-                <i class="fas fa-plus-circle"></i>
-            </a>-->
-            <p   class="btn btn-info " data-toggle="modal" data-target="#myModalajoutcamion"><i class="fas fa-plus-circle"></i></p>
-        </div>
+<div class="form-row">
+    <div class="col-md-4 mb-3">
+        <label for="chauffeur-select">Chauffeur</label>
+        <select name="chauffeur" class="form-control form-control-lg" id="chauffeur-select" required>
+            <option value="" data-permis=""></option>
+        </select>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label for="permis">Permis</label>
+        <input type="text" name="permis" id="permis" class="form-control form-control-lg" placeholder="" readonly />
     </div>
 
-    <div class="form-row">
-        <div class="col-md-4 mb-3">
-            <label for="id_chauffeur">Chauffeur</label>
-            <select name="chauffeur" class="form-control form-control-lg" id="chauffeur-select">
-                <option value="" data-permis=""></option>
-            </select>
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <label for="chauffeur_permis">Permis</label>
-            <input type="text" name="permis" id="permis" class="form-control form-control-lg" placeholder="" readonly />
-        </div>
-
-        <div class="col-md-4 mb-3">
-            <label for="addChauffeur" style="color: whitesmoke">Ajouter Chauffeur</label>
-            <!--<a class="btn btn-info form-control" id="addChauffeur">
-                <i class="fas fa-plus-circle"></i>
-            </a>-->
-             <p   class="btn btn-info" data-toggle="modal" data-target="#myModalajoutchauffeur"><i class="fas fa-plus-circle"></i></p>
-
-
-        </div>
+    <div class="col-md-4 mb-3">
+        <label>&nbsp;</label> <!-- Utilisez un label vide pour aligner verticalement le bouton -->
+        <button type="button" class="btn btn-info btn-block" data-toggle="modal" data-target="#myModalajoutchauffeur">
+            <i class="fas fa-plus-circle"></i>
+        </button>
     </div>
+</div>
+                   <!-------------------Ajouter Transitaire -------------------------->
+
+<div class="form-row">
+    <div class="col-md-4 mb-3">
+        <label for="chauffeur-select">Transitaire</label>
+        <select name="transitaire" class="form-control form-control-lg" id="transitaire" required>
+            <option value="" data-permis=""></option>
+            {% for transitaire in transitaire %}
+                 <option value="{{ transitaire.id_transit }}" data-permis="">{{ transitaire.fullname }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label for="permis">Telephone</label>
+        <input type="tel" name="telephone" id="telephone" class="form-control form-control-lg" placeholder="" readonly />
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label>&nbsp;</label> <!-- Utilisez un label vide pour aligner verticalement le bouton -->
+        <button type="button" class="btn btn-info btn-block" data-toggle="modal" data-target="#myModalajouttransitaire">
+            <i class="fas fa-plus-circle"></i>
+        </button>
+    </div>
+</div>
 
      <div class="form-group mb-4">
         <label for="remorque">Remorque</label>
-        <input id="remorque" type="text" name="remorque" class="form-control form-control-lg" placeholder="REMORQUE" />
+        <input id="remorque" type="text" name="remorque" class="form-control form-control-lg" placeholder="REMORQUE"  required/>
     </div>
 
 
     <div class="form-group mb-4">
         <label for="statut_entree">Statut</label>
-        <select name="statut_entree" class="form-control form-control-lg">
+        <select name="statut_entree" class="form-control form-control-lg" required>
             <option value=""></option>
-            <option value="1">CHARGE</option>
-            <option value="0">NON CHARGE</option>
+            <option value="2">COMPLET</option>
+            <option value="1">PARTIELLE</option>
+            <option value="0">VIDE</option>
         </select>
     </div>
 
@@ -248,8 +262,8 @@
     $(document).ready(function() {
         actualiserListeCamions();
         actualiserListeChauffeurs();
-        setInterval(actualiserListeCamions, 2000); // 20000 ms = 20 secondes
-        setInterval(actualiserListeChauffeurs, 2000);
+        setInterval(actualiserListeCamions, 20000); // 20000 ms = 20 secondes
+        setInterval(actualiserListeChauffeurs, 20000);
 
         // Fonction pour filtrer les camions en fonction de la destination sélectionnée
         $('#destination-select').on('change', function() {
@@ -259,7 +273,7 @@
             // Réinitialisation des champs Camion, Type et Transporteur
             $('#camion-select').val('');
             $('#type').val('');
-            $('#transporteur').attr('placeholder', '');
+            $('#transporteur').val(''); // Correction du champ Transporteur
             $('#remorque').val('').removeAttr('readonly').attr('placeholder', 'REMORQUE');  // Réinitialiser remorque
 
             options.each(function() {
@@ -269,7 +283,7 @@
                 if (destination === 'icdtom' || destination === 'icdcma') {
                     option.css('display', (type === 'SEMI-REMORQUE') ? 'block' : 'none');
                 } else if (destination === 'zud') {
-                    option.css('display', (type === 'VRAC' || type === 'TRANSPORT-VEHICULE') ? 'block' : 'none');
+                    option.css('display', (type === 'VRAC' || type === 'TRANSPORT-VEHICULE' || type === 'SEMI-REMORQUE') ? 'block' : 'none');
                 } else if (destination === 'sacherie') {
                     option.css('display', (type === 'VRAC') ? 'block' : 'none');
                 } else {
@@ -286,14 +300,13 @@
             var immatriculation = selectedOption.data('immatriculation');
 
             $('#type').val(type); // Mise à jour du select pour le type
-            $('#transporteur').val(transporteur); // Ajout de transporteur au champ
+            $('#transporteur').val(transporteur); // Mise à jour du champ Transporteur
             $('#permis').val(''); // Réinitialiser le permis
 
             // Mise à jour du champ Remorque
             if (type === 'SEMI-REMORQUE') {
                 $('#remorque').val('').removeAttr('readonly').attr('placeholder', 'REMORQUE');
             } else {
-
                 $('#remorque').val(immatriculation).attr('readonly', true).attr('placeholder', immatriculation);
             }
         });
@@ -334,6 +347,7 @@
                     {% csrf_token %}
                     <input type="hidden" id="boiteId" name="boite_id">
                     <div class="form-group">
+
                         <label for="immat">Immatriculation</label>
                         <input type="text" class="form-control" id="immat" name="immat" required>
                     </div>
@@ -467,6 +481,11 @@ $(document).ready(function() {
                         <label for="permis">Permis</label><br>
                         <input type="text" id="permis" name="permis" required class="form-control">
                     </div>
+                    <div class="form-group">
+                        <label for="telephone">Telephone</label><br>
+                        <input type="tel" id="telephone" name="telephone" required class="form-control">
+                    </div>
+
                 </form>
             </div>
             <div class="modal-footer">
@@ -489,6 +508,73 @@ $(document).ready(function() {
                 // Si la réponse indique que l'enregistrement est réussi, fermez le modal
                 if (response.success) {
                     $('#myModalajoutchauffeur').modal('hide');
+                    // Optionnel : actualisez les options du select pour inclure le nouveau chauffeur
+                    // Vous pouvez déclencher un événement personnalisé ici pour actualiser la liste des chauffeurs
+                    // Par exemple :
+                    // $(document).trigger('chauffeurAdded', [response.chauffeur]);
+                } else {
+                    // Gérez les erreurs ici (par exemple, afficher des messages d'erreur)
+                }
+            },
+            error: function(xhr, status, error) {
+                // Gérez les erreurs de la requête AJAX ici
+                console.log('Erreur AJAX: ' + error);
+            }
+        });
+    });
+});
+</script>
+
+
+
+<!--#####################Transiatirer########################--->
+
+     <div class="modal fade" id="myModalajouttransitaire" class="modal fade"  tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Ajouter Transitaire</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-ajout-transitaire" action="/ajouter_transitaire/" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="id_user" value="{{ util.id_user }}">
+                    <div class="form-group">
+                        <label for="fullname">Prenom & Nom</label><br>
+                        <input type="text" id="fullname" name="fullname" required class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telephone">Telephone</label><br>
+                        <input type="tel" id="telephone" name="telephone" required class="form-control">
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <input type="button" id="submit-ajout-transitaire" class="btn btn-primary" value="Enregistrer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#submit-ajout-transitaire').click(function() {
+        $.ajax({
+            url: $('#form-ajout-transitaire').attr('action'),
+            type: 'POST',
+            data: $('#form-ajout-transitaire').serialize(),
+            success: function(response) {
+                // Si la réponse indique que l'enregistrement est réussi, fermez le modal
+                if (response.success) {
+                    $('#myModalajouttransitaire').modal('hide');
                     // Optionnel : actualisez les options du select pour inclure le nouveau chauffeur
                     // Vous pouvez déclencher un événement personnalisé ici pour actualiser la liste des chauffeurs
                     // Par exemple :

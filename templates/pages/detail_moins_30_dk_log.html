@@ -73,16 +73,19 @@
               <table  class="table table-hover" >
             <thead>
               <tr>
-                  <th>Mission</th>
+                  <th>Destination</th>
+
+                <th>Date Entree</th>
+
+
+                  <th>Pointeur Entree</th>
+                   <th>Date Sortie</th>
+                  <th>Pointeur Sortie</th>
+
                 <th>Camion</th>
 
                 <th>Transporteur</th>
                 <th>chauffeur</th>
-                <th>Date Entree</th>
-                  <th>Date Sortie</th>
-
-                  <th>Pointeur Entree</th>
-                  <th>Pointeur Sortie</th>
 
 
               </tr>
@@ -90,14 +93,18 @@
             <tbody>
             {%   for mvt in mvt  %}
               <tr>
-              <td>{{  mvt.mission }}  </td>
+              <td>{{  mvt.destination }}  </td>
+
+
+                  <td>{{  mvt.date_entree }}  </td>
+
+                  <td>{{  mvt.pointeur }}  </td>
+                    <td>{{  mvt.date_sortie }}  </td>
+                  <td>{{  mvt.pointeur_srt }}  </td>
+
               <td>{{  mvt.imat }}  </td>
                   <td>{{  mvt.trans }}  </td>
-                  <td>{{  mvt.chauffeur }}  </td>
-                  <td>{{  mvt.date_entree }}  </td>
-                  <td>{{  mvt.date_sortie }}  </td>
-                  <td>{{  mvt.pointeur }}  </td>
-                  <td>{{  mvt.pointeur_srt }}  </td>
+                  <td>{{  mvt.chauffeur_name }}  </td>
 
 
 
