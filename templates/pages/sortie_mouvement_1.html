@@ -85,6 +85,7 @@ let textContent = paragraph.textContent;
                             <td>
                             <a class="label theme-bg text-white f-12"  class="btn btn-info btn-lg"
                                        data-id="${mouvement_list.id_mvt}"
+                                       data-destination="${mouvement_list.destination}"
                                        data-immat ="${camionvoyage}"
                                        data-utilisateur-id="${textContent}"
                                        href="#!"
@@ -162,10 +163,11 @@ let textContent = paragraph.textContent;
                 </button>
             </div>
             <div class="modal-body">
-                <form id="editForm" method="post" action="{% url 'ajoutsortiedk' %}">
+                <form id="editForm" method="post" action="{% url 'ajoutsortie' %}">
                     {% csrf_token %}
                     {{ form.non_field_errors }}
-                     <input TYPE="hidden" name="source" value="icdtom">
+                     <input TYPE="hidden" name="source" value="sacherie">
+                     <input TYPE="hidden" name="destination"  id="destination" >
                     <!-- Champ caché pour ID Mouvement -->
                     <input type="hidden" id="idMvt" name="id_mvt">
 
@@ -235,9 +237,10 @@ let textContent = paragraph.textContent;
         var idMvt = button.data('id'); // Extraire les informations des attributs data-*
         var utilisateurId = button.data('utilisateur-id');
         var iMMat = button.data('immat');
-
+        var destination = button.data('destination')
         var modal = $(this);
         modal.find('#idMvt').val(idMvt);
+        modal.find('#destination').val(destination);
         modal.find('#immat').attr('placeholder', iMMat);
 
         modal.find('#utilisateurId').val(utilisateurId);

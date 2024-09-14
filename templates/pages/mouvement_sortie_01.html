@@ -87,9 +87,9 @@ let textContent = paragraph.textContent;
                         var row = `<tr>
 
 
-                           <td>${statutText}</td>-->
-
-                            <td>${camionvoyage}</td>
+                           <!--<td>${statutText}</td>-->
+                             <td>${camionvoyage}</td>
+                            <td style="text-transform: uppercase">${mouvement_list.destination}</td>
                             <td>${mouvement_list.camion.transporteur}</td>
                             <td>${mouvement_list.remorque}</td>
                             <td>${mouvement_list.chauffeur.fullname}</td>
@@ -137,8 +137,9 @@ let textContent = paragraph.textContent;
          <table id="mouvements-table" class="table table-striped table-hover">
                     <thead class="thead-light">
                         <tr>
-
+                            
                             <th scope="col">Camion</th>
+                            <th scope="col">Destination</th>
                             <th scope="col">Transporteur </th>
                             <th scope="col">Remorque </th>
                             <th scope="col">Chauffeur</th>

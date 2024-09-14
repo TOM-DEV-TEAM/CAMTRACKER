@@ -1301,10 +1301,10 @@ def fetch_stats(request, id_user):
 
 def fetch_stats1(request, id_user):
     maintenant = timezone.now()
+
     # Filtrer les mouvements
     mouvements = (Mouvement4.objects.filter(date_sortie__isnull=True)
                   | Mouvement4.objects.filter(date_sortie__isnull=False))
-
     urg = 0
     dep = 0
     lg_30 = 0
@@ -1323,6 +1323,11 @@ def fetch_stats1(request, id_user):
         if mvt.date_sortie is None:
             # Mouvements en cours
             total_cours += 1
+
+            if mvt.date_entree:
+                pass
+            else:
+                mvt.date_entree = maintenant
             if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
                 urg += 1
             elif (maintenant - mvt.date_entree) >= duree_dk:
@@ -1369,6 +1374,11 @@ def fetch_stats2(request, id_user):
         if mvt.date_sortie is None:
             # Mouvements en cours
             total_cours += 1
+
+            if mvt.date_entree:
+                pass
+            else:
+                mvt.date_entree = maintenant
             if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
                 urg += 1
             elif (maintenant - mvt.date_entree) >= duree_dk:
@@ -1381,16 +1391,16 @@ def fetch_stats2(request, id_user):
             else:
                 lg_moins += 1
 
-    totalter = lg_30 + lg_moins
+        totalter = lg_30 + lg_moins
 
-    return JsonResponse({
-        'urg': urg,
-        'dep': dep,
-        'lg_30': lg_30,
-        'lg_mois': lg_moins,
-        'total_cours': total_cours,
-        'total_ter': totalter,
-    })
+        return JsonResponse({
+            'urg': urg,
+            'dep': dep,
+            'lg_30': lg_30,
+            'lg_mois': lg_moins,
+            'total_cours': total_cours,
+            'total_ter': totalter,
+        })
 ####################### FETCH DASHBORD INFORMATIONS ZUD ###########################
 
 def fetch_stats3(request, id_user):
@@ -1494,9 +1504,9 @@ def liste_mouvementsdkparticulier(request, id_user):
       'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
     }
     return JsonResponse(response_data)
-################### FETCH SORTIE ICD TOM ########################
+################### FETCH SORTIE ICD TOM  DKLOG ########################
 def liste_mouvementsdk1(request, id_user):
-    mouvements = Mouvement1.objects.filter(date_sortie__isnull=True).values(
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='icdtom').values(
         'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
     )
     mouvement_list = list(mouvements)
@@ -1533,42 +1543,87 @@ def liste_mouvementsdk1(request, id_user):
     return JsonResponse(response_data)
 
 #### pip
-################### FETCH SORTIE ICD CMA ########################
+################### FETCH SORTIE ICD CMA  DKLOG########################
 def liste_mouvementsdk01(request, id_user):
-    mouvements = Mouvement4.objects.filter(date_sortie__isnull=True).values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
-                                            , 'remorque')
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='cmaicd').values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
     mouvement_list = list(mouvements)
+
     for mouvement in mouvement_list:
-      camion_id = mouvement['camion_id']
-      camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur','type').first()
-      mouvement['camion'] = camion
-      chauffeur_id = mouvement['chauffeur_id']
-      chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
-                                                                            'permis').first()
-      mouvement['chauffeur'] = chauffeur
+        # Récupérer les informations du camion
+        camion_id = mouvement.get('camion_id')
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
+                                                                'type').first()
+        mouvement['camion'] = camion if camion else {
+            'id_cam': None,
+            'immatriculation': 'Non assigné',
+            'transporteur': 'Non assigné',
+            'type': 'Non assigné'
+        }
+
+        # Récupérer les informations du chauffeur
+        chauffeur_id = mouvement.get('chauffeur_id')
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur if chauffeur else {
+            'id_chauffeur': None,
+            'fullname': 'Non assigné',
+            'permis': 'N/A'
+        }
+
+        # Assigner des valeurs par défaut pour les autres champs
+        mouvement['statut_entree'] = mouvement.get('statut_entree', 'Non assigné')
+        mouvement['statut_sortie'] = mouvement.get('statut_sortie', 'Non assigné')
+        mouvement['remorque'] = mouvement.get('remorque', 'Non assigné')
+
     response_data = {
-      'mouvements': mouvement_list,
-      'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+        'mouvements': mouvement_list,
+        'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
     }
     return JsonResponse(response_data)
-################### FETCH SORTIE SACHERIE ########################
+
+
+################### FETCH SORTIE SACHERIE  DKLOG########################
 def liste_mouvementsdk11(request, id_user):
-    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='hangar').values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
-                                            , 'remorque')
+    from django.http import JsonResponse
+
+    # Récupération des mouvements
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='hangar').values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'destination'
+    )
     mouvement_list = list(mouvements)
+
+    # Traitement des mouvements
     for mouvement in mouvement_list:
-      camion_id = mouvement['camion_id']
-      camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur','type').first()
-      mouvement['camion'] = camion
-      chauffeur_id = mouvement['chauffeur_id']
-      chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
-                                                                            'permis').first()
-      mouvement['chauffeur'] = chauffeur
+        # Gestion des informations du camion
+        camion_id = mouvement['camion_id']
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
+                                                                'type').first()
+        if camion:
+            mouvement['camion'] = camion
+        else:
+            mouvement['camion'] = {'id_cam': 'Non assigné', 'immatriculation': 'Non assigné',
+                                   'transporteur': 'Non assigné', 'type': 'Non assigné'}
+
+        # Gestion des informations du chauffeur
+        chauffeur_id = mouvement['chauffeur_id']
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        if chauffeur:
+            mouvement['chauffeur'] = chauffeur
+        else:
+            mouvement['chauffeur'] = {'id_chauffeur': 'Non assigné', 'fullname': 'Non assigné', 'permis': 'Non assigné'}
+
+    # Préparation des données pour la réponse JSON
     response_data = {
-      'mouvements': mouvement_list,
-      'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+        'mouvements': mouvement_list,
+        'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
     }
+
     return JsonResponse(response_data)
+
+
 ################### FETCH SORTIE ZUD ########################
 def liste_mouvementsdk12(request, id_user):
     mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='zud').values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
@@ -1594,6 +1649,7 @@ def ajoutsortie(request):
             id_mvt = request.POST.get('id_mvt')
             id_user = request.POST.get('id_user')
             source =  request.POST.get('source')
+            destination = request.POST.get('destination')
             # Récupérer les objets Utilisateurs et Mouvement en fonction des IDs fournis
             util = get_object_or_404(Utilisateurs, id_user=id_user)
             if (source == 'icdtom'):
@@ -1603,7 +1659,12 @@ def ajoutsortie(request):
             elif (source == 'zud'):
                 mouvement = get_object_or_404(Mouvement3, id_mvt=id_mvt)
             elif (source == 'sacherie'):
-                mouvement = get_object_or_404(Mouvement2, id_mvt=id_mvt)
+                if (destination== 'TOM'):
+                    mouvement = get_object_or_404(Mouvement2, id_mvt=id_mvt)
+                if (destination== 'ITS'):
+                    mouvement = get_object_or_404(Mouvement6, id_mvt=id_mvt)
+                elif (destination== 'TRANSEXPRESS'):
+                    mouvement = get_object_or_404(Mouvement7, id_mvt=id_mvt)
 
             # Mettre à jour les informations du mouvement
             mouvement.date_sortie = timezone.now()
@@ -1620,6 +1681,8 @@ def ajoutsortie(request):
                 return redirect(f"/index_sortie_zud/{id_user.strip()}?success=true")
             elif (source == 'icdcma'):
                 return redirect(f"/index_sortie_icdcma/{id_user.strip()}?success=true")
+            elif (source == 'sacherie'):
+                return redirect(f"/index3_view/{id_user.strip()}?success=true")
     else:
         form = SortieForm()
     # Assurez-vous que 'mouvement' et 'util' sont définis si vous les utilisez dans le template
@@ -2918,23 +2981,69 @@ def liste_mouvements_3(request, id_user):
 
     return JsonResponse(response_data)
 def liste_mouvements4(request, id_user):
-    mouvements = Mouvement2.objects.filter(date_entree__isnull=False,date_sortie__isnull=True).values('id_mvt','mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
-                                            , 'remorque')
-    mouvement_list = list(mouvements)
-    for mouvement in mouvement_list:
-      camion_id = mouvement['camion_id']
-      camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur','type').first()
-      mouvement['camion'] = camion
-      chauffeur_id = mouvement['chauffeur_id']
-      chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
-                                                                            'permis').first()
-      mouvement['chauffeur'] = chauffeur
-    response_data = {
-      'mouvements': mouvement_list,
-      'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
-    }
-    return JsonResponse(response_data)
+    # Récupérer les mouvements de Mouvement2, Mouvement6 et Mouvement7
+    mouvements2 = Mouvement2.objects.filter(date_entree__isnull=False, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
+    mouvements6 = Mouvement6.objects.filter(date_entree__isnull=False, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
+    mouvements7 = Mouvement7.objects.filter(date_entree__isnull=False, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
 
+    # Convertir les QuerySets en listes
+    mouvement_list = list(mouvements2) + list(mouvements6) + list(mouvements7)
+
+    for mouvement in mouvement_list:
+        # Déterminer la destination en fonction du modèle d'origine
+        if mouvement in mouvements2:
+            mouvement['destination'] = 'TOM'
+        elif mouvement in mouvements6:
+            mouvement['destination'] = 'ITS'
+        elif mouvement in mouvements7:
+            mouvement['destination'] = 'TRANSEXPRESS'
+
+        # Ajouter les informations sur le camion, sinon "Non assigné"
+        camion_id = mouvement.get('camion_id')
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
+                                                                'type').first()
+        if camion:
+            mouvement['camion'] = camion
+        else:
+            mouvement['camion'] = {
+                'id_cam': 'Non assigné',
+                'immatriculation': 'Non assigné',
+                'transporteur': 'Non assigné',
+                'type': 'Non assigné'
+            }
+
+        # Ajouter les informations sur le chauffeur, sinon "Non assigné"
+        chauffeur_id = mouvement.get('chauffeur_id')
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        if chauffeur:
+            mouvement['chauffeur'] = chauffeur
+        else:
+            mouvement['chauffeur'] = {
+                'id_chauffeur': 'Non assigné',
+                'fullname': 'Non assigné',
+                'permis': 'Non assigné'
+            }
+
+        # Vérifier et ajouter les autres champs manquants avec "Non assigné"
+        mouvement['mission'] = mouvement.get('mission', 'Non assigné')
+        mouvement['statut_entree'] = mouvement.get('statut_entree', 'Non assigné')
+        mouvement['statut_sortie'] = mouvement.get('statut_sortie', 'Non assigné')
+        mouvement['remorque'] = mouvement.get('remorque', 'Non assigné')
+
+    # Préparer la réponse JSON avec les mouvements combinés
+    response_data = {
+        'mouvements': mouvement_list,
+        'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+    }
+
+    return JsonResponse(response_data)
 
 def fetch_camion(request):
     camions=Camion.objects.all().values('id_cam','transporteur','immatriculation','type')
