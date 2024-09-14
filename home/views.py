@@ -20,8 +20,9 @@ from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.decorators import login_required
 from datetime import timedelta, datetime
 from django.utils import timezone
+from numpy.random import poisson
 from openpyxl.workbook import Workbook
-from .forms import MouvementForm, SortieForm, ChauffeurForm, CamionForm, TransitaireForm
+from .forms import MouvementForm, SortieForm, ChauffeurForm, CamionForm, TransitaireForm, ClientForm, VehiculeForm
 from .models import *
 from datetime import timedelta
 from django.utils import timezone
@@ -239,11 +240,157 @@ def fetch_mvt_termine(request):
 
 
 
+###################### Index Controller ##################################
+from django.shortcuts import render, get_object_or_404
+from django.utils.timezone import make_aware
+from datetime import datetime, timedelta
+from .models import Utilisateurs, Camion, Mouvement0
+
+################### RENDER INDEX CONTROLLER ##############################
+def index_controlleur(request, id):
+    # Récupérer l'utilisateur en fonction de l'ID
+    user = get_object_or_404(Utilisateurs, id_user=id)
+    # Rendre le template avec les données
+    return render(request, 'pages/index_controlleur.html', { 'util': user})
+
+################### RENDER CAMIONS ZUD ##############################
+def camion_zud(request, id):
+    # Récupérer l'utilisateur en fonction de l'ID
+    user = get_object_or_404(Utilisateurs, id_user=id)
+    # Rendre le template avec les données
+    return render(request, 'pages/camion_zud.html', { 'util': user})
+
+################### LOGIQUE INDEX CONTROLLER ##############################
+def liste_observations(request, id):
+    # Récupérer l'utilisateur en fonction de l'ID
+    user = get_object_or_404(Utilisateurs, id_user=id)
+    # Rendre le template avec les données
+    return render(request, 'pages/liste_observations.html', { 'util': user})
+#################################### LOGIQUE RENDER OBSERVATIONS ADMIN ######################
+def liste_observationsadmin(request, id):
+    # Récupérer l'utilisateur en fonction de l'ID
+    user = get_object_or_404(Utilisateurs, id_user=id)
+    # Rendre le template avec les données
+    return render(request, 'pages/liste_observationsadmin.html', { 'util': user})
+
+from django.db.models import Q
+from django.http import JsonResponse
+from .models import Mouvement0, Camion, Chaffeur, Transitaire
+from django.http import JsonResponse
+from .models import Mouvement0
+from django.utils.timezone import now
+from django.http import JsonResponse
 
 
+def fetch_controlleur(request):
+    try:
+        mouvements = Mouvement0.objects.filter(
+            destination='zud',
+            date_sortie__isnull=True,
+            camion__type__in=['VRAC', 'PORTE-CONTENEUR', 'PLATEAU', 'PORTE-CHAR']
+        ).select_related('chauffeur', 'transitaire', 'camion')
 
-######Gestion Camion
-########################################AGENT#######################################################
+        data = []
+        for mouvement in mouvements:
+            duration_seconds = (now() - mouvement.date_entree).total_seconds()
+            hours = int(duration_seconds // 3600)
+            minutes = int((duration_seconds % 3600) // 60)
+            seconds = int(duration_seconds % 60)
+            heures_passees = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+            data.append({
+                'id_mouvement': mouvement.id_mvt,
+                'heures_passees': heures_passees,
+                'camion': {
+                    'id_cam': mouvement.camion.id_cam,
+                    'immatriculation': mouvement.camion.immatriculation,
+                    'transporteur': mouvement.camion.transporteur,
+                    'type': mouvement.camion.type
+                },
+                'chauffeur': {
+                    'fullname': mouvement.chauffeur.fullname if mouvement.chauffeur else None,
+                    'telephone': mouvement.chauffeur.telephone if mouvement.chauffeur else None
+                },
+                'transitaire': {
+                    'fullname': mouvement.transitaire.fullname if mouvement.transitaire else None,
+                    'telephone': mouvement.transitaire.telephone if mouvement.transitaire else None
+                }
+            })
+        return JsonResponse({'mouvements': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)       ######Gestion Camion
+#################### FETCH OBSERVATION ####################################################
+
+def fetch_observation(request):
+    try:
+        observations = Observation.objects.select_related('user', 'camion')
+        data = []
+        for observation in observations:
+            observation_data = {
+                'id_observation': observation.id_observation,
+                'date': observation.date.strftime("%Y-%m-%d %H:%M:%S"),
+                'bd': observation.bd,
+                'dd': observation.dd,
+                'enpanne': observation.enpanne,
+                'motif_stationnement': observation.motif_stationnement,
+                'camion': {
+                    'id_cam': observation.camion.id_cam,
+                    'immatriculation': observation.camion.immatriculation,
+                    'transporteur': observation.camion.transporteur,
+                    'type': observation.camion.type
+                },
+                'utilisateurs': {
+                    'id_user': observation.user.id_user,
+                    'fullname': observation.user.fullname,
+                },
+            }
+            data.append(observation_data)
+
+        return JsonResponse({'observations': data})
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)########################################AGENT#######################################################
+from django.shortcuts import redirect, HttpResponse
+from .models import Observation, Utilisateurs, Mouvement0
+from django.http import JsonResponse
+
+def ajout_observation(request):
+    if request.method == 'POST':
+        id_mvt = request.POST.get('id_mvt')
+        id_cam = request.POST.get('id_cam')
+        dd = request.POST.get('dd')
+        bd = request.POST.get('bd')
+        enpanne = request.POST.get('enpanne')
+        motif_stationnement = request.POST.get('motif_stationnement')
+        statut = request.POST.get('statut')
+        user_id = request.POST.get('id_user')
+        try:
+            # Correction de la clé de recherche
+            observation = Observation.objects.get(id_mvt_0=id_mvt, camion=id_cam)
+        except Observation.DoesNotExist:
+            # Création d'une nouvelle observation si elle n'existe pas
+            observation = Observation(
+                id_mvt_0=Mouvement0.objects.get(id_mvt=id_mvt),
+                camion=Camion.objects.get(id_cam=id_cam),
+                user_id=user_id,
+            )
+        mouvement0 = Mouvement0.objects.get(id_mvt=id_mvt)
+        mouvement0.statut_entree = statut
+        mouvement0.save()
+        try:
+            user = Utilisateurs.objects.get(id_user=user_id)
+        except Utilisateurs.DoesNotExist:
+            return JsonResponse({"success": False, "message": "Utilisateur non trouvé"}, status=404)
+        # Conversion des valeurs pour les champs `bd` et `dd`
+        observation.bd = int(bd) if bd else None
+        observation.dd = int(dd) if dd else None
+        observation.enpanne = int(enpanne) if enpanne else None
+        observation.motif_stationnement = str(motif_stationnement) if motif_stationnement else None
+        observation.save()
+        return JsonResponse({"success": True, "message": "Effectuée avec succès."})
+    return JsonResponse({"success": False, "message": "Méthode de requête invalide"}, status=405)
+################################### AJOUT OBSERVATION #########################################
 def liste_camion(request, id):
  user = Utilisateurs.objects.get(id_user=id)
  listeboite = Camion()
@@ -745,40 +892,53 @@ def seconnecter(request):
         user = None
         try:
             user = Utilisateurs.objects.get(email=username, password=password)
-            if user.poste == 'E1':
-                camions = Camion.objects.all()
-                return render(request, 'pages/index1.html', {'util': user, 'camions': camions})
-            elif user.poste == 'S1':
-                return render(request, 'pages/index2.html', {'util': user})
-            elif user.poste == 'SA':
-                return redirect("/liste_user/" + str(user.id_user))
-            elif user.poste == 'A1':
-                return redirect("/index/" + str(user.id_user))
-            elif user.poste == 'E0':
-                return redirect("/entreedecalog_view/" + str(user.id_user))
-            elif user.poste == 'A0':
-                return redirect("/index_dk_log/" + str(user.id_user))
-            elif user.poste == 'E2':
-                camions = Camion.objects.all()
-                return redirect("/index2_view/" + str(user.id_user))
-            elif user.poste == 'S2':
-                camions = Camion.objects.all()
-                return redirect("/index3_view/" + str(user.id_user))
-            elif user.poste == 'S0':
-                return redirect("/sortie_decalog_view/" + str(user.id_user))
-            elif user.poste == 'A2':
-                return redirect("/index_sacherie/" + str(user.id_user))
-            elif user.poste == 'S3':
-                camions = Camion.objects.all()
-                return redirect("/index_sortie_zud/" + str(user.id_user))
-            elif user.poste == 'E3':
-                return redirect("/index_entree_zud/" + str(user.id_user))
-            elif user.poste == 'A3':
-                return redirect("/index_admin_zud/" + str(user.id_user))
+            if user.status == 'active':
+                ################### SUPER ADMIN ##################
+                if user.poste == 'SA':
+                    return redirect("/liste_user/" + str(user.id_user))
+                #################### UTILISATEURS DKLOG ###############
+                elif user.poste == 'E0':
+                    return redirect("/entreedecalog_view/" + str(user.id_user))
+                elif user.poste == 'A0':
+                    return redirect("/index_dk_log/" + str(user.id_user))
+
+                elif user.poste == 'S0':
+                    return redirect("/sortie_decalog_view/" + str(user.id_user))
+                elif user.poste == 'C0':
+                    return redirect("/index_controller/" + str(user.id_user))
+                ##################### ICD TOM ###########################
+                elif user.poste == 'A1':
+                    return redirect("/index/" + str(user.id_user))
+                if user.poste == 'E1':
+                    return redirect("/index_entree_icdtom/" + str(user.id_user))
+                elif user.poste == 'S1':
+                    return redirect("/index_sortie_icdtom/" + str(user.id_user))
+                ######################## SACHERIE ##############################
+                elif user.poste == 'E2':
+                    return redirect("/index2_view/" + str(user.id_user))
+                elif user.poste == 'S2':
+                    return redirect("/index3_view/" + str(user.id_user))
+                elif user.poste == 'A2':
+                    return redirect("/index_sacherie/" + str(user.id_user))
+                ######################## ZUD ##############################
+                elif user.poste == 'S3':
+                    return redirect("/index_sortie_zud/" + str(user.id_user))
+                elif user.poste == 'E3':
+                    return redirect("/index_entree_zud/" + str(user.id_user))
+                elif user.poste == 'A3':
+                    return redirect("/index_admin_zud/" + str(user.id_user))
+                #################### ICD CMA ######################
+                elif user.poste == 'E4':
+                    return redirect("/index_entree_icdcma/" + str(user.id_user))
+                elif user.poste == 'S4':
+                    return redirect("/index_sortie_icdcma/" + str(user.id_user))
+                else:
+                    return render(request, 'pages/login2.html')
             else:
+                messages.error(request, 'Votre compte est désactivé !! ')
                 return render(request, 'pages/login2.html')
         except Utilisateurs.DoesNotExist:
-            messages.error(request, 'Login ou mot de passe incorrect.')
+            messages.error(request, 'Login ou mot de passe incorrect!!')
             return render(request, 'pages/login2.html')
     else:
         return render(request, 'pages/login2.html')
@@ -790,7 +950,7 @@ def login_page(request):
     if forms.is_valid() or 1:
       email = forms.cleaned_data['email']
       password = forms.cleaned_data['password']
-      user = authenticate(email=email, password=password)
+      user = authenticate(email=email, password=password,status='active')
       if user:
         login(request, user)
         return redirect('dashboard')
@@ -799,23 +959,139 @@ def login_page(request):
 
 ######Gestio Post Entree
 def liste_mouvements(request, id_user):
-    mouvements = Mouvement1.objects.filter(date_entree__isnull=True).values('id_mvt', 'mission', 'camion_id',
-                                                                            'statut_entree', 'statut_sortie',
-                                                                            'chauffeur_id'
-                                                                            , 'remorque')
+    mouvements = Mouvement1.objects.filter(date_entree__isnull=True, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
     mouvement_list = list(mouvements)
+
     for mouvement in mouvement_list:
-        camion_id = mouvement['camion_id']
-        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
-                                                                'type').first()
+        # Vérifier camion_id
+        camion_id = mouvement.get('camion_id')
+        if camion_id:
+            camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur', 'type').first()
+        else:
+            camion = {'id_cam': 'non assignée', 'immatriculation': 'non assignée', 'transporteur': 'non assignée', 'type': 'non assignée'}
         mouvement['camion'] = camion
-        chauffeur_id = mouvement['chauffeur_id']
-        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
-                                                                              'permis').first()
+
+        # Vérifier chauffeur_id
+        chauffeur_id = mouvement.get('chauffeur_id')
+        if chauffeur_id:
+            chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname', 'permis').first()
+        else:
+            chauffeur = {'id_chauffeur': 'non assignée', 'fullname': 'non assignée', 'permis': 'non assignée'}
         mouvement['chauffeur'] = chauffeur
+
+        # Remplacer les autres champs nulls par 'non assignée'
+        for key, value in mouvement.items():
+            if value is None:
+                mouvement[key] = 'non assignée'
+
     response_data = {
         'mouvements': mouvement_list,
         'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+    }
+    return JsonResponse(response_data)
+################# LISTE MOUVEMENTS ENTREE CMA #########################
+def liste_mouvements_entree_cma(request, id_user):
+    mouvements = Mouvement4.objects.filter(date_entree__isnull=True, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
+    mouvement_list = list(mouvements)
+
+    for mouvement in mouvement_list:
+        # Vérifier camion_id
+        camion_id = mouvement.get('camion_id')
+        if camion_id:
+            camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur', 'type').first()
+        else:
+            camion = {'id_cam': 'non assignée', 'immatriculation': 'non assignée', 'transporteur': 'non assignée', 'type': 'non assignée'}
+        mouvement['camion'] = camion
+
+        # Vérifier chauffeur_id
+        chauffeur_id = mouvement.get('chauffeur_id')
+        if chauffeur_id:
+            chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname', 'permis').first()
+        else:
+            chauffeur = {'id_chauffeur': 'non assignée', 'fullname': 'non assignée', 'permis': 'non assignée'}
+        mouvement['chauffeur'] = chauffeur
+
+        # Remplacer les autres champs nulls par 'non assignée'
+        for key, value in mouvement.items():
+            if value is None:
+                mouvement[key] = 'non assignée'
+
+    response_data = {
+        'mouvements': mouvement_list,
+        'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+    }
+    return JsonResponse(response_data)
+#################### LISTE MOUVEMENTS SORTIE CMA ################################
+def liste_mouvements_sortie_cma(request, id_user):
+    # Récupérer les mouvements avec des filtres sur date_entree et date_sortie
+    mouvements = Mouvement4.objects.filter(date_entree__isnull=False, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
+    mouvement_list = list(mouvements)
+
+    for mouvement in mouvement_list:
+        # Vérifier camion_id et assigner les valeurs du camion ou 'non assignée'
+        camion_id = mouvement.get('camion_id')
+        if camion_id:
+            camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
+                                                                    'type').first()
+        else:
+            camion = {'id_cam': 'non assignée', 'immatriculation': 'non assignée', 'transporteur': 'non assignée',
+                      'type': 'non assignée'}
+        mouvement['camion'] = camion
+
+        # Vérifier chauffeur_id et assigner les valeurs du chauffeur ou 'non assignée'
+        chauffeur_id = mouvement.get('chauffeur_id')
+        if chauffeur_id:
+            chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                                  'permis').first()
+        else:
+            chauffeur = {'id_chauffeur': 'non assignée', 'fullname': 'non assignée', 'permis': 'non assignée'}
+        mouvement['chauffeur'] = chauffeur
+
+        # Remplacer toutes les autres valeurs nulles ou vides par 'non assignée'
+        for key, value in mouvement.items():
+            if value is None or value == '':
+                mouvement[key] = 'non assignée'
+
+    response_data = {
+        'mouvements': mouvement_list,
+        'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+    }
+
+    return JsonResponse(response_data)
+
+############# RENDER POINTEURS ICD TOM ###################
+def index_entree_icdtom(request, id_user):
+    user = Utilisateurs.objects.get(id_user=id_user)
+    return render(request, 'pages/index1.html', {'util': user, })
+
+def index_sortie_icdtom(request, id_user):
+    user = Utilisateurs.objects.get(id_user=id_user)
+    return render(request, 'pages/index2.html', {'util': user, })
+################# RENDER POINTEURS ICD CMA ###################
+def index_entree_icdcma(request, id_user):
+    user = Utilisateurs.objects.get(id_user=id_user)
+    return render(request, 'pages/index_entree_icdcma.html', {'util': user, })
+
+def index_sortie_icdcma(request, id_user):
+    user = Utilisateurs.objects.get(id_user=id_user)
+    return render(request, 'pages/index_sortie_icdcma.html', {'util': user, })
+######################### FETCH LISTE MOUVEMENTS PARTICULIERS ######################
+def liste_mouvements_particulier(request):
+    mouvements = Mouvement8.objects.filter(date_sortie__isnull=True).values('id_mvt', 'destination', 'vehicule_id', 'date_entree')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+        vehicule_id = mouvement['vehicule_id']
+        vehicule = Vehicule.objects.filter(id_veh=vehicule_id).values('id_veh', 'immatriculation').first()
+        mouvement['vehicule'] = vehicule
+    response_data = {
+        'mouvements': mouvement_list,
+     # Inclure l'ID de l'utilisateur dans la réponse JSON
     }
     return JsonResponse(response_data)
 
@@ -829,10 +1105,30 @@ def sortie_tom(request, id_user):
   return render(request, 'pages/index2.html', {'util': util})
 def entredecalon_view(request, id_user):
   util = Utilisateurs.objects.get(id_user=id_user)
-  camions = Camion.objects.all()
-  chauffeurs = Chaffeur.objects.all()
-  transitaire = Transitaire.objects.all()
-  return render(request, 'pages/mouvement_entre_0.html', {'util': util, 'transitaire':transitaire, 'camions': camions, 'chauffeurs': chauffeurs})
+  return render(request, 'pages/mouvement_entre_0.html', {'util': util})
+def entreedecalog_particulier(request, id_user):
+      util = Utilisateurs.objects.get(id_user=id_user)
+      return render(request, 'pages/mouvement_entre_particulier.html', {'util': util})
+def entredecalon_view1(request, id_user):
+  util = Utilisateurs.objects.get(id_user=id_user)
+  return render(request, 'pages/mouvement_entre_01.html', {'util': util})
+def entredecalon_view2(request, id_user):
+  util = Utilisateurs.objects.get(id_user=id_user)
+  return render(request, 'pages/mouvement_entre_02.html', {'util': util})
+################################# RENDER MODIFICATIONS DES MOUVEMENTS ###############
+def modif_mvt(request, id_user):
+  util = Utilisateurs.objects.get(id_user=id_user)
+  return render(request, 'pages/modif_mvt.html', {'util': util})
+def modif_mvt1(request, id_user):
+      util = Utilisateurs.objects.get(id_user=id_user)
+      return render(request, 'pages/modif_mvt1.html', {'util': util})
+def modif_mvt2(request, id_user):
+  util = Utilisateurs.objects.get(id_user=id_user)
+  return render(request, 'pages/modif_mvt2.html', {'util': util})
+def modif_mvtpar(request, id_user):
+  util = Utilisateurs.objects.get(id_user=id_user)
+  return render(request, 'pages/modif_mvtpar.html', {'util': util})
+
 @csrf_exempt
 def ajoutmouvement(request, id_user):
   try:
@@ -857,27 +1153,389 @@ def ajoutmouvement(request, id_user):
     form = MouvementForm()
   camions = Camion.objects.all()
   return render(request, 'pages/ajouter_mouvement.html', {'form': form, 'camions': camions, 'util': util})
+#################################### GESTION DES FETCH SUR LE DASHBOARD ##################
+####################### FETCH DASHBORD INFORMATIONS PARTICULIERS ###########################
+def fetch_statsparticulier(request, id_user):
+    maintenant = timezone.now()
+    # Filtrer les mouvements
+    mouvements = (Mouvement8.objects.filter(date_sortie__isnull=True)
+                  | Mouvement8.objects.filter(date_sortie__isnull=False))
+    urg = 0
+    dep = 0
+    lg_30 = 0
+    lg_moins = 0
+    total_cours = 0
+    for mvt in mouvements:
+        #camion = Camion.objects.get(id_cam=mvt.camion_id)
+        #type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        if mvt.date_sortie is None:
+            # Mouvements en cours
+            total_cours += 1
+            if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
+                urg += 1
+            elif (maintenant - mvt.date_entree) >= duree_dk:
+                dep += 1
+        else:
+            # Mouvements sortis
+            duree_mouvement = mvt.date_sortie - mvt.date_entree
+            if duree_mouvement >= duree_dk:
+                lg_30 += 1
+            else:
+                lg_moins += 1
+    totalter = lg_30 + lg_moins
+    return JsonResponse({
+        'urg': urg,
+        'dep': dep,
+        'lg_30': lg_30,
+        'lg_mois': lg_moins,
+        'total_cours': total_cours,
+        'total_ter': totalter,
+    })
+####################### FETCH DASHBORD INFORMATIONS PLT ###########################
+def fetch_stats0(request, id_user):
+    maintenant = timezone.now()
+    # Filtrer les mouvements
+    mouvements = (Mouvement0.objects.filter(date_sortie__isnull=True)
+                  | Mouvement0.objects.filter(date_sortie__isnull=False))  # Si vous avez besoin d'ordonner les résultats, vous pouvez trier la liste
+    urg = 0
+    dep = 0
+    lg_30 = 0
+    lg_moins = 0
+    total_cours = 0
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        if mvt.date_sortie is None:
+            # Mouvements en cours
+            total_cours += 1
+            if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
+                urg += 1
+            elif (maintenant - mvt.date_entree) >= duree_dk:
+                dep += 1
+        else:
+            # Mouvements sortis
+            duree_mouvement = mvt.date_sortie - mvt.date_entree
+            if duree_mouvement >= duree_dk:
+                lg_30 += 1
+            else:
+                lg_moins += 1
 
+    totalter = lg_30 + lg_moins
+
+    return JsonResponse({
+        'urg': urg,
+        'dep': dep,
+        'lg_30': lg_30,
+        'lg_mois': lg_moins,
+        'total_cours': total_cours,
+        'total_ter': totalter,
+    })
+####################### FETCH DASHBORD INFORMATIONS ICD TOM ###########################
+
+def fetch_stats(request, id_user):
+    maintenant = timezone.now()
+
+    # Filtrer les mouvements
+    mouvements = (Mouvement1.objects.filter(date_sortie__isnull=True)
+                  | Mouvement1.objects.filter(date_sortie__isnull=False))
+    urg = 0
+    dep = 0
+    lg_30 = 0
+    lg_moins = 0
+    total_cours = 0
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='icd', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        if mvt.date_sortie is None:
+            # Mouvements en cours
+            total_cours += 1
+
+            if mvt.date_entree:
+                pass
+            else:
+                mvt.date_entree=maintenant
+            if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
+                urg += 1
+            elif (maintenant - mvt.date_entree) >= duree_dk:
+                dep += 1
+        else:
+            # Mouvements sortis
+            duree_mouvement = mvt.date_sortie - mvt.date_entree
+            if duree_mouvement >= duree_dk:
+                lg_30 += 1
+            else:
+                lg_moins += 1
+
+    totalter = lg_30 + lg_moins
+
+    return JsonResponse({
+        'urg': urg,
+        'dep': dep,
+        'lg_30': lg_30,
+        'lg_mois': lg_moins,
+        'total_cours': total_cours,
+        'total_ter': totalter,
+    })
+####################### FETCH DASHBORD INFORMATIONS CMA ICD ###########################
+
+def fetch_stats1(request, id_user):
+    maintenant = timezone.now()
+    # Filtrer les mouvements
+    mouvements = (Mouvement4.objects.filter(date_sortie__isnull=True)
+                  | Mouvement4.objects.filter(date_sortie__isnull=False))
+
+    urg = 0
+    dep = 0
+    lg_30 = 0
+    lg_moins = 0
+    total_cours = 0
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='icd', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        if mvt.date_sortie is None:
+            # Mouvements en cours
+            total_cours += 1
+            if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
+                urg += 1
+            elif (maintenant - mvt.date_entree) >= duree_dk:
+                dep += 1
+        else:
+            # Mouvements sortis
+            duree_mouvement = mvt.date_sortie - mvt.date_entree
+            if duree_mouvement >= duree_dk:
+                lg_30 += 1
+            else:
+                lg_moins += 1
+
+    totalter = lg_30 + lg_moins
+
+    return JsonResponse({
+        'urg': urg,
+        'dep': dep,
+        'lg_30': lg_30,
+        'lg_mois': lg_moins,
+        'total_cours': total_cours,
+        'total_ter': totalter,
+    })
+####################### FETCH DASHBORD INFORMATIONS SACHERIE ###########################
+def fetch_stats2(request, id_user):
+    maintenant = timezone.now()
+    # Filtrer les mouvements
+    mouvements = (Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='hangar')
+                  | Mouvement0.objects.filter(date_sortie__isnull=False, destination__contains='hangar'))# Si vous avez besoin d'ordonner les résultats, vous pouvez trier la liste
+    urg = 0
+    dep = 0
+    lg_30 = 0
+    lg_moins = 0
+    total_cours = 0
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='sacherie', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        if mvt.date_sortie is None:
+            # Mouvements en cours
+            total_cours += 1
+            if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
+                urg += 1
+            elif (maintenant - mvt.date_entree) >= duree_dk:
+                dep += 1
+        else:
+            # Mouvements sortis
+            duree_mouvement = mvt.date_sortie - mvt.date_entree
+            if duree_mouvement >= duree_dk:
+                lg_30 += 1
+            else:
+                lg_moins += 1
+
+    totalter = lg_30 + lg_moins
+
+    return JsonResponse({
+        'urg': urg,
+        'dep': dep,
+        'lg_30': lg_30,
+        'lg_mois': lg_moins,
+        'total_cours': total_cours,
+        'total_ter': totalter,
+    })
+####################### FETCH DASHBORD INFORMATIONS ZUD ###########################
+
+def fetch_stats3(request, id_user):
+    maintenant = timezone.now()
+    # Filtrer les mouvements
+    mouvements = (Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='zud')
+                  | Mouvement0.objects.filter(date_sortie__isnull=False,
+                                              destination__contains='hangar'))  # Si vous avez besoin d'ordonner les résultats, vous pouvez trier la liste
+    urg = 0
+    dep = 0
+    lg_30 = 0
+    lg_moins = 0
+    total_cours = 0
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='sacherie', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        if mvt.date_sortie is None:
+            # Mouvements en cours
+            total_cours += 1
+            if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
+                urg += 1
+            elif (maintenant - mvt.date_entree) >= duree_dk:
+                dep += 1
+        else:
+            # Mouvements sortis
+            duree_mouvement = mvt.date_sortie - mvt.date_entree
+            if duree_mouvement >= duree_dk:
+                lg_30 += 1
+            else:
+                lg_moins += 1
+
+    totalter = lg_30 + lg_moins
+
+    return JsonResponse({
+        'urg': urg,
+        'dep': dep,
+        'lg_30': lg_30,
+        'lg_mois': lg_moins,
+        'total_cours': total_cours,
+        'total_ter': totalter,
+    })
 #####Gestion Sortie
 def liste_mouvements1(request, id_user):
-    mouvements = Mouvement1.objects.filter(date_entree__isnull=False,date_sortie__isnull=True).values('id_mvt','mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
-                                            , 'remorque')
+    # Récupérer les mouvements avec des filtres sur date_entree et date_sortie
+    mouvements = Mouvement1.objects.filter(date_entree__isnull=False, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
+    mouvement_list = list(mouvements)
+
+    for mouvement in mouvement_list:
+        # Vérifier camion_id et assigner les valeurs du camion ou 'non assignée'
+        camion_id = mouvement.get('camion_id')
+        if camion_id:
+            camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
+                                                                    'type').first()
+        else:
+            camion = {'id_cam': 'non assignée', 'immatriculation': 'non assignée', 'transporteur': 'non assignée',
+                      'type': 'non assignée'}
+        mouvement['camion'] = camion
+
+        # Vérifier chauffeur_id et assigner les valeurs du chauffeur ou 'non assignée'
+        chauffeur_id = mouvement.get('chauffeur_id')
+        if chauffeur_id:
+            chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                                  'permis').first()
+        else:
+            chauffeur = {'id_chauffeur': 'non assignée', 'fullname': 'non assignée', 'permis': 'non assignée'}
+        mouvement['chauffeur'] = chauffeur
+
+        # Remplacer toutes les autres valeurs nulles ou vides par 'non assignée'
+        for key, value in mouvement.items():
+            if value is None or value == '':
+                mouvement[key] = 'non assignée'
+
+    response_data = {
+        'mouvements': mouvement_list,
+        'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+    }
+
+    return JsonResponse(response_data)
+
+
+############################### FETCH SORTICE PARTICULIER ################
+################### FETCH SORTIE ICD TOM ########################
+def liste_mouvementsdkparticulier(request, id_user):
+    mouvements = Mouvement8.objects.filter(date_sortie__isnull=True).values('id_mvt', 'vehicule_id', 'destination')
     mouvement_list = list(mouvements)
     for mouvement in mouvement_list:
-      camion_id = mouvement['camion_id']
-      camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur','type').first()
+      camion_id = mouvement['vehicule_id']
+      camion = Vehicule.objects.filter(id_veh=camion_id).values('id_veh', 'immatriculation').first()
       mouvement['camion'] = camion
-      chauffeur_id = mouvement['chauffeur_id']
-      chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
-                                                                            'permis').first()
-      mouvement['chauffeur'] = chauffeur
-    response_data = {
+      response_data = {
       'mouvements': mouvement_list,
       'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
     }
     return JsonResponse(response_data)
+################### FETCH SORTIE ICD TOM ########################
 def liste_mouvementsdk1(request, id_user):
-    mouvements = Mouvement0.objects.filter(date_entree__isnull=False,date_sortie__isnull=True).values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
+    mouvements = Mouvement1.objects.filter(date_sortie__isnull=True).values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
+    mouvement_list = list(mouvements)
+
+    for mouvement in mouvement_list:
+        # Récupérer les informations du camion
+        camion_id = mouvement.get('camion_id')
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur', 'type').first()
+        mouvement['camion'] = camion if camion else {
+            'id_cam': None,
+            'immatriculation': 'Non assigné',
+            'transporteur': 'Non assigné',
+            'type': 'Non assigné'
+        }
+
+        # Récupérer les informations du chauffeur
+        chauffeur_id = mouvement.get('chauffeur_id')
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname', 'permis').first()
+        mouvement['chauffeur'] = chauffeur if chauffeur else {
+            'id_chauffeur': None,
+            'fullname': 'Non assigné',
+            'permis': 'N/A'
+        }
+
+        # Assigner des valeurs par défaut pour les autres champs
+        mouvement['statut_entree'] = mouvement.get('statut_entree', 'Non assigné')
+        mouvement['statut_sortie'] = mouvement.get('statut_sortie', 'Non assigné')
+        mouvement['remorque'] = mouvement.get('remorque', 'Non assigné')
+
+    response_data = {
+        'mouvements': mouvement_list,
+        'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+    }
+    return JsonResponse(response_data)
+
+#### pip
+################### FETCH SORTIE ICD CMA ########################
+def liste_mouvementsdk01(request, id_user):
+    mouvements = Mouvement4.objects.filter(date_sortie__isnull=True).values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
                                             , 'remorque')
     mouvement_list = list(mouvements)
     for mouvement in mouvement_list:
@@ -893,18 +1551,59 @@ def liste_mouvementsdk1(request, id_user):
       'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
     }
     return JsonResponse(response_data)
-
-
+################### FETCH SORTIE SACHERIE ########################
+def liste_mouvementsdk11(request, id_user):
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='hangar').values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
+                                            , 'remorque')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+      camion_id = mouvement['camion_id']
+      camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur','type').first()
+      mouvement['camion'] = camion
+      chauffeur_id = mouvement['chauffeur_id']
+      chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                            'permis').first()
+      mouvement['chauffeur'] = chauffeur
+    response_data = {
+      'mouvements': mouvement_list,
+      'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+    }
+    return JsonResponse(response_data)
+################### FETCH SORTIE ZUD ########################
+def liste_mouvementsdk12(request, id_user):
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='zud').values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
+                                            , 'remorque')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+      camion_id = mouvement['camion_id']
+      camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur','type').first()
+      mouvement['camion'] = camion
+      chauffeur_id = mouvement['chauffeur_id']
+      chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                 'permis').first()
+      mouvement['chauffeur'] = chauffeur
+    response_data = {
+      'mouvements': mouvement_list,
+      'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
+    }
+    return JsonResponse(response_data)
 def ajoutsortie(request):
     if request.method == 'POST':
         form = SortieForm(request.POST)
         if form.is_valid():
             id_mvt = request.POST.get('id_mvt')
             id_user = request.POST.get('id_user')
-
+            source =  request.POST.get('source')
             # Récupérer les objets Utilisateurs et Mouvement en fonction des IDs fournis
             util = get_object_or_404(Utilisateurs, id_user=id_user)
-            mouvement = get_object_or_404(Mouvement1, id_mvt=id_mvt)
+            if (source == 'icdtom'):
+                mouvement = get_object_or_404(Mouvement1, id_mvt=id_mvt)
+            elif (source == 'icdcma'):
+                mouvement = get_object_or_404(Mouvement4, id_mvt=id_mvt)
+            elif (source == 'zud'):
+                mouvement = get_object_or_404(Mouvement3, id_mvt=id_mvt)
+            elif (source == 'sacherie'):
+                mouvement = get_object_or_404(Mouvement2, id_mvt=id_mvt)
 
             # Mettre à jour les informations du mouvement
             mouvement.date_sortie = timezone.now()
@@ -915,45 +1614,183 @@ def ajoutsortie(request):
 
             # Rediriger vers une vue après sauvegarde
             #return redirect(f'/index2_view/{util.id_user}')
-            return render(request, 'pages/index2.html', {'util': util})
-
+            if (source=='icdtom'):
+                return redirect(f"/sortie_tom/{id_user}?success=true")
+            elif(source == 'zud'):
+                return redirect(f"/index_sortie_zud/{id_user.strip()}?success=true")
+            elif (source == 'icdcma'):
+                return redirect(f"/index_sortie_icdcma/{id_user.strip()}?success=true")
     else:
         form = SortieForm()
-
     # Assurez-vous que 'mouvement' et 'util' sont définis si vous les utilisez dans le template
     return render(request, 'pages/ajoutsortiedp.html', {'form': form})
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from .models import Utilisateurs, Mouvement0
+from .forms import SortieForm
+from django.http import HttpResponseRedirect
+from urllib.parse import urlencode
+
+def ajoutsortiepar(request):
+    id_user = request.POST.get('id_user')
+    util = Utilisateurs.objects.get(id_user=id_user)
+
+    if request.method == 'POST':
+        try:
+            id_mvt = request.POST.get('id_mvt')
+            mouvement8 = Mouvement8.objects.get(id_mvt=id_mvt)
+            mouvement8.date_sortie = timezone.now()
+            mouvement8.pointeur_sortie_id = util.id_user
+            mouvement8.save()
+
+            # Si tout se passe bien, on renvoie un paramètre de succès
+            query_params = urlencode({'success': 'true'})
+            return HttpResponseRedirect(f'/sortie_decalog_viewparticulier/{util.id_user}?{query_params}')
+
+        except Mouvement8.DoesNotExist:
+            # Gérer le cas où le mouvement n'existe pas
+            query_params = urlencode({'error': 'Le mouvement spécifié n\'existe pas.'})
+            return HttpResponseRedirect(f'/sortie_decalog_viewparticulier/{util.id_user}?{query_params}')
+
+        except Exception as e:
+            # Gérer toute autre erreur
+            query_params = urlencode({'error': 'Une erreur s\'est produite: ' + str(e)})
+            return HttpResponseRedirect(f'/sortie_decalog_viewparticulier/{util.id_user}?{query_params}')
+
+    # Si la méthode n'est pas POST, on renvoie simplement la vue sans action
+    return render(request, 'pages/ajoutsortiepar.html')
+
+
 def ajoutsortiedk(request):
+    id_user = request.POST.get('id_user')
+    util = get_object_or_404(Utilisateurs, id_user=id_user)
     if request.method == 'POST':
         form = SortieForm(request.POST)
         if form.is_valid():
+            code_camion = request.POST.get('code_camion')
+            poids = request.POST.get('poids') or 0
+            poids_autorise = request.POST.get('poinds_autorise')
+            pont_bascule = request.POST.get('pont_bascule')
+            remorque =  request.POST.get('remorque')
+            dest = request.POST.get('destination')
+            pays =  request.POST.get('pays')
+            if not pays == dest:
+                destination = f"{pays} ({dest})"
+            else:
+                destination =  pays
             id_mvt = request.POST.get('id_mvt')
-            id_user = request.POST.get('id_user')
+            source = request.POST.get('source')
+            num_ticket = request.POST.get('num_ticket')
+            if source == 'zud':
+                mouvement0 = Mouvement0.objects.get(id_mvt=id_mvt)
+                mouvement0.date_sortie = timezone.now()
+                mouvement0.pointeur_sortie_id = util.id_user
+                mouvement0.num_ticket = num_ticket
+                mouvement0.save()
+                mouvement = Mouvement3.objects.get(id_mvt_0_id=id_mvt)
+                mouvement.date_sortie = timezone.now()
+                mouvement.num_ticket = num_ticket
+                mouvement.pointeur_sortie_id = util.id_user
+                mouvement.save()
+            elif source == 'sacherie':
+                mouvement0 = Mouvement0.objects.get(id_mvt=id_mvt)
+                mouvement0.poids = poids
+                mouvement0.poids_autorise = poids_autorise
+                mouvement0.pont_bascule = pont_bascule
+                mouvement0.remorque = remorque
+                mouvement0.code_camion = code_camion
+                mouvement0.date_sortie = timezone.now()
+                mouvement0.destination_final = destination
+                mouvement0.save()
+                if 'tom' in mouvement0.destination:
+                    mouvement = Mouvement2.objects.filter(id_mvt_0_id=id_mvt).first()
+                    mouvement.poids = poids
+                    mouvement.poids_autorise = poids_autorise
+                    mouvement.pont_bascule = pont_bascule
+                    mouvement.remorque = remorque
+                    mouvement.code_camion = code_camion
+                    mouvement.date_sortie = timezone.now()
+                    mouvement.destination_final = destination
+                    mouvement.save()
+                elif 'transexpress' in mouvement0.destination:
+                    mouvement = Mouvement7.objects.filter(id_mvt_0_id=id_mvt).first()
+                    mouvement.poids = poids
+                    mouvement.poids_autorise = poids_autorise
+                    mouvement.pont_bascule = pont_bascule
+                    mouvement.remorque = remorque
+                    mouvement.code_camion = code_camion
+                    mouvement.date_sortie = timezone.now()
+                    mouvement.destination_final = destination
+                    mouvement.save()
+                elif 'its' in mouvement0.destination:
+                    mouvement = Mouvement6.objects.filter(id_mvt_0_id=id_mvt).first()
+                    mouvement.poids = poids
+                    mouvement.poids_autorise = poids_autorise
+                    mouvement.pont_bascule = pont_bascule
+                    mouvement.remorque = remorque
+                    mouvement.code_camion = code_camion
+                    mouvement.date_sortie = timezone.now()
+                    mouvement.destination_final = destination
+                    mouvement.save()
+                pass  # Ajouter votre code ici
+            elif 'icd' in source:
+                # Comportement spécifique pour 'icd'
+                pass  # Ajouter votre code ici
 
             # Récupérer les objets Utilisateurs et Mouvement en fonction des IDs fournis
-            util = get_object_or_404(Utilisateurs, id_user=id_user)
-            mouvement = get_object_or_404(Mouvement0, id_mvt=id_mvt)
-
+                movement_map = {
+                    'icdtom': Mouvement1,
+                    'icdcma': Mouvement4,
+                }
+                mouvement = get_object_or_404(movement_map.get(source), id_mvt=id_mvt)
             # Mettre à jour les informations du mouvement
-            mouvement.date_sortie = timezone.now()
-            mouvement.pointeur_sortie_id = util.id_user
-            mouvement.statut_sortie = form.cleaned_data.get(
-                'statut_sortie')  # Récupérer le statut depuis les données validées du formulaire
-            mouvement.save()
-
-            # Rediriger vers une vue après sauvegarde
-            return redirect(f'/sortie_decalog_view/{util.id_user}')
+                mouvement.date_sortie = timezone.now()
+                mouvement.pointeur_sortie_id = util.id_user
+                # Logique en fonction de la source
+                mouvement.save()
+                mouvement0=Mouvement0.objects.get(id_mvt=mouvement.id_mvt_0_id)
+                mouvement0.date_sortie = timezone.now()
+                mouvement0.pointeur_sortie_id = util.id_user
+                mouvement0.save()
+            # Rediriger vers une vue après sauvegarde avec un paramètre de succès
+            query_params = urlencode({'success': 'true'})
+            if source == 'sacherie':
+                return HttpResponseRedirect(f'/sortie_decalog_view1/{util.id_user}?{query_params}')
+            elif source == 'zud':
+                return HttpResponseRedirect(f'/sortie_decalog_view2/{util.id_user}?{query_params}')
+            else:
+                return HttpResponseRedirect(f'/sortie_decalog_view/{util.id_user}?{query_params}')
+        else:
+            # Rediriger avec un message d'erreur si le formulaire est invalide
+            query_params = urlencode({'error': 'Le formulaire est invalide.'})
+        return HttpResponseRedirect(f'/sortie_decalog_view/{util.id_user}?{query_params}')
     else:
         form = SortieForm()
-
-    # Assurez-vous que 'mouvement' et 'util' sont définis si vous les utilisez dans le template
-    return render(request, 'pages/ajoutsortiedp.html', {'form': form})
+    return render(request, 'pages/ajoutsortiedk.html', {'form': form})
 def tout_mouvement(request, id_mvt):
     user=Utilisateurs.objects.get(id_user=id_mvt)
     return render(request, 'pages/liste_mouvement.html', {'util': user})
+########################## TOUT MOUVEMENT ADMIN DKLOG PLT #####################
+def tout_mouvement00(request, id_mvt):
+    user=Utilisateurs.objects.get(id_user=id_mvt)
+    return render(request, 'pages/liste_mouvements00.html', {'util': user})########################## TOUT MOUVEMENT ADMIN DKLOG TOM ICD #####################
+########################## TOUT MOUVEMENT ADMIN DKLOG TOM ICD #####################
 def tout_mouvement0(request, id_mvt):
     user=Utilisateurs.objects.get(id_user=id_mvt)
     return render(request, 'pages/liste_mouvements0.html', {'util': user})
+########################## TOUT MOUVEMENT ADMIN DKLOG TOM CMA #####################
+def tout_mouvement01(request, id_mvt):
+    user=Utilisateurs.objects.get(id_user=id_mvt)
+    return render(request, 'pages/liste_mouvements01.html', {'util': user})
+########################## TOUT MOUVEMENT ADMIN DKLOG TOM ICD #####################
+def tout_mouvement02(request, id_mvt):
+    user=Utilisateurs.objects.get(id_user=id_mvt)
+    return render(request, 'pages/liste_mouvements02.html', {'util': user})
+########################## TOUT MOUVEMENT ADMIN DKLOG TOM ICD #####################
+def tout_mouvement03(request, id_mvt):
+    user=Utilisateurs.objects.get(id_user=id_mvt)
+    return render(request, 'pages/liste_mouvements03.html', {'util': user})
 def tout_mouvement2(request, id_mvt):
     user=Utilisateurs.objects.get(id_user=id_mvt)
     return render(request, 'pages/liste_mouvement2.html', {'util': user})
@@ -985,10 +1822,38 @@ def liste_mouvements2(request):
                                                                               'permis').first()
         mouvement['chauffeur'] = chauffeur
     return JsonResponse(list(mouvement_list), safe=False)
+################################# FETCH TOUTU MOUVEMENTS ADMIN ICD TOM #########################
 
+def liste_mouvements_dk0(request):
+    mouvements = Mouvement0.objects.all().values('id_mvt','destination', 'camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+        camion_id = mouvement['camion_id']
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur').first()
+        mouvement['camion'] = camion
+        user_entre=Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
+        if mouvement['pointeur_sortie_id']  :
+            user_sortie= Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values('fullname').first()
+        else:
+            user_sortie = Utilisateurs.objects.filter(id_user=1).values('fullname').first()
+            #for user_sortie in user_sortie :
+                # Mettre l'attribut fullname vide
+            user_sortie = {'fullname': 'original_name'}
+            user_sortie['fullname'] = 'Non Assigné'
+
+            #user_sortie='oo'
+
+        mouvement['user_ert'] = user_entre
+        mouvement['user_srt'] = user_sortie
+        chauffeur_id = mouvement['chauffeur_id']
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur
+    return JsonResponse(list(mouvement_list), safe=False)
+################################# FETCH TOUTU MOUVEMENTS ADMIN ICD TOM #########################
 
 def liste_mouvements_dk(request):
-    mouvements = Mouvement0.objects.all().values('id_mvt','destination','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
+    mouvements = Mouvement1.objects.all().values('id_mvt','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
     mouvement_list = list(mouvements)
     for mouvement in mouvement_list:
         camion_id = mouvement['camion_id']
@@ -1013,7 +1878,91 @@ def liste_mouvements_dk(request):
                                                                               'permis').first()
         mouvement['chauffeur'] = chauffeur
     return JsonResponse(list(mouvement_list), safe=False)
+################################# FETCH TOUTU MOUVEMENTS ADMIN ICD CMA #########################
 
+def liste_mouvements_dk1(request):
+    mouvements = Mouvement4.objects.all().values('id_mvt','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+        camion_id = mouvement['camion_id']
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur').first()
+        mouvement['camion'] = camion
+        user_entre=Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
+        if mouvement['pointeur_sortie_id']  :
+            user_sortie= Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values('fullname').first()
+        else:
+            user_sortie = Utilisateurs.objects.filter(id_user=1).values('fullname').first()
+            #for user_sortie in user_sortie :
+                # Mettre l'attribut fullname vide
+            user_sortie = {'fullname': 'original_name'}
+            user_sortie['fullname'] = 'null'
+
+            #user_sortie='oo'
+
+        mouvement['user_ert'] = user_entre
+        mouvement['user_srt'] = user_sortie
+        chauffeur_id = mouvement['chauffeur_id']
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur
+    return JsonResponse(list(mouvement_list), safe=False)
+################################# FETCH TOUTU MOUVEMENTS ADMIN SACHERIE #########################
+
+def liste_mouvements_dk2(request):
+    mouvements = Mouvement0.objects.filter(destination__contains='hangar').values('id_mvt', 'destination','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+        camion_id = mouvement['camion_id']
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur').first()
+        mouvement['camion'] = camion
+        user_entre=Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
+        if mouvement['pointeur_sortie_id']  :
+            user_sortie= Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values('fullname').first()
+        else:
+            user_sortie = Utilisateurs.objects.filter(id_user=1).values('fullname').first()
+            #for user_sortie in user_sortie :
+                # Mettre l'attribut fullname vide
+            user_sortie = {'fullname': 'original_name'}
+            user_sortie['fullname'] = 'null'
+
+            #user_sortie='oo'
+
+        mouvement['user_ert'] = user_entre
+        mouvement['user_srt'] = user_sortie
+        chauffeur_id = mouvement['chauffeur_id']
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur
+    return JsonResponse(list(mouvement_list), safe=False)
+################################# FETCH TOUTU MOUVEMENTS ADMIN ZUD #########################
+
+def liste_mouvements_dk3(request):
+    mouvements = Mouvement3.objects.all().values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie',
+                                                 'chauffeur_id', 'remorque', 'date_entree', 'date_sortie',
+                                                 'pointeur_sortie_id', 'pointeur_entree_id')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+        camion_id = mouvement['camion_id']
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur').first()
+        mouvement['camion'] = camion
+        user_entre = Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
+        if mouvement['pointeur_sortie_id']:
+            user_sortie = Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values(
+                'fullname').first()
+        else:
+            user_sortie = Utilisateurs.objects.filter(id_user=1).values('fullname').first()
+            # for user_sortie in user_sortie :
+            # Mettre l'attribut fullname vide
+            user_sortie = {'fullname': 'original_name'}
+            user_sortie['fullname'] = 'null'
+            # user_sortie='oo'
+        mouvement['user_ert'] = user_entre
+        mouvement['user_srt'] = user_sortie
+        chauffeur_id = mouvement['chauffeur_id']
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur
+    return JsonResponse(list(mouvement_list), safe=False)
 def liste_mouvements_sacherie(request):
     mouvements = Mouvement2.objects.all().values('id_mvt','mission','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
     mouvement_list = list(mouvements)
@@ -1156,81 +2105,88 @@ def activer_desactiver_user(request):
         return redirect(
         "/liste_user/" + str(request.POST.get('userid')))  # Remplacez 'your_view_name' par le nom de la vue que vous souhaitez rediriger après la mise à jour
 
-def fetch_dshbord(request) :
-        vingt_minutes = timedelta(minutes=20)
-        trt_minutes = timedelta(minutes=30)
-        maintenant = timezone.now()
-        mouvements = Mouvement1.objects.filter(date_sortie__isnull=True)
-        mouvements_filtrés = [mvt for mvt in mouvements if (maintenant - mvt.date_entree) >= vingt_minutes and (
-                maintenant - mvt.date_entree) < trt_minutes]
-        urg = len(mouvements_filtrés)
-        ###Depassement
-
-        mouvements_dep = Mouvement1.objects.filter(date_sortie__isnull=True)
-        mouvements_filtrés_dep = [mvt for mvt in mouvements_dep if (maintenant - mvt.date_entree) >= trt_minutes]
-        dep = len(mouvements_filtrés_dep)
-
-        ###Plus 30
-        vingt_minutes_30 = timedelta(minutes=30)
-        maintenant = timezone.now()
-        mouvements_30 = Mouvement1.objects.filter(date_sortie__isnull=False)
-        mouvements_filtrés_30 = [mvt for mvt in mouvements_30 if (mvt.date_sortie - mvt.date_entree) >= trt_minutes]
-        lg_30 = len(mouvements_filtrés_30)
-        #####OIMS 30
-
-        vingt_minutes_moin = timedelta(minutes=30)
-        maintenant = timezone.now()
-        mouvements_moins = Mouvement1.objects.filter(date_sortie__isnull=False)
-        mouvements_filtrés_moins = [mvt for mvt in mouvements_moins if
-                                    (mvt.date_sortie - mvt.date_entree) < trt_minutes]
-        lg_moins = len(mouvements_filtrés_moins)
-        mvt_total = Mouvement1.objects.filter(date_sortie__isnull=True)
-        total_cours = len(mvt_total)
-        totalter = lg_30 + lg_moins
-        tout_mouvements = Mouvement1.objects.filter(date_sortie__isnull=True)[:50]
-        vingt_minutes = timedelta(minutes=30)
-        trt = timedelta(minutes=20)
-        data=[]
-        for mvt in tout_mouvements:
-            diff = (maintenant - mvt.date_entree).total_seconds() / 60
-            mvt.chrono = int(diff)
-
-            # duree=math.ceil((mvt.date_sortie - mvt.date_entree).total_seconds() / 3600)
-            duree = float(diff)
-            if duree >= 30:
-                mvt.etat = 3
-            if duree < 30 and duree > 20:
-                mvt.etat = 2
-            if duree <= 20:
-                mvt.etat = 1
-
-            camion = Camion.objects.get(id_cam=mvt.camion_id)
-            mvt.cam = camion.immatriculation
-            user = Utilisateurs.objects.get(id_user=request.POST['id'])
-            data.append({
-                'dep' : dep ,
-                'urg' : urg ,
-            'moins' : lg_moins,
-            'plus' : lg_30,
-            'total_crs' :total_cours ,
-            'total_ter' : totalter ,
-            'etat' : mvt.etat,
-                'date_entree' :mvt.date_entree,
-                'chrono' : mvt.chrono,
-                'mission' :mvt.mission,
-                'cam' : mvt.cam
-
-
-
-            })
-
-        return JsonResponse({'data': data})
-
-
 ##################3Gestion
-
 def liste_mouvements_0(request):
-    mouvements = Mouvement0.objects.all().values('id_mvt','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id','destination')
+    mouvements = Mouvement0.objects.filter(destination__icontains='icd', date_sortie__isnull=True).values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
+        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination'
+    )
+    mouvement_list = list(mouvements)
+
+    for mouvement in mouvement_list:
+        # Récupérer les informations du camion
+        camion_id = mouvement.get('camion_id')
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
+                                                                'type').first()
+        mouvement['camion'] = camion if camion else {
+            'id_cam': None,
+            'immatriculation': 'Non assigné',
+            'transporteur': 'Non assigné',
+            'type': 'Non assigné'
+        }
+
+        # Récupérer les informations du pointeur d'entrée
+        user_entre_id = mouvement.get('pointeur_entree_id')
+        user_entre = Utilisateurs.objects.filter(id_user=user_entre_id).values('fullname').first()
+        mouvement['user_ert'] = user_entre if user_entre else {'fullname': 'Non assigné'}
+
+        # Récupérer les informations du pointeur de sortie
+        user_sortie_id = mouvement.get('pointeur_sortie_id')
+        if user_sortie_id:
+            user_sortie = Utilisateurs.objects.filter(id_user=user_sortie_id).values('fullname').first()
+        else:
+            user_sortie = {'fullname': 'null'}
+        mouvement['user_srt'] = user_sortie
+
+        # Récupérer les informations du chauffeur
+        chauffeur_id = mouvement.get('chauffeur_id')
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur if chauffeur else {
+            'id_chauffeur': None,
+            'fullname': 'Non assigné',
+            'permis': 'N/A'
+        }
+
+        # Assigner des valeurs par défaut pour les autres champs
+        mouvement['remorque'] = mouvement.get('remorque', 'Non assigné')
+        mouvement['date_entree'] = mouvement.get('date_entree', 'Non assigné')
+        mouvement['date_sortie'] = mouvement.get('date_sortie', 'Non assigné')
+        mouvement['destination'] = mouvement.get('destination', 'Non assigné')
+
+    return JsonResponse(mouvement_list, safe=False)
+
+
+def liste_mouvements_01(request):
+    mouvements = Mouvement0.objects.filter(destination__icontains='hangar', date_sortie__isnull=True).values('id_mvt','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id','destination')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+        camion_id = mouvement['camion_id']
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur','type').first()
+        mouvement['camion'] = camion
+        user_entre=Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
+        if mouvement['pointeur_sortie_id']  :
+            user_sortie= Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values('fullname').first()
+        else:
+            user_sortie = Utilisateurs.objects.filter(id_user=1).values('fullname').first()
+            #for user_sortie in user_sortie :
+                # Mettre l'attribut fullname vide
+            user_sortie = {'fullname': 'original_name'}
+            user_sortie['fullname'] = 'null'
+
+            #user_sortie='oo'
+
+        mouvement['user_ert'] = user_entre
+        mouvement['user_srt'] = user_sortie
+        chauffeur_id = mouvement['chauffeur_id']
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur
+    return JsonResponse(list(mouvement_list), safe=False)
+####################### FETCHE POUR LA SACHERIE #################
+
+def liste_mouvements_02(request):
+    mouvements = Mouvement0.objects.filter(destination__icontains='zud', date_sortie__isnull=True).values('id_mvt','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id','destination')
     mouvement_list = list(mouvements)
     for mouvement in mouvement_list:
         camion_id = mouvement['camion_id']
@@ -1259,74 +2215,173 @@ def ajouter_mouvements_0(request):
     ###ajout mvt 0
     ####copie mvt 1
     return  redirect("/entreedecalog_view/" + str(request.POST['id_user']))
+from django.shortcuts import redirect, get_object_or_404
+from django.utils import timezone
+from .models import *
+from django.http import HttpResponse
+######################### AJOUT MOUVEMENT PARTICULIER #########################
+def ajoutmouvementparticulier(request, id_user):
+        util = get_object_or_404(Utilisateurs, id_user=id_user)
+        if request.method == 'POST':
+            try:
+                vehicule = request.POST.get('vehicule')
+                destination = request.POST.get('destination')
+
+              #  mouvement0 = Mouvement0(
+               #     date_entree =  datetime.now(),
+                #    pointeur_entree_id= util.id_user,
+                 #   vehicule_id=vehicule,
+                  #  destination=destination,
+                #)
+                #mouvement0.save()
+
+                mouvement8 = Mouvement8(
+                    date_entree=datetime.now(),
+                    pointeur_entree_id=util.id_user,
+                    vehicule_id=vehicule,
+                    destination=destination,
+             #       id_mvt_0_id=mouvement0.id_mvt
+                )
+                mouvement8.save()
+
+                # Optional: You might want to redirect to a success page or do something else after saving
+                return redirect(f"/entreedecalog_particulier/{util.id_user}?success=true")
+
+            except Exception as e:
+                error_message = str(e)
+                return redirect(f"/entreedecalog_particulier/{util.id_user}?error={error_message}")
 
 
+########################## AJOUT MOUVEMENT 0 #####################################
 def ajoutmouvement0(request, id_user):
-    try:
-        util = Utilisateurs.objects.get(id_user=id_user)
-    except Utilisateurs.DoesNotExist:
-        return HttpResponse("L'utilisateur spécifié n'existe pas.", status=404)
-    if request.method == 'POST':
-            mouvement0 = Mouvement0()
-            mouvement0.date_entree = timezone.now()
-            mouvement0.camion_id = request.POST.get('camion')
-            mouvement0.transitaire_id = request.POST.get('transitaire')
-            mouvement0.chauffeur_id = request.POST.get('chauffeur')
-            mouvement0.statut_entree = request.POST.get('statut_entree')
-            mouvement0.destination = request.POST.get('destination')
-            remorque=''
-            camion = Camion.objects.get(id_cam=mouvement0.camion_id)
-            if (camion.type != 'SEMI-REMORQUE'):
-                    remorque = camion.immatriculation
-            else:
-                    remorque = request.POST.get('remorque')
-            mouvement0.remorque = remorque
-            mouvement0.pointeur_entree_id = util.id_user
-            mouvement0.save()
-            mvt0=Mouvement0.objects.filter(Q(destination__endswith='tom') | Q(destination__endswith='sacherie')| Q(destination__endswith='zud')).last()
-            if  mouvement0.destination.endswith('tom') :
-                mouvement1 = Mouvement1()
-                mouvement1.camion_id = request.POST.get('camion')
-                mouvement1.chauffeur_id = request.POST.get('chauffeur')
-                mouvement1.statut_entree = request.POST.get('statut_entree')
-                mouvement1.remorque=remorque
-                mouvement1.id_mvt_0_id=mvt0.id_mvt
-                mouvement1.pointeur_entree_id = util.id_user
-                mouvement1.save()
-            elif (mouvement0.destination.endswith('sacherie')):
-                mouvement2 = Mouvement2()
-                mouvement2.camion_id = request.POST.get('camion')
-                mouvement2.chauffeur_id = request.POST.get('chauffeur')
-                mouvement2.statut_entree = request.POST.get('statut_entree')
-                mouvement2.remorque=remorque
-                mouvement2.id_mvt_0_id=mvt0.id_mvt
-                mouvement2.pointeur_entree_id = util.id_user
-                mouvement2.save()
-            elif (mouvement0.destination.endswith('zud')):
-                mouvement3 = Mouvement3()
-                mouvement3.camion_id = request.POST.get('camion')
-                mouvement3.chauffeur_id = request.POST.get('chauffeur')
-                mouvement3.statut_entree = request.POST.get('statut_entree')
-                mouvement3.remorque = remorque
-                mouvement3.id_mvt_0_id = mvt0.id_mvt
-                mouvement3.pointeur_entree_id = util.id_user
-                mouvement3.save()
-            #return render('pages/mouvement_entre_0.html', {'util': util})
-            return  redirect("/entreedecalog_view/" + str(util.id_user))
+    util = get_object_or_404(Utilisateurs, id_user=id_user)
 
+    if request.method == 'POST':
+        try:
+            navire = request.POST.get('navire')
+            camion_id = request.POST.get('camion')
+            chauffeur_id = request.POST.get('chauffeur')
+            client_id = request.POST.get('client')
+            representant_id =  request.POST.get('representant')
+            marchandise = request.POST.get('marchandise')
+            mission = request.POST.get('mission')
+            date_validite = request.POST.get('date_validite')
+            tonnage = request.POST.get('tonnage') or 0
+            typeconteneur1 = request.POST.get('typeconteneur1')
+            numconteneur1 = request.POST.get('numconteneur1')
+            typeconteneur2 = request.POST.get('typeconteneur2')
+            numconteneur2 = request.POST.get('numconteneur2')
+            bl1 = request.POST.get('bl1')
+            bl2 = request.POST.get('bl2')
+            nbrcolis = request.POST.get('nbrcolis') or 0
+            entite = request.POST.get('entite')
+            destination = request.POST.get('destination')
+            remorque = request.POST.get('remorque')
+            transitaire_id = request.POST.get('transitaire')
+            # Création d'un Mouvement0
+            mouvement0 = Mouvement0(
+                typeconteneur1=typeconteneur1,
+                remorque= remorque,
+                navire = navire,
+                numconteneur1=numconteneur1,
+                typeconteneur2=typeconteneur2,
+                numconteneur2=numconteneur2,
+                bl1=bl1,
+                date_validite=date_validite,
+                bl2=bl2,
+                nbrcolis=nbrcolis,
+                tonnage=tonnage,
+                mission=mission,
+                date_entree=timezone.now(),
+                camion_id=camion_id,
+                transitaire_id=transitaire_id,
+                representant_id=representant_id,
+                chauffeur_id=chauffeur_id,
+                client_id=client_id,
+                marchandise=marchandise,
+                pointeur_entree_id=util.id_user
+            )
+            if entite != destination:
+                destination = f"{entite} ({destination})"
+            else:
+                destination = entite
+            mouvement0.destination = destination
+            camion = Camion.objects.get(id_cam=camion_id)
+            if camion.type != 'SEMI-REMORQUE':
+                mouvement0.remorque = camion.immatriculation
+            else:
+                mouvement0.remorque = remorque
+            mouvement0.save()
+
+            # Obtenir le dernier mouvement0 pour l'entité donnée
+           # mvt0 = Mouvement0.objects.filter(destination__startswith=entite).last()
+            # Obtenir le dernier mouvement0 pour l'entité donnée
+            mvt0 = mouvement0.id_mvt
+
+            # Initialize common attributes
+            common_attrs = {
+                'camion_id':camion_id,
+                'chauffeur_id':chauffeur_id,
+                'client_id':client_id,
+                'mission': mission,
+                'remorque': remorque,
+                'id_mvt_0_id': mvt0,
+                'pointeur_entree_id': util.id_user
+            }
+            # Determine movement type based on destination
+            movement_type = None
+            destination = destination
+            if 'icdtom' in destination:
+                movement_type = Mouvement1
+            elif 'cmaicd' in destination:
+                movement_type = Mouvement4
+            elif 'tom' in destination and 'hangar' in destination:
+                movement_type = Mouvement2
+            elif 'its' in destination and 'hangar' in destination:
+                movement_type = Mouvement6
+            elif 'transexpress' in destination and 'hangar' in destination:
+                movement_type = Mouvement7
+            elif 'zud' in destination:
+                movement_type = Mouvement3
+            if movement_type:
+                # Initialize mouvement with common attributes
+                mouvement = movement_type(**common_attrs)
+                # Add specific attributes for certain movement types
+                if destination ==  'zud':
+                    mouvement.marchandise = marchandise
+                    mouvement.bl1 = bl1
+                    mouvement.bl2 = bl2
+                    mouvement.transitaire_id = transitaire_id
+                    mouvement.representant_id = representant_id
+                    mouvement.navire = navire
+                    mouvement.tonnage = tonnage
+                    mouvement.nbrcolis = nbrcolis
+                mouvement.save()
+                if 'hangar' in destination:
+                    mouvement.marchandise = marchandise
+            if 'hangar' in destination :
+                return redirect(f"/entreedecalog_view1/{util.id_user}?success=true")
+            elif destination == 'zud':
+                return redirect(f"/entreedecalog_view2/{util.id_user}?success=true")
+            else :
+                return redirect(f"/entreedecalog_view/{util.id_user}?success=true")
+        except Exception as e:
+            error_message = str(e)
+            return redirect(f"/entreedecalog_view/{util.id_user}?error={error_message}")
     else:
         chauffeurs = Chaffeur.objects.all()
         camions = Camion.objects.all()
-        return render(request, 'pages/mouvement_entre_0.html', {'camions': camions,'util': util, 'chauffeurs': chauffeurs,})
-    chauffeurs = Chaffeur.objects.all()
-    camions = Camion.objects.all()
-    return render(request, 'pages/mouvement_entre_0.html', {'form': form, 'camions': camions,'util': util, 'chauffeurs': chauffeurs,})
+        return render(request, 'pages/mouvement_entre_0.html', {
+            'camions': camions,
+            'util': util,
+            'chauffeurs': chauffeurs,
+        })
+
 
 def entree_tom(request):
     if request.method == 'POST':
         id_mvt = request.POST.get('id_mvt')
         id_user = request.POST.get('id_user')
-        # Récupérer les objets Utilisateurs et Mouvement en fonction des IDs fournis
         util = get_object_or_404(Utilisateurs, id_user=id_user)
         mouvement = get_object_or_404(Mouvement1, id_mvt=id_mvt)
         mouvement.pointeur_entree_id = util.id_user
@@ -1334,38 +2389,79 @@ def entree_tom(request):
         mouvement.mission = request.POST.get('mission')
         mouvement.save()
         return redirect('/index1_view/' + str(util.id_user))
-
-
-
 def entree_camion(request):
     if request.method == 'POST':
         form = SortieForm(request.POST)
         if form.is_valid():
             id_mvt = request.POST.get('id_mvt')
             id_user = request.POST.get('id_user')
-
+            source = request.POST.get('source')
+            destination = request.POST.get('destination')
             # Récupérer les objets Utilisateurs et Mouvement en fonction des IDs fournis
             util = get_object_or_404(Utilisateurs, id_user=id_user)
-            mouvement = get_object_or_404(Mouvement1, id_mvt=id_mvt)
+            if (source=='icdtom'):
+                mouvement = get_object_or_404(Mouvement1, id_mvt=id_mvt)
+            elif (source=='icdcma'):
+                mouvement = get_object_or_404(Mouvement4, id_mvt=id_mvt)
+            elif (source == 'zud'):
+                mouvement = get_object_or_404(Mouvement3, id_mvt=id_mvt)
+            elif (source == 'sacherie'):
+                if (destination) == 'TOM':
+                    mouvement = get_object_or_404(Mouvement2, id_mvt=id_mvt)
+                elif (destination) == 'ITS':
+                    mouvement = get_object_or_404(Mouvement6, id_mvt=id_mvt)
+                elif (destination) == 'TRANSEXPRESS':
+                    mouvement = get_object_or_404(Mouvement7, id_mvt=id_mvt)
             mouvement.pointeur_entree_id=id_user
             mouvement.date_entree = timezone.now()
             mouvement.mission =  request.POST.get(
-                'mission')  # Récupérer le statut depuis les données validées du formulaire
+                'mission')
             mouvement.save()
-
             # Rediriger vers une vue après sauvegarde
-            return redirect(f'/index1_view/{util.id_user}')
+            if (source == 'icdtom'):
+                return redirect(f'/index1_view/{util.id_user}?success=true')
+            elif (source =='zud'):
+                return redirect(f'/index_entree_zud/{util.id_user}?success=true')
+            elif(source == 'icdcma'):
+                return redirect(f'/index_entree_icdcma/{util.id_user}?success=true')
+            elif (source == 'sacherie'):
+                return redirect(f'/index2_view/{util.id_user}?success=true')
     else:
         form = SortieForm()
 
     # Assurez-vous que 'mouvement' et 'util' sont définis si vous les utilisez dans le template
     return render(request, 'pages/ajoutsortiedp.html', {'form': form})
-
+################################# SORTIE DKLOG POUR PARTICULIER ##################
+def sortie_decalog_viewparticulier(request, id_user):
+  util = Utilisateurs.objects.get(id_user=id_user)
+  return render(request, 'pages/mouvement_sortie_particulier.html', {'util': util})
+################################# SORTIE DKLOG POUR ICD TOM ##################
 def sortie_decalog_view(request, id_user):
   util = Utilisateurs.objects.get(id_user=id_user)
   return render(request, 'pages/mouvement_sortie_0.html', {'util': util})
+################################# SORTIE DKLOG POUR ICD CMA ##################
+def sortie_decalog_view01(request, id_user):
+  util = Utilisateurs.objects.get(id_user=id_user)
+  return render(request, 'pages/mouvement_sortie_001.html', {'util': util})
+################################# SORTIE DKLOG POUR SACHERIE ##################
+def sortie_decalog_view1(request, id_user):
+  util = Utilisateurs.objects.get(id_user=id_user)
+  return render(request, 'pages/mouvement_sortie_01.html', {'util': util})
+################################# SORTIE DKLOG POUR ZUD ##################
+def sortie_decalog_view2(request, id_user):
+    util = Utilisateurs.objects.get(id_user=id_user)
+    return render(request, 'pages/mouvement_sortie_02.html', {'util': util})
+@csrf_exempt
+def ajouter_client(request):
+    if request.method == 'POST':
+        form = ClientForm(request.POST)
+        if form.is_valid():
+            client = form.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
 
-
+    return JsonResponse({'success': False, 'errors': 'Méthode non autorisée'})
 @csrf_exempt
 
 def ajouter_camion_dk_log(request):
@@ -1380,18 +2476,37 @@ def ajouter_camion_dk_log(request):
             return JsonResponse({'success': False, 'errors': form.errors})
 
     return JsonResponse({'success': False, 'errors': 'Méthode non autorisée'})
+def ajouter_vehicule_particulier(request):
+            if request.method == 'POST':
+                form = VehiculeForm(request.POST)
+                if form.is_valid() or 1:
+                    camion = form.save()
+                    # Retourner une réponse JSON indiquant le succès de l'enregistrement
+                    return JsonResponse({'success': True})
+                else:
+                    # Retourner une réponse JSON avec des erreurs de formulaire
+                    return JsonResponse({'success': False, 'errors': form.errors})
+
+            return JsonResponse({'success': False, 'errors': 'Méthode non autorisée'})
+
 
 @csrf_exempt
 
-def ajouter_chauffeur(request):
+def ajouter_chauffeurs(request):
     if request.method == 'POST':
         form = ChauffeurForm(request.POST)
         if form.is_valid():
             chauffeur = form.save()
             # Retourner une réponse JSON indiquant le succès de l'enregistrement
             #return JsonResponse({'success': True, 'chauffeur': {'id': chauffeur.id_chauffeur, 'fullname': chauffeur.fullname}})
-            return JsonResponse(
-                {'success': True})
+            return JsonResponse({
+                'success': True,
+                'chauffeur': {
+                    'id': chauffeur.id_chauffeur,
+                    'fullname': chauffeur.fullname
+                }
+            })
+
         else:
             # Retourner une réponse JSON avec des erreurs de formulaire
             return JsonResponse({'success': False, 'errors': form.errors})
@@ -1399,44 +2514,82 @@ def ajouter_chauffeur(request):
     return JsonResponse({'success': False, 'errors': 'Méthode non autorisée'})
 
 
+
 def fetch_camion(request):
     camions=Camion.objects.all().values('id_cam','transporteur','immatriculation','type')
     return JsonResponse(list(camions), safe=False)
-
+def fetch_vehicule(request):
+    vehicules=Vehicule.objects.all().values('id_veh','immatriculation')
+    return JsonResponse(list(vehicules), safe=False)
+def fetch_camion_sacherie(request):
+    camions = Camion.objects.filter(type__in=['VRAC', 'PLATEAU']).values('id_cam', 'transporteur', 'immatriculation', 'type')
+    return JsonResponse(list(camions), safe=False)
 
 def fetch_chauffeur(request):
     chauffeurs=Chaffeur.objects.all().values('id_chauffeur','fullname','permis')
     return JsonResponse(list(chauffeurs), safe=False)
-
-
-from datetime import timedelta
+def fetch_transitaire(request):
+    transitaires = Transitaire.objects.filter(mission='transitaire').values('id_transit','fullname', 'telephone')
+    return JsonResponse(list(transitaires), safe=False)
+def fetch_representant(request):
+    transitaires = Transitaire.objects.filter(mission='representant').values('id_transit', 'fullname', 'telephone')
+    return JsonResponse(list(transitaires), safe=False)
+########################### GESTION DES FETCHS DES MOUVEMENTS SUR LE DASHBOARD #############
+from django.http import JsonResponse
 from django.utils import timezone
+from datetime import timedelta
 
-
-def index_dk(request, id):
+######################### GESTION DES FETCHS DES MOUVEMENTS SUR LE DASHBOARD ##################
+#################### PLT ################################
+def fetch_mouvementsdash0(request):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
-
-    ###############Calcul des variable
-    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True) | Mouvement0.objects.filter(
-        date_sortie__isnull=False)
-
-    urg = 0
-    dep = 0
-    lg_30 = 0
-    lg_moins = 0
-    total_cours = 0
-
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True)[:50]
     mouvements_avec_attributs = []
-
     for mvt in mouvements:
         camion = Camion.objects.get(id_cam=mvt.camion_id)
         mvt.cam = camion.immatriculation
 
-        type = camion.type
         try:
-            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            para = ParametrageDelais.objects.get(entite='dklog', type=camion.type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=1440)
+            delais_urg = timedelta(minutes=20)
+
+        diff = (maintenant - mvt.date_entree).total_seconds() / 60
+        diff_seconds = (maintenant - mvt.date_entree).total_seconds()
+        hours, remainder = divmod(diff_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        mvt.chrono = f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
+
+        if timedelta(minutes=diff) >= duree_dk:
+            mvt.etat = 3
+        elif timedelta(minutes=diff) < duree_dk and timedelta(minutes=diff) >= delais_urg:
+            mvt.etat = 2
+        else:
+            mvt.etat = 1
+
+        mouvements_avec_attributs.append({
+            'cam': mvt.cam,
+            'destination': mvt.destination.upper(),
+            'chrono': mvt.chrono,
+            'etat': mvt.etat
+        })
+
+    return JsonResponse({'mouvements': mouvements_avec_attributs})
+#################### ICD TOM  #################################
+def fetch_mouvementsdash(request):
+    maintenant = timezone.now()
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='icdtom')[:50]
+
+    mouvements_avec_attributs = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+
+        try:
+            para = ParametrageDelais.objects.get(entite='icd', type=camion.type)
             duree_dk = timedelta(minutes=int(para.delais_maximal))
             delais_urg = timedelta(minutes=int(para.delais_urgent))
         except:
@@ -1444,52 +2597,214 @@ def index_dk(request, id):
             delais_urg = timedelta(minutes=20)
 
         diff = (maintenant - mvt.date_entree).total_seconds() / 60
-        mvt.chrono = int(diff)
-        duree = float(diff)
+        diff_seconds = (maintenant - mvt.date_entree).total_seconds()
+        hours, remainder = divmod(diff_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        mvt.chrono = f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
 
-        if timedelta(minutes=duree) >= duree_dk:
+        if timedelta(minutes=diff) >= duree_dk:
             mvt.etat = 3
-        elif timedelta(minutes=duree) < duree_dk and timedelta(minutes=duree) >= delais_urg:
+        elif timedelta(minutes=diff) < duree_dk and timedelta(minutes=diff) >= delais_urg:
             mvt.etat = 2
         else:
             mvt.etat = 1
 
-        mouvements_avec_attributs.append(mvt)
+        mouvements_avec_attributs.append({
+            'cam': mvt.cam,
+            'chrono': mvt.chrono,
+            'etat': mvt.etat
+        })
+    return JsonResponse({'mouvements': mouvements_avec_attributs})
+#################### ICD CMA  #################################
+def fetch_mouvementsdash1(request):
+    maintenant = timezone.now()
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='cmaicd')[:50]
+    mouvements_avec_attributs = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
 
-        if mvt.date_sortie is None:
-            # Mouvements en cours
-            total_cours += 1
-            if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
-                urg += 1
-            elif (maintenant - mvt.date_entree) >= duree_dk:
-                dep += 1
+        try:
+            para = ParametrageDelais.objects.get(entite='icd', type=camion.type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+
+        diff = (maintenant - mvt.date_entree).total_seconds() / 60
+        diff_seconds = (maintenant - mvt.date_entree).total_seconds()
+        hours, remainder = divmod(diff_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        mvt.chrono = f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
+        if timedelta(minutes=diff) >= duree_dk:
+            mvt.etat = 3
+        elif timedelta(minutes=diff) < duree_dk and timedelta(minutes=diff) >= delais_urg:
+            mvt.etat = 2
         else:
-            # Mouvements sortis
-            duree_mouvement = mvt.date_sortie - mvt.date_entree
-            if duree_mouvement >= duree_dk:
-                lg_30 += 1
-            else:
-                lg_moins += 1
+            mvt.etat = 1
 
-    totalter = lg_30 + lg_moins
-    mouvements_filtrés = [mvt for mvt in mouvements_avec_attributs if mvt.date_sortie is None][:50]
+        mouvements_avec_attributs.append({
+            'cam': mvt.cam,
+            'chrono': mvt.chrono,
+            'etat': mvt.etat
+        })
 
+    return JsonResponse({'mouvements': mouvements_avec_attributs})
+#################### SACHERIE  #################################
+def fetch_mouvementsdash2(request):
+    maintenant = timezone.now()
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='hangar')[:50]
+
+    mouvements_avec_attributs = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+
+        try:
+            para = ParametrageDelais.objects.get(entite='sacherie', type=camion.type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=60)
+            delais_urg = timedelta(minutes=20)
+
+        diff = (maintenant - mvt.date_entree).total_seconds() / 60
+        diff_seconds = (maintenant - mvt.date_entree).total_seconds()
+        hours, remainder = divmod(diff_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        mvt.chrono = f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
+        if timedelta(minutes=diff) >= duree_dk:
+            mvt.etat = 3
+        elif timedelta(minutes=diff) < duree_dk and timedelta(minutes=diff) >= delais_urg:
+            mvt.etat = 2
+        else:
+            mvt.etat = 1
+
+        mouvements_avec_attributs.append({
+            'cam': mvt.cam,
+            'destination': mvt.destination.upper(),
+            'chrono': mvt.chrono,
+            'etat': mvt.etat
+        })
+
+    return JsonResponse({'mouvements': mouvements_avec_attributs})
+#################### ZUD  #################################
+def fetch_mouvementsdash3(request):
+    maintenant = timezone.now()
+    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='zud')[:50]
+    mouvements_avec_attributs = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        try:
+            para = ParametrageDelais.objects.get(entite='zud', type=camion.type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=1440)
+            delais_urg = timedelta(minutes=20)
+
+        diff = (maintenant - mvt.date_entree).total_seconds() / 60
+        diff_seconds = (maintenant - mvt.date_entree).total_seconds()
+        hours, remainder = divmod(diff_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        mvt.chrono = f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
+        if timedelta(minutes=diff) >= duree_dk:
+            mvt.etat = 3
+        elif timedelta(minutes=diff) < duree_dk and timedelta(minutes=diff) >= delais_urg:
+            mvt.etat = 2
+        else:
+            mvt.etat = 1
+
+        mouvements_avec_attributs.append({
+            'cam': mvt.cam,
+            'chrono': mvt.chrono,
+            'etat': mvt.etat
+        })
+
+    return JsonResponse({'mouvements': mouvements_avec_attributs})
+def fetch_mouvementsdashparticulier(request):
+    maintenant = timezone.now()
+    mouvements = Mouvement8.objects.filter(date_sortie__isnull=True)[:50]
+    mouvements_avec_attributs = []
+    for mvt in mouvements:
+        vehicule = Vehicule.objects.get(id_veh=mvt.vehicule_id)
+        mvt.cam = vehicule.immatriculation
+        try:
+            para = 30
+            duree_dk = timedelta(minutes=int(para))
+            delais_urg = timedelta(minutes=int(para))
+        except:
+            duree_dk = timedelta(minutes=60)
+            delais_urg = timedelta(minutes=20)
+
+        diff = (maintenant - mvt.date_entree).total_seconds() / 60
+        diff_seconds = (maintenant - mvt.date_entree).total_seconds()
+        hours, remainder = divmod(diff_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        mvt.chrono = f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
+        if timedelta(minutes=diff) >= duree_dk:
+            mvt.etat = 3
+        elif timedelta(minutes=diff) < duree_dk and timedelta(minutes=diff) >= delais_urg:
+            mvt.etat = 2
+        else:
+            mvt.etat = 1
+
+        mouvements_avec_attributs.append({
+            'cam': mvt.cam,
+            'chrono': mvt.chrono,
+            'etat': mvt.etat
+        })
+
+    return JsonResponse({'mouvements': mouvements_avec_attributs})
+
+
+from datetime import timedelta
+from django.utils import timezone
+############################ DASHBOARD ICD TOM ##########################
+def index_dk0(request, id):
+    user = Utilisateurs.objects.get(id_user=id)
+    return render(request, 'pages/index_dk_log0.html',
+                  { 'util': user})
+
+############################ DASHBOARD ICD TOM ##########################
+def index_dk(request, id):
     user = Utilisateurs.objects.get(id_user=id)
     return render(request, 'pages/index_dk_log.html',
-                  {'urg': urg, 'dep': dep, 'lg_30': lg_30, 'lg_mois': lg_moins,
-                   'total_cours': total_cours, 'total_ter': totalter, 'mvt': mouvements_filtrés, 'util': user})
+                  {'util': user})
 
+######################################## DASHBOARD ICD CMA #####################################
+def index_dk1(request, id):
+    user = Utilisateurs.objects.get(id_user=id)
+    return render(request, 'pages/index_dk_log1.html',
+                  {'util': user})
+from itertools import chain
+################################## DASHBOARD SACHERIE #################################
+def index_dk2(request, id):
+    user = Utilisateurs.objects.get(id_user=id)
+    return render(request, 'pages/index_dk_log2.html',
+                  {'util': user})
 
-########################Gestion Sacherie
-
+################################### DASHBOARD ZUD ################################
+def index_dk3(request, id):
+    user = Utilisateurs.objects.get(id_user=id)
+    return render(request, 'pages/index_dk_log3.html',
+                  {'util': user})
+################################### DASHBOARD PARTICULIER ################################
+def index_dkparticulier(request, id):
+        user = Utilisateurs.objects.get(id_user=id)
+        return render(request, 'pages/index_dk_logparticulier.html',
+                  {'util': user})
+######################## RENDER FOR SACHERIE USERS ########################
+################ ENTREE ###########################"
 def index2_view(request, id):
   util = Utilisateurs.objects.get(id_user=id)
-  camions = Camion.objects.all()
-  return render(request, 'pages/entree_mouvement_1.html', {'util': util, 'camions': camions})
+  return render(request, 'pages/entree_mouvement_1.html', {'util': util})
+####################### SORTIE ##########################
 def index3_view(request, id):
   util = Utilisateurs.objects.get(id_user=id)
-  camions = Camion.objects.all()
-  return render(request, 'pages/sortie_mouvement_1.html', {'util': util, 'camions': camions})
+  return render(request, 'pages/sortie_mouvement_1.html', {'util': util})
 def entree_sacherie(request):
     if request.method == 'POST':
         form = SortieForm(request.POST)
@@ -1514,61 +2829,94 @@ def entree_sacherie(request):
 
     # Assurez-vous que 'mouvement' et 'util' sont définis si vous les utilisez dans le template
     return render(request, 'pages/ajoutsortiedp.html', {'form': form})
-
-
-
 def ajoutsortie_sacherie(request):
-
         if request.method == 'POST':
             form = SortieForm(request.POST)
             if form.is_valid():
                 id_mvt = request.POST.get('id_mvt')
                 id_user = request.POST.get('id_user')
-
                 # Récupérer les objets Utilisateurs et Mouvement en fonction des IDs fournis
                 util = get_object_or_404(Utilisateurs, id_user=id_user)
                 mouvement = get_object_or_404(Mouvement2, id_mvt=id_mvt)
-
                 # Mettre à jour les informations du mouvement
                 mouvement.date_sortie = timezone.now()
                 mouvement.pointeur_sortie_id = util.id_user
                 mouvement.statut_sortie = form.cleaned_data.get(
                     'statut_sortie')  # Récupérer le statut depuis les données validées du formulaire
                 mouvement.save()
-
                 # Rediriger vers une vue après sauvegarde
                 return redirect(f'/index3_view/{util.id_user}')
-
         else:
             form = SortieForm()
-
         # Assurez-vous que 'mouvement' et 'util' sont définis si vous les utilisez dans le template
         return render(request, 'pages/ajoutsortiedp.html', {'form': form})
 
 
 def liste_mouvements_3(request, id_user):
-    mouvements = Mouvement2.objects.filter(date_entree__isnull=True).values('id_mvt', 'mission', 'camion_id',
-                                                                            'statut_entree', 'statut_sortie',
-                                                                            'chauffeur_id'
-                                                                            , 'remorque')
-    mouvement_list = list(mouvements)
+    # Récupérer les mouvements de Mouvement2, Mouvement6 et Mouvement7
+    mouvements2 = Mouvement2.objects.filter(date_entree__isnull=True, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
+    mouvements6 = Mouvement6.objects.filter(date_entree__isnull=True, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
+    mouvements7 = Mouvement7.objects.filter(date_entree__isnull=True, date_sortie__isnull=True).values(
+        'id_mvt', 'mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque'
+    )
+
+    # Convertir les QuerySets en listes et ajouter la clé `destination`
+    mouvement_list = list(mouvements2) + list(mouvements6) + list(mouvements7)
+
+    # Ajouter la variable `destination` et gérer les valeurs manquantes
     for mouvement in mouvement_list:
+        # Vérifier dans quelle liste se trouve le mouvement et ajouter la destination correspondante
+        if mouvement in mouvements2:
+            mouvement['destination'] = 'TOM'
+        elif mouvement in mouvements6:
+            mouvement['destination'] = 'ITS'
+        elif mouvement in mouvements7:
+            mouvement['destination'] = 'TRANSEXPRESS'
+
+        # Ajouter les informations sur le camion, sinon "Non assigné"
         camion_id = mouvement['camion_id']
         camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
                                                                 'type').first()
-        mouvement['camion'] = camion
+        if camion:
+            mouvement['camion'] = camion
+        else:
+            mouvement['camion'] = {
+                'id_cam': 'Non assigné',
+                'immatriculation': 'Non assigné',
+                'transporteur': 'Non assigné',
+                'type': 'Non assigné'
+            }
+
+        # Ajouter les informations sur le chauffeur, sinon "Non assigné"
         chauffeur_id = mouvement['chauffeur_id']
         chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
                                                                               'permis').first()
-        mouvement['chauffeur'] = chauffeur
+        if chauffeur:
+            mouvement['chauffeur'] = chauffeur
+        else:
+            mouvement['chauffeur'] = {
+                'id_chauffeur': 'Non assigné',
+                'fullname': 'Non assigné',
+                'permis': 'Non assigné'
+            }
+
+        # Vérifier et ajouter les autres champs manquants avec "Non assigné"
+        mouvement['mission'] = mouvement.get('mission', 'Non assigné')
+        mouvement['statut_entree'] = mouvement.get('statut_entree', 'Non assigné')
+        mouvement['statut_sortie'] = mouvement.get('statut_sortie', 'Non assigné')
+        mouvement['remorque'] = mouvement.get('remorque', 'Non assigné')
+
+    # Préparer la réponse JSON avec les mouvements combinés
     response_data = {
         'mouvements': mouvement_list,
         'id_usr': id_user,  # Inclure l'ID de l'utilisateur dans la réponse JSON
     }
+
     return JsonResponse(response_data)
-
-
-
 def liste_mouvements4(request, id_user):
     mouvements = Mouvement2.objects.filter(date_entree__isnull=False,date_sortie__isnull=True).values('id_mvt','mission', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id'
                                             , 'remorque')
@@ -1592,27 +2940,17 @@ def fetch_camion(request):
     camions=Camion.objects.all().values('id_cam','transporteur','immatriculation','type')
     return JsonResponse(list(camions), safe=False)
 
-
+def fetch_client(request):
+    clients = Client.objects.all().values('id_client', 'fullname', 'telephone')
+    return JsonResponse(list(clients), safe=False)
 def fetch_chauffeur(request):
     chauffeurs=Chaffeur.objects.all().values('id_chauffeur','fullname','permis')
     return JsonResponse(list(chauffeurs), safe=False)
-
-
-
-
-
-
-
-
-
 def index_sacherie(request,id):
-
     duree_dk = 30
     delais_urg=20
     maintenant = timezone.now()
-
     try:
-
         para = ParametrageDelais.objects.get(entite='sacherie', type='VRAC')
         duree_dk = timedelta(minutes=int(para.delais_maximal))
         delais_urg=timedelta(minutes=int(para.delais_urgent))
@@ -1620,19 +2958,14 @@ def index_sacherie(request,id):
         # pass
         duree_dk = timedelta(minutes=30)
         delais_urg = timedelta(minutes=20)
-
-
-
     mouvements = Mouvement2.objects.filter(date_entree__isnull=False,date_sortie__isnull=True)
     mouvements_filtrés = [mvt for mvt in mouvements if (maintenant - mvt.date_entree) >= delais_urg and (
                 maintenant - mvt.date_entree) < duree_dk]
     urg = len(mouvements_filtrés)
    ###Depassement
-
     mouvements_dep = Mouvement2.objects.filter(date_entree__isnull=False,date_sortie__isnull=True)
     mouvements_filtrés_dep = [mvt for mvt in mouvements_dep if (maintenant - mvt.date_entree) >= duree_dk]
     dep = len(mouvements_filtrés_dep)
-
     ###Plus 30
     vingt_minutes_30 = timedelta(minutes=30)
     maintenant = timezone.now()
@@ -1641,7 +2974,6 @@ def index_sacherie(request,id):
     mouvements_filtrés_30 = [mvt for mvt in mouvements_30 if (mvt.date_sortie - mvt.date_entree) >= duree_dk]
     lg_30 = len(mouvements_filtrés_30)
     #####OIMS 30
-
     vingt_minutes_moin = timedelta(minutes=30)
     maintenant = timezone.now()
     mouvements_moins = Mouvement2.objects.filter(date_entree__isnull=False,date_sortie__isnull=False)
@@ -1654,12 +2986,9 @@ def index_sacherie(request,id):
     tout_mouvements= Mouvement2.objects.filter(date_entree__isnull=False,date_sortie__isnull=True)[:50]
     vingt_minutes = timedelta(minutes=30)
     trt = timedelta(minutes=20)
-
-
     for mvt in tout_mouvements :
         diff = (maintenant - mvt.date_entree).total_seconds()/60
         mvt.chrono=int(diff)
-
         #duree=math.ceil((mvt.date_sortie - mvt.date_entree).total_seconds() / 3600)
         duree=float(diff)
         if timedelta(minutes=duree) >= duree_dk:
@@ -1668,23 +2997,14 @@ def index_sacherie(request,id):
             mvt.etat= 2
         if timedelta(minutes=duree) <= delais_urg :
           mvt.etat= 1
-
         camion=Camion.objects.get(id_cam=mvt.camion_id)
         mvt.cam=camion.immatriculation
     user=Utilisateurs.objects.get(id_user=id)
     return render(request, 'pages/index_sacherie.html',
                   { 'urg': urg, 'dep': dep, 'lg_30': lg_30, 'lg_mois': lg_moins,
                    'total_cours': total_cours, 'total_ter': totalter,'mvt':tout_mouvements,'util' :user})
-
-
-
-
 ###############Gestion details Sacherie
-
 ############Gestion Detail
-
-
-
 def detail_urgent_sacherie(request,id):
    duree_dk = 30
    delais_urg = 20
@@ -1870,13 +3190,242 @@ def detail_moins_30_sacherie(request, id):
 ############Gestion Detail
 
 
-
-
-def detail_urgent_dk_log(request, id):
+###################### DETAIL URGENT PARTICULIER #####################################
+def detail_urgent_dk_logpar(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement8.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
+    mouvements_avec_attributs = []
+    mouvements_filtrés=[]
+    for mvt in mouvements:
+        camion = Vehicule.objects.get(id_veh=mvt.vehicule_id)
+        mvt.cam = camion.immatriculation
+        try:
+            para = 30
+            duree_dk = timedelta(minutes=int(para))
+            delais_urg = timedelta(minutes=int(para))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.imat = camion.immatriculation
+        if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk :
+            mouvements_filtrés.append(mvt)
+        lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_urgent = (lg / total_encours) * 100
+    else:
+        pourcentage_urgent = 0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        'lg': lg,
+        'pourcentage_urgent': int(pourcentage_urgent),
+        'util': user
+    }
+    return render(request, "pages/detail_urgent_dk_logpar.html", context)
+###################### DETAIL URGENT PLT #####################################
+def detail_urgent_dk_log0(request, id):
     maintenant = timezone.now()
     duree_dk = 30
     delais_urg = 15
     mouvements = Mouvement0.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
+    mouvements_avec_attributs = []
+    mouvements_filtrés=[]
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+        if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk :
+            mouvements_filtrés.append(mvt)
+        # Ajoutez l'objet mouvement enrichi à la liste
+        #mouvements_avec_attributs.append(mvt)
+    # Appliquez le filtre après avoir enrichi les objets mouvement
+    #mouvements_filtrés = [mvt for mvt in mouvements_avec_attributs if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk]
+    lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_urgent = (lg / total_encours) * 100
+    else:
+        pourcentage_urgent = 0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        'lg': lg,
+        'pourcentage_urgent': int(pourcentage_urgent),
+        'util': user
+    }
+    return render(request, "pages/detail_urgent_dk_log0.html", context)
+###################### DETAIL URGENT ICD TOM #####################################
+def detail_urgent_dk_log(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement1.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
+    mouvements_avec_attributs = []
+    mouvements_filtrés=[]
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+        if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk :
+            mouvements_filtrés.append(mvt)
+        # Ajoutez l'objet mouvement enrichi à la liste
+        #mouvements_avec_attributs.append(mvt)
+    # Appliquez le filtre après avoir enrichi les objets mouvement
+    #mouvements_filtrés = [mvt for mvt in mouvements_avec_attributs if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk]
+    lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_urgent = (lg / total_encours) * 100
+    else:
+        pourcentage_urgent = 0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        'lg': lg,
+        'pourcentage_urgent': int(pourcentage_urgent),
+        'util': user
+    }
+
+    return render(request, "pages/detail_urgent_dk_log.html", context)
+###################### DETAIL URGENT ICD CMA #####################################
+def detail_urgent_dk_log1(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement4.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
+    mouvements_avec_attributs = []
+    mouvements_filtrés=[]
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+        if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk :
+
+            mouvements_filtrés.append(mvt)
+
+        # Ajoutez l'objet mouvement enrichi à la liste
+        #mouvements_avec_attributs.append(mvt)
+
+    # Appliquez le filtre après avoir enrichi les objets mouvement
+    #mouvements_filtrés = [mvt for mvt in mouvements_avec_attributs if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk]
+
+    lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_urgent = (lg / total_encours) * 100
+    else:
+        pourcentage_urgent = 0
+
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        'lg': lg,
+        'pourcentage_urgent': int(pourcentage_urgent),
+        'util': user
+    }
+    return render(request, "pages/detail_urgent_dk_log.html", context)
+###################### DETAIL URGENT SACHERIE #####################################
+def detail_urgent_dk_log2(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement0.objects.filter(date_entree__isnull=False, date_sortie__isnull=True, destination__contains='hangar')
+    mouvements_avec_attributs = []
+    mouvements_filtrés=[]
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+        if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk :
+            mouvements_filtrés.append(mvt)
+        # Ajoutez l'objet mouvement enrichi à la liste
+        #mouvements_avec_attributs.append(mvt)
+    # Appliquez le filtre après avoir enrichi les objets mouvement
+    #mouvements_filtrés = [mvt for mvt in mouvements_avec_attributs if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk]
+    lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_urgent = (lg / total_encours) * 100
+    else:
+        pourcentage_urgent = 0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        'lg': lg,
+        'pourcentage_urgent': int(pourcentage_urgent),
+        'util': user
+    }
+    return render(request, "pages/detail_urgent_dk_log0.html", context)
+###################### DETAIL URGENT ZUD #####################################
+def detail_urgent_dk_log3(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement3.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
     mouvements_avec_attributs = []
     mouvements_filtrés=[]
 
@@ -1926,8 +3475,49 @@ def detail_urgent_dk_log(request, id):
     }
 
     return render(request, "pages/detail_urgent_dk_log.html", context)
+####################### DETAIL DEPASSEMENT PLT ############################
+def detail_depassement_dk_logpar(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement8.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Vehicule.objects.get(id_veh=mvt.vehicule_id)
+        mvt.cam = camion.immatriculation
+        try:
+            para = 30
+            duree_dk = timedelta(minutes=int(para))
+            delais_urg = timedelta(minutes=int(para))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.imat = camion.immatriculation
+        if (maintenant - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_depassement = (lg / total_encours) * 100
+    else:
+        pourcentage_depassement = 0
 
-def detail_depassement_dk_log(request, id):
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_depassement' : int(pourcentage_depassement),
+        'util': user
+    }
+
+    return render(request, "pages/detail_depasseme_dk_logpar.html", context)
+
+####################### DETAIL DEPASSEMENT PLT ############################
+def detail_depassement_dk_log0(request, id):
     maintenant = timezone.now()
     duree_dk = 30
     delais_urg = 15
@@ -1974,13 +3564,345 @@ def detail_depassement_dk_log(request, id):
         'util': user
     }
 
-    return render(request, "pages/detail_depasseme_dk_log.html", context)
+    return render(request, "pages/detail_depasseme_dk_log0.html", context)
+####################### DETAIL DEPASSEMENT ICD TOM ############################
+def detail_depassement_dk_log(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement1.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
+    mouvements_filtrés = []
 
-def detail_plus_30_dk_log(request, id):
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+
+        if (maintenant - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+
+    lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_depassement = (lg / total_encours) * 100
+    else:
+        pourcentage_depassement = 0
+
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_depassement' : int(pourcentage_depassement),
+        'util': user
+    }
+
+    return render(request, "pages/detail_depasseme_dk_log.html", context)
+####################### DETAIL DEPASSEMENT ICD CMA ############################
+def detail_depassement_dk_log1(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement4.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+
+        if (maintenant - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+
+    lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_depassement = (lg / total_encours) * 100
+    else:
+        pourcentage_depassement = 0
+
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_depassement' : int(pourcentage_depassement),
+        'util': user
+    }
+
+    return render(request, "pages/detail_depasseme_dk_log.html", context)
+####################### DETAIL DEPASSEMENT SACHERIE ############################
+def detail_depassement_dk_log2(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+
+    mouvements = Mouvement0.objects.filter(date_entree__isnull=False, date_sortie__isnull=True, destination__contains='hangar')
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+
+        if (maintenant - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+
+    lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_depassement = (lg / total_encours) * 100
+    else:
+        pourcentage_depassement = 0
+
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_depassement' : int(pourcentage_depassement),
+        'util': user
+    }
+
+    return render(request, "pages/detail_depasseme_dk_log0.html", context)
+####################### DETAIL DEPASSEMENT ZUD ############################
+def detail_depassement_dk_log3(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement3.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+
+        if (maintenant - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+
+    lg = len(mouvements_filtrés)
+    total_encours = len(mouvements)
+    if total_encours >= 1:
+        pourcentage_depassement = (lg / total_encours) * 100
+    else:
+        pourcentage_depassement = 0
+
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_depassement' : int(pourcentage_depassement),
+        'util': user
+    }
+
+    return render(request, "pages/detail_depasseme_dk_log.html", context)
+######################### DETAILS PLUS DE 30 MINUTES PLT  #######################
+def detail_plus_30_dk_log0(request, id):
     maintenant = timezone.now()
     duree_dk = 30
     delais_urg = 15
     mouvements = Mouvement0.objects.filter(date_entree__isnull=False,date_sortie__isnull=False)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+        if (mvt.date_sortie - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    total_plus_30 = len(mouvements)
+    if total_plus_30 >= 1:
+      pourcentage_plus_30 = (lg / total_plus_30) * 100
+    else :
+      pourcentage_plus_30=0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'util': user,
+        'pourcentage_plus_30' : int( pourcentage_plus_30)
+    }
+    return render(request, "pages/detail_plus_30_dk_log0.html", context)
+
+######################### DETAILS PLUS DE 30 MINUTES ICD TOM  #######################
+def detail_plus_30_dk_log(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement1.objects.filter(date_entree__isnull=False,date_sortie__isnull=False)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+        if (mvt.date_sortie - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    total_plus_30 = len(mouvements)
+    if total_plus_30 >= 1:
+      pourcentage_plus_30 = (lg / total_plus_30) * 100
+    else :
+      pourcentage_plus_30=0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'util': user,
+        'pourcentage_plus_30' : int( pourcentage_plus_30)
+    }
+    return render(request, "pages/detail_plus_30_dk_log.html", context)
+######################### DETAILS PLUS DE 30 MINUTES ICD CMA  #######################
+def detail_plus_30_dk_log1(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement4.objects.filter(date_entree__isnull=False,date_sortie__isnull=False)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+
+        if (mvt.date_sortie - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+
+    lg = len(mouvements_filtrés)
+    total_plus_30 = len(mouvements)
+    if total_plus_30 >= 1:
+      pourcentage_plus_30 = (lg / total_plus_30) * 100
+    else :
+      pourcentage_plus_30=0
+    user = Utilisateurs.objects.get(id_user=id)
+
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'util': user,
+        'pourcentage_plus_30' : int( pourcentage_plus_30)
+    }
+
+    return render(request, "pages/detail_plus_30_dk_log.html", context)
+######################### DETAILS PLUS DE 30 MINUTES SACHERIE  #######################
+def detail_plus_30_dk_log2(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement0.objects.filter(date_entree__isnull=False,date_sortie__isnull=False, destination__contains='hangar')
     mouvements_filtrés = []
 
     for mvt in mouvements:
@@ -2025,12 +3947,334 @@ def detail_plus_30_dk_log(request, id):
         'pourcentage_plus_30' : int( pourcentage_plus_30)
     }
 
+    return render(request, "pages/detail_plus_30_dk_log0.html", context)
+######################### DETAILS PLUS DE 30 MINUTES ZUD   #######################
+def detail_plus_30_dk_log3(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement3.objects.filter(date_entree__isnull=False,date_sortie__isnull=False)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+
+        if (mvt.date_sortie - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    total_plus_30 = len(mouvements)
+    if total_plus_30 >= 1:
+      pourcentage_plus_30 = (lg / total_plus_30) * 100
+    else :
+      pourcentage_plus_30=0
+    user = Utilisateurs.objects.get(id_user=id)
+
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'util': user,
+        'pourcentage_plus_30' : int( pourcentage_plus_30)
+    }
+
     return render(request, "pages/detail_plus_30_dk_log.html", context)
-def detail_moins_30_dk_log(request, id):
+###################### DETAILS MOINS DE 30 MINUTES ICD TOM ############################
+def detail_moins_30_dk_logpar(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement8.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Vehicule.objects.get(id_veh=mvt.vehicule_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = 30
+            duree_dk = timedelta(minutes=int(para))
+            delais_urg = timedelta(minutes=int(para))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.imat = camion.immatriculation
+        if (mvt.date_sortie - mvt.date_entree) <= duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    lg = len(mouvements_filtrés)
+    total_moins_30 = len(mouvements)
+    if  total_moins_30 >= 1 :
+       pourcentage_moins_30 = (lg / total_moins_30) * 100
+    else :
+        pourcentage_moins_30=0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_moins_30' :int(pourcentage_moins_30),
+        'util': user
+    }
+    #return render(request, "pages/detail_depassement.html", context)
+    return render(request, "pages/detail_moins_30_dk_logpar.html", context)
+
+######################### DETAILS PLUS DE 30 MINUTES PARTICULIER  #######################
+def detail_plus_30_dk_logpar(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement8.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Vehicule.objects.get(id_veh=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        if (mvt.date_sortie - mvt.date_entree) > duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    total_plus_30 = len(mouvements)
+    if total_plus_30 >= 1:
+        pourcentage_plus_30 = (lg / total_plus_30) * 100
+    else:
+        pourcentage_plus_30 = 0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'util': user,
+        'pourcentage_plus_30': int(pourcentage_plus_30)
+    }
+    return render(request, "pages/detail_plus_30_dk_logpar.html", context)
+###################### DETAILS MOINS DE 30 MINUTES ICD TOM ############################
+def detail_moins_30_dk_log0(request, id):
     maintenant = timezone.now()
     duree_dk = 30
     delais_urg = 15
     mouvements = Mouvement0.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+        if (mvt.date_sortie - mvt.date_entree) <= duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    lg = len(mouvements_filtrés)
+    total_moins_30 = len(mouvements)
+    if  total_moins_30 >= 1 :
+       pourcentage_moins_30 = (lg / total_moins_30) * 100
+    else :
+        pourcentage_moins_30=0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_moins_30' :int(pourcentage_moins_30),
+        'util': user
+    }
+    #return render(request, "pages/detail_depassement.html", context)
+    return render(request, "pages/detail_moins_30_dk_log0.html", context)
+
+###################### DETAILS MOINS DE 30 MINUTES ICD TOM ############################
+def detail_moins_30_dk_log(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement1.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+        if (mvt.date_sortie - mvt.date_entree) <= duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    lg = len(mouvements_filtrés)
+    total_moins_30 = len(mouvements)
+    if  total_moins_30 >= 1 :
+       pourcentage_moins_30 = (lg / total_moins_30) * 100
+    else :
+        pourcentage_moins_30=0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_moins_30' :int(pourcentage_moins_30),
+        'util': user
+    }
+    #return render(request, "pages/detail_depassement.html", context)
+    return render(request, "pages/detail_moins_30_dk_log.html", context)
+###################### DETAILS MOINS DE 30 MINUTES ICD CMA ############################
+def detail_moins_30_dk_log1(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement4.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+        if (mvt.date_sortie - mvt.date_entree) <= duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    lg = len(mouvements_filtrés)
+    total_moins_30 = len(mouvements)
+    if  total_moins_30 >= 1 :
+       pourcentage_moins_30 = (lg / total_moins_30) * 100
+    else :
+        pourcentage_moins_30=0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_moins_30' :int(pourcentage_moins_30),
+        'util': user
+    }
+    #return render(request, "pages/detail_depassement.html", context)
+    return render(request, "pages/detail_moins_30_dk_log.html", context)
+###################### DETAILS MOINS DE 30 MINUTES SACHERIE ############################
+def detail_moins_30_dk_log2(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement0.objects.filter(date_entree__isnull=False, date_sortie__isnull=False, destination__contains='hangar')
+    mouvements_filtrés = []
+    for mvt in mouvements:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        mvt.cam = camion.immatriculation
+        type = camion.type
+        try:
+            para = ParametrageDelais.objects.get(entite='dklog', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+        mvt.pointeur = poineur.fullname
+        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+        mvt.pointeur_srt = poineur_srt.fullname
+        mvt.trans = camion.transporteur
+        mvt.imat = camion.immatriculation
+        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+        mvt.chauffeur_name = chauffeur_name.fullname
+
+        if (mvt.date_sortie - mvt.date_entree) <= duree_dk:
+            mouvements_filtrés.append(mvt)
+    lg = len(mouvements_filtrés)
+    lg = len(mouvements_filtrés)
+    total_moins_30 = len(mouvements)
+    if  total_moins_30 >= 1 :
+       pourcentage_moins_30 = (lg / total_moins_30) * 100
+    else :
+        pourcentage_moins_30=0
+    user = Utilisateurs.objects.get(id_user=id)
+    context = {
+        'segment': 'index',
+        'mvt': mouvements_filtrés,
+        # 'products' : Product.objects.all()
+        'lg': lg,
+        'pourcentage_moins_30' :int(pourcentage_moins_30),
+        'util': user
+    }
+
+    #return render(request, "pages/detail_depassement.html", context)
+    return render(request, "pages/detail_moins_30_dk_log0.html", context)
+###################### DETAILS MOINS DE 30 MINUTES ZUD  ############################
+def detail_moins_30_dk_log3(request, id):
+    maintenant = timezone.now()
+    duree_dk = 30
+    delais_urg = 15
+    mouvements = Mouvement3.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
     mouvements_filtrés = []
 
     for mvt in mouvements:
@@ -2328,15 +4572,14 @@ def export_mouvement1(request):
 
 def liste_parametrage(request, id):
     user = get_object_or_404(Utilisateurs, id_user=id)
-    if user.poste == 'A0':
-        entite = 'dklog'
-    elif user.poste == 'A1':
-        entite = 'icdtom'
-    elif user.poste == 'A2':
-        entite = 'sacherie'
-    elif user.poste == 'A3':
-        entite = 'zud'
-    listeboite = ParametrageDelais.objects.filter(entite=entite)
+    listeboite = ParametrageDelais.objects.all()
+    for boite in listeboite:
+        delais_maximal = int(boite.delais_maximal) if boite.delais_maximal else 0
+        delais_urgent = int(boite.delais_urgent) if boite.delais_urgent else 0
+        boite.delais_maximal_hours =delais_maximal // 60
+        boite.delais_maximal_minutes =delais_maximal % 60
+        boite.delais_urgent_hours = delais_urgent // 60
+        boite.delais_urgent_minutes =delais_urgent % 60
     return render(request, 'pages/parametrage1.html', {'boite': listeboite, 'util': user})
 
 
@@ -2345,15 +4588,12 @@ def ajouter_parametre(request):
     if request.method == 'POST':
         id_user = request.POST.get('id_user')
         util = get_object_or_404(Utilisateurs, id_user=id_user)
+        h_urg = int(request.POST.get('h_urg'))  # Conversion en entier avec valeur par défaut 0
+        m_urg = int(request.POST.get('m_urg'))  # Conversion en entier avec valeur par défaut 0
+        h_max = int(request.POST.get('h_max'))  # Conversion en entier avec valeur par défaut 0
+        m_max = int(request.POST.get('m_max'))  # Conversion en entier avec valeur par défaut 0
+        entite = request.POST.get('entite')
 
-        entites = {
-            'A0': 'dklog',
-            'A1': 'icdtom',
-            'A2': 'sacherie',
-            'A3': 'zud'
-        }
-
-        entite = entites.get(util.poste, None)
         if entite is None:
             return HttpResponse("Invalid user role", status=400)
 
@@ -2362,14 +4602,15 @@ def ajouter_parametre(request):
             entite=entite
         )
 
-        parametre.delais_urgent = request.POST.get('delais_urgent')
-        parametre.delais_maximal = request.POST.get('delais_maximal')
+        # Calcul en minutes
+        parametre.delais_urgent = h_urg * 60 + m_urg
+        parametre.delais_maximal = h_max * 60 + m_max
         parametre.type = request.POST.get('type')
         parametre.nbr_max = request.POST.get('nbr_max')
         parametre.entite = entite
         parametre.save()
 
-        return redirect(f"/parametrage/{id_user}")
+        return redirect(f"/parametrage/{id_user}?success=true")
     else:
         return redirect(f"/doc/ajouterboite_page/{request.POST.get('id_user')}")
 
@@ -2388,10 +4629,12 @@ def modifier_parametre(request):
     return render(request, 'index.html')
 
 ################################  GESTIONNAIRE DE ZUD ##########################
+ ##################### ENTREE #######################
 def index_entree_zud(request, id):
   util = Utilisateurs.objects.get(id_user=id)
   camions = Camion.objects.all()
   return render(request, 'pages/index_entree_zud.html', {'util': util, 'camions': camions})
+ ##################### SORTIE #######################
 def index_sortie_zud(request, id):
   util = Utilisateurs.objects.get(id_user=id)
   camions = Camion.objects.all()
@@ -2399,7 +4642,7 @@ def index_sortie_zud(request, id):
 
 ### LISTE DES MOUVEMENTS  D'entree############
 def liste_mouvements_entree_zud(request, id_user):
-    mouvements = Mouvement3.objects.filter(date_entree__isnull=True).values('id_mvt', 'mission', 'camion_id',
+    mouvements = Mouvement3.objects.filter(date_entree__isnull=True, date_sortie__isnull=True).values('id_mvt', 'mission', 'camion_id',
                                                                             'statut_entree', 'statut_sortie',
                                                                             'chauffeur_id'
                                                                             , 'remorque')
@@ -2931,3 +5174,373 @@ def ajouter_transitaire(request):
             return JsonResponse({'success': False, 'errors': form.errors})
 
     return JsonResponse({'success': False, 'errors': 'Méthode non autorisée'})
+
+
+
+
+
+
+
+########################Gestion Chauffeur
+
+########################################AGENT#######################################################
+def liste_chauffeur(request, id):
+    user = Utilisateurs.objects.get(id_user=id)
+    listeboite=Chaffeur.objects.all()
+    return render(request, 'pages/gestion_chauffeur.html', {'boite': listeboite,'util': user})
+#####Gestion User
+
+def Crer_agent_page(request, id):
+   # forms = UtilisateurForm(request.POST)
+   user = UtilisateursTraking.objects.get(id_utilisateur=id)
+   # return render(request, 'templatetra/crer_agent.html', {'forms': forms, 'util': user})
+   return render(request, 'templatetra/crer_agent.html', {'util': user})
+
+
+def enregistrer_agent(request):
+  if request.method == 'POST':
+    # form = UtilisateuwrForm(request.POST)
+    form = 1
+    user = UtilisateursTraking.objects.get(id_utilisateur=request.POST["id_user"])
+    if form.is_valid() or 1:
+      cleaned_data = form.cleaned_data
+      instance = UtilisateursTraking(
+        nom=request.POST['nom'],
+        prenom=request.POST['prenom'],
+        email=request.POST['email'],
+        password='passer',
+        telephone=request.POST['telephone'],
+        role=request.POST['rolee']
+
+        # form.cleaned_data['direction']
+      )
+      instance.save()
+      # return redirect('/users/login/')
+      return list_agent(request, user.id_utilisateur)
+    else:
+      # forms = UtilisateurForm()
+      return Crer_agent_page(request, request.POST["id_user"])
+      # return render(request, 'templatetra/crer_agent.html', {'forms': forms})
+
+
+def update_agent_page(request, id_user, id_agt):
+  user = UtilisateursTraking.objects.get(id_utilisateur=id_user)
+  agt = UtilisateursTraking.objects.get(id_utilisateur=id_agt)
+  return render(request, 'templatetra/update_agent.html', {'agt': agt, 'util': user, 'user': agt})
+
+
+def upadte_agent(request):
+  agt = UtilisateursTraking.objects.get(id_utilisateur=request.POST['id_agt'])
+  user = UtilisateursTraking.objects.get(id_utilisateur=request.POST['id_user'])
+  if request.POST['prenom']:
+    agt.prenom = request.POST['prenom']
+  if request.POST['nom']:
+    agt.email = request.POST['nom']
+  if request.POST['telephone']:
+    agt.telephone = request.POST['telephone'],
+
+  agt.save()
+  return list_agent(request, user.id_utilisateur)
+
+
+def desactiver_agent(request, id_user, id_agt):
+  user = UtilisateursTraking.objects.get(id_utilisateur=id_user)
+  agt = UtilisateursTraking.objects.get(id_utilisateur=id_agt)
+  agt.etat = 0
+  agt.save()
+  return list_agent(request, user.id_utilisateur)
+def activer_agent(request, id_user, id_agt):
+  user = UtilisateursTraking.objects.get(id_utilisateur=id_user)
+  agt = UtilisateursTraking.objects.get(id_utilisateur=id_agt)
+  agt.etat = 1
+  agt.save()
+  return list_agent(request, user.id_utilisateur)
+
+
+def reinitiliaser_mdp(request, id_user, id_agt):
+  user = UtilisateursTraking.objects.get(id_utilisateur=id_user)
+  agt = UtilisateursTraking.objects.get(id_utilisateur=id_agt)
+  agt.password = 'reinit'
+  agt.save()
+  return list_agent(request, user.id_utilisateur)
+
+##############Import Fichier Camion
+@csrf_exempt
+def importer_donnees_camion_excel(fichier_excel):
+    """
+    Importe les données d'un fichier Excel dans la table Camion.
+
+    Args:
+        fichier_excel (UploadedFile): Le fichier Excel à importer.
+
+    Raises:
+        ValueError: Si le fichier Excel n'est pas valide.
+    """
+
+    if not fichier_excel.content_type.startswith('application/vnd.openxmlformats'):
+        raise ValueError('Le fichier Excel n\'est pas valide.')
+
+    # Lire le fichier Excel dans un DataFrame Pandas
+    df = pd.read_excel(fichier_excel)
+
+    # Vérifier si les colonnes du DataFrame correspondent aux champs du modèle Camion
+    champs_camion = ['immatriculation', 'transporteur','type']
+    if not df.columns.isin(champs_camion).all():
+        raise ValueError('Le fichier Excel ne contient pas les colonnes requises.')
+
+    # Enregistrer les données dans la base de données
+    with transaction.atomic():
+        for index, row in df.iterrows():
+            camion = Camion(
+                immatriculation=row['immatriculation'],
+                transporteur=row['transporteur'],
+                type=row['type'],
+            )
+            camion.save()
+
+
+@csrf_exempt
+def importer_donnees_camion(request):
+    if request.method == 'POST':
+        fichier_excel = request.FILES['fichier_excel']
+        try:
+            importer_donnees_camion_excel(fichier_excel)
+            message = 'Données importées avec succès.'
+        except ValueError as e:
+            message = e.args[0]
+    else:
+        fichier_excel = None
+        message = ''
+    #user=Utilisateurs.objects.get(poste='admin')
+    user = Utilisateurs.objects.get(id_user=1)
+    return  redirect("/liste_amion/" +str(user.id_user))
+
+
+def ajouter_camion_page(request):
+  return render(request, 'pages/ajouter_camion.html',)
+@csrf_exempt
+
+def ajouter_chauffeur(request):
+  if request.method == 'POST':
+    #form = BoiteForm(request.POST)
+    #id_user = request.session.get('user_id')
+    if Chaffeur.objects.filter(permis=request.POST['permis']).exists():
+      return redirect()
+      # cleaned_data = form.cleaned_data
+    else:
+      camion = Chaffeur(
+        permis=request.POST['permis'],
+        telephone=request.POST['telephone'],
+          fullname=request.POST['fullname'],
+      )
+      camion.save()
+
+      return redirect("/liste_chauffeur/" + str(request.POST['id_user']))
+
+  else:
+
+    # return ajouterboite_page(request, request.POST['id_user'])
+    return redirect("/doc/jouterboite_page/" + str(request.POST['id_user']))
+
+def modifier_chauffeur(request):
+    if request.method == 'POST':
+      boite_id = request.POST['boite_id']
+      boite = get_object_or_404(Chaffeur, id_chauffeutr=boite_id)
+      boite.fullname = request.POST['fullname']
+      boite.permis = request.POST['permis']
+      boite.telephone = request.POST['telephone']
+      boite.save()
+      #return redirect(reverse('index'))  # Redirigez vers la page index après la modification
+      return redirect("/liste_chauffeur/" + str(request.POST['id_user']))
+
+    return render(request, 'index.html')
+#################### FETCH LISTE DES MOVUEMENTS MODIFICATIONS ###############
+########## ICD ################
+def liste_modifs(request):
+    mouvements = Mouvement0.objects.filter(destination__icontains='icd', date_sortie__isnull=True).values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
+        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination', 'mission', 'client_id'
+    )
+    mouvement_list = list(mouvements)
+
+    for mouvement in mouvement_list:
+        client_id = mouvement.get('client_id')
+        # Récupérer les informations du camion
+        camion_id = mouvement.get('camion_id')
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
+                                                                'type').first()
+        client = Client.objects.filter(id_client=client_id).values('id_client', 'fullname', 'telephone').first()
+        mouvement['client']=client if client else{
+            'id_client': None,
+            'fullname': 'Non Assigné',
+            'telephone': 'Non Assigné'
+        }
+        mouvement['camion'] = camion if camion else {
+            'id_cam': None,
+            'immatriculation': 'Non assigné',
+            'transporteur': 'Non assigné',
+            'type': 'Non assigné'
+        }
+
+        # Récupérer les informations du pointeur d'entrée
+        user_entre_id = mouvement.get('pointeur_entree_id')
+        user_entre = Utilisateurs.objects.filter(id_user=user_entre_id).values('fullname').first()
+        mouvement['user_ert'] = user_entre if user_entre else {'fullname': 'Non assigné'}
+
+        # Récupérer les informations du pointeur de sortie
+        user_sortie_id = mouvement.get('pointeur_sortie_id')
+        if user_sortie_id:
+            user_sortie = Utilisateurs.objects.filter(id_user=user_sortie_id).values('fullname').first()
+        else:
+            user_sortie = {'fullname': 'null'}
+        mouvement['user_srt'] = user_sortie
+
+        # Récupérer les informations du chauffeur
+        chauffeur_id = mouvement.get('chauffeur_id')
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur if chauffeur else {
+            'id_chauffeur': None,
+            'fullname': 'Non assigné',
+            'permis': 'N/A'
+        }
+
+        # Assigner des valeurs par défaut pour les autres champs
+        mouvement['remorque'] = mouvement.get('remorque', 'Non assigné')
+        mouvement['mission'] = mouvement.get('mission', 'Non assigné')
+        mouvement['date_entree'] = mouvement.get('date_entree', 'Non assigné')
+        mouvement['date_sortie'] = mouvement.get('date_sortie', 'Non assigné')
+        mouvement['destination'] = mouvement.get('destination', 'Non assigné')
+
+    return JsonResponse(mouvement_list, safe=False)
+
+########## SACHERIE ################
+def liste_modifs1(request):
+    mouvements = Mouvement0.objects.filter(destination__icontains='hangar', date_sortie__isnull=True).values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
+        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination', 'mission', 'client_id', 'marchandise'
+    )
+    mouvement_list = list(mouvements)
+
+    for mouvement in mouvement_list:
+        client_id = mouvement.get('client_id')
+        # Récupérer les informations du camion
+        camion_id = mouvement.get('camion_id')
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
+                                                                'type').first()
+        client = Client.objects.filter(id_client=client_id).values('id_client', 'fullname', 'telephone').first()
+        mouvement['client'] = client if client else {
+            'id_client': None,
+            'fullname': 'Non Assigné',
+            'telephone': 'Non Assigné'
+        }
+        mouvement['camion'] = camion if camion else {
+            'id_cam': None,
+            'immatriculation': 'Non assigné',
+            'transporteur': 'Non assigné',
+            'type': 'Non assigné'
+        }
+
+        # Récupérer les informations du pointeur d'entrée
+        user_entre_id = mouvement.get('pointeur_entree_id')
+        user_entre = Utilisateurs.objects.filter(id_user=user_entre_id).values('fullname').first()
+        mouvement['user_ert'] = user_entre if user_entre else {'fullname': 'Non assigné'}
+
+        # Récupérer les informations du pointeur de sortie
+        user_sortie_id = mouvement.get('pointeur_sortie_id')
+        if user_sortie_id:
+            user_sortie = Utilisateurs.objects.filter(id_user=user_sortie_id).values('fullname').first()
+        else:
+            user_sortie = {'fullname': 'null'}
+        mouvement['user_srt'] = user_sortie
+
+        # Récupérer les informations du chauffeur
+        chauffeur_id = mouvement.get('chauffeur_id')
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur if chauffeur else {
+            'id_chauffeur': None,
+            'fullname': 'Non assigné',
+            'permis': 'N/A'
+        }
+
+        # Assigner des valeurs par défaut pour les autres champs
+        mouvement['remorque'] = mouvement.get('remorque', 'Non assigné')
+        mouvement['mission'] = mouvement.get('mission', 'Non assigné')
+        mouvement['marchandise']= mouvement.get('marchandise', 'Non Assigné')
+        mouvement['date_entree'] = mouvement.get('date_entree', 'Non assigné')
+        mouvement['date_sortie'] = mouvement.get('date_sortie', 'Non assigné')
+        mouvement['destination'] = mouvement.get('destination', 'Non assigné')
+
+    return JsonResponse(mouvement_list, safe=False)
+########## ZUD ################
+def liste_modifs2(request):
+    mouvements = Mouvement0.objects.filter(destination__icontains='zud', date_sortie__isnull=True).values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
+        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination', 'transitaire_id','mission', 'client_id', 'marchandise'
+    )
+    mouvement_list = list(mouvements)
+
+    for mouvement in mouvement_list:
+        client_id = mouvement.get('client_id')
+        # Récupérer les informations du camion
+        camion_id = mouvement.get('camion_id')
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur',
+                                                                'type').first()
+        client = Client.objects.filter(id_client=client_id).values('id_client', 'fullname', 'telephone').first()
+        mouvement['client'] = client if client else {
+            'id_client': None,
+            'fullname': 'Non Assigné',
+            'telephone': 'Non Assigné'
+        }
+        mouvement['camion'] = camion if camion else {
+            'id_cam': None,
+            'immatriculation': 'Non assigné',
+            'transporteur': 'Non assigné',
+            'type': 'Non assigné'
+        }
+
+        # Récupérer les informations du pointeur d'entrée
+        user_entre_id = mouvement.get('pointeur_entree_id')
+        user_entre = Utilisateurs.objects.filter(id_user=user_entre_id).values('fullname').first()
+        mouvement['user_ert'] = user_entre if user_entre else {'fullname': 'Non assigné'}
+
+        # Récupérer les informations du pointeur de sortie
+        user_sortie_id = mouvement.get('pointeur_sortie_id')
+        if user_sortie_id:
+            user_sortie = Utilisateurs.objects.filter(id_user=user_sortie_id).values('fullname').first()
+        else:
+            user_sortie = {'fullname': 'null'}
+        mouvement['user_srt'] = user_sortie
+
+        # Récupérer les informations du chauffeur
+        chauffeur_id = mouvement.get('chauffeur_id')
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
+                                                                              'permis').first()
+        mouvement['chauffeur'] = chauffeur if chauffeur else {
+            'id_chauffeur': None,
+            'fullname': 'Non assigné',
+            'permis': 'N/A'
+        }
+        # Assigner des valeurs par défaut pour les autres champs
+        mouvement['remorque'] = mouvement.get('remorque', 'Non assigné')
+        mouvement['mission'] = mouvement.get('mission', 'Non assigné')
+        mouvement['marchandise'] = mouvement.get('marchandise', 'Non Assigné')
+        mouvement['date_entree'] = mouvement.get('date_entree', 'Non assigné')
+        mouvement['date_sortie'] = mouvement.get('date_sortie', 'Non assigné')
+        mouvement['destination'] = mouvement.get('destination', 'Non assigné')
+    return JsonResponse(mouvement_list, safe=False)
+########## PARTICULIER ################
+def liste_modifspar(request):
+    mouvements = Mouvement8.objects.filter(date_sortie__isnull=True).values('id_mvt', 'destination', 'vehicule_id',
+                                                                            'date_entree')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+        vehicule_id = mouvement['vehicule_id']
+        vehicule = Vehicule.objects.filter(id_veh=vehicule_id).values('id_veh', 'immatriculation').first()
+        mouvement['vehicule'] = vehicule
+    response_data = {
+        'mouvements': mouvement_list,
+        # Inclure l'ID de l'utilisateur dans la réponse JSON
+    }
+    return JsonResponse(response_data)

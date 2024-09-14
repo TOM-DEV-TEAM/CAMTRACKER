@@ -123,12 +123,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'CAM_TRAKING',
         'USER': 'postgres',
-        'PASSWORD': '20170843Zs',
+        'PASSWORD': 'Passer@1',
         'HOST': '127.0.0.1',
-        'DATABASE_PORT': '5432',
-
+        'PORT': '5432',  # Corrected key
     }
 }
+
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 

@@ -1,10 +1,278 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block breadcrumbs %}{% endblock breadcrumbs %}
+
+{% block content %}
+
+    <!-- [ rating list ] end-->
+     <div class="container mt-12 ">
+
+                 <nav class="navbar navbar-light bg-light">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between w-100" id="navbarNav">
+           <form action="/export_mouvement0/" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success">Extraire vers Excel</button>
+          </form>
+        </div>
+    </div>
+</nav>
+
+ <ul class="nav nav-tabs" >
+  <li class="nav-item">
+    <a class="nav-link active" aria-current="page" href="/liste_tt_mvt00/{{ util.id_user }}">PLT</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="/liste_tt_mvt0/{{ util.id_user }}">ICD TOM</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="/liste_tt_mvt01/{{ util.id_user }}">ICD CMA</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="/liste_tt_mvt02/{{ util.id_user }}" tabindex="-1" >SACHERIE</a>
+  </li> <li class="nav-item">
+    <a class="nav-link" href="/liste_tt_mvt03/{{ util.id_user }}" tabindex="-1" >ZUD</a>
+  </li>     <li class="nav-item">
+    <a class="nav-link" href="/index_dk_logparticulier/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
+  </li>
+</ul><br>
+        <div class="table-responsive">
+             <div class="text-left">
+
+</div>
+
+         <table  id="mouvements-table"  class="table table-hover" >
+                 <thead class="thead-light">
+                        <tr>
+
+
+
+                             <th scope="col">Destination</th>
+                            <th scope="col">Camion</th>
+                            <th scope="col">Remorque</th>
+                             <th scope="col">Transporteur </th>
+                            <th scope="col">Chauffeur</th>
+                            <th scope="col">Permis</th>
+                             <th scope="col">Date Entrée </th>
+                            <th scope="col">Pointeur Entrée</th>
+                            <th scope="col">Statut Entree</th>
+
+                            <th scope="col">Date Sortie </th>
+
+                            <th scope="col">Pointeur Sortie</th>
+                            <th scope="col">Statut Sortie</th>
+                            <th scope="col">Action</th>
+
+
+
+
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+          </table>
+
+
+    </div>
+     </div>
+
+
+    <!--<div class="container">
+  <h2>Modal Example</h2>
+   Trigger the modal with a button
+  <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>
+
+
+
+Inclure les scripts de Bootstrap et jQuery -->
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        function fetchMouvements() {
+            $.ajax({
+                url: "{% url 'liste_mouvements_dk0' %}",
+                method: "GET",
+                success: function(data) {
+                    var tableBody = $('#mouvements-table tbody');
+                    tableBody.empty();
+                    data.forEach(function(mouvement_list) {
+                         var statutText = '';
+                            if (mouvement_list.statut_entree === 0) {
+                                statutText = 'DECHARGE';
+                            } else if (mouvement_list.statut_entree === 1) {
+                                statutText = 'CHARGE';
+                            }
+                        else {
+                            statutText='Non Assigné'
+                            }
+                            var statutTextsortie = '';
+                            if (mouvement_list.statut_sortie === 0) {
+                                statutTextsortie = 'DECHARGE';
+                            } else if (mouvement_list.statut_sortie === 1) {
+                                statutTextsortie = 'CHARGE';
+                            }else {
+                                statutTextsortie='Non Assigné'
+                            }
+                        var row = `
+                            <tr>
+
+<td style="text-transform: uppercase">${mouvement_list.destination}</td>
+                                <td>${mouvement_list.camion.immatriculation}</td>
+
+                                <td>${mouvement_list.remorque}</td>
+
+                                <td>${mouvement_list.camion.transporteur}</td>
+                                <td>${mouvement_list.chauffeur.fullname}</td>
+<td>${mouvement_list.chauffeur.permis}</td>
+<td>${mouvement_list.date_entree}</td>
+<td>${mouvement_list.user_ert.fullname }</td>
+<td>${statutText}</td>
+
+<td>${mouvement_list.date_sortie}</td>
+<td >${mouvement_list.user_srt.fullname }</td>
+<td>${statutTextsortie}</td>
+<td>
+            <button  class="btn btn-primary btn-edit"
+                data-id="${mouvement_list.id_mvt}"
+                data-camion="${mouvement_list.camion.immatriculation}"
+                data-transporteur="${mouvement_list.camion.transporteur}"
+                data-chauffeur="${mouvement_list.chauffeur.fullname}"
+                data-permis="${mouvement_list.chauffeur.permis}"
+                data-remorque="${mouvement_list.remorque}"
+                 data-statut-entree="${mouvement_list.statut_entree}"
+    data-statut-sortie="${mouvement_list.statut_sortie}"
+                data-destination="${mouvement_list.destination}"
+                data-toggle="modal"
+                data-target="#editModal"
+>Modifier</button>
+        </td>
+
+
+                            </tr>`;
+                        tableBody.append(row);
+                    });
+                }
+            });
+        }
+
+        fetchMouvements();
+        setInterval(fetchMouvements, 10000);
+        $('#mouvements-table').on('click', '.btn-edit', function() {
+        var id = $(this).data('id');
+        var camion = $(this).data('camion');
+        var transporteur = $(this).data('transporteur');
+        var chauffeur = $(this).data('chauffeur');
+        var permis = $(this).data('permis');
+        var remorque = $(this).data('remorque');
+        var statutEntree = $(this).data('statut-entree');
+    var statutSortie = $(this).data('statut-sortie');
+        var destination = $(this).data('destination');
+
+        $('#mouvementId').val(id);
+        $('#camion').val(camion);
+        $('#transporteur').val(transporteur);
+        $('#chauffeur').val(chauffeur);
+        $('#permis').val(permis);
+        $('#remorque').val(remorque);
+        $('#statut_entree').val(statutEntree);
+    $('#statut_sortie').val(statutSortie);
+        $('#destination').val(destination);
+    });
+    });
+
+</script>
+
+    </div>
+  </div>
+
+
+
+    <div class="modal fade" id="editModal" class="modal fade"  tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Modifier Mouvement</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+      <div class="modal-body">
+        <form id="editForm" method="POST" action="/modifier_mouvement0/">
+          <input type="hidden" id="mouvementId" name="mouvementId">
+            <input type="hidden" id="id_user" value="{{ util.id_user }}" name="id_user">
+          <!-- Ajoutez les champs de formulaire nécessaires ici -->
+
+             <div class="form-row">
+        <div class="col-md-6 mb-6">
+            <label for="camion">Camion</label>
+            <input type="text" name="camion" id="camion" class="form-control form-control-lg" placeholder="camion" required />
+        </div>
+
+          <div class="col-md-6 mb-6">
+              <label for="camion">Remorque</label>
+            <input type="text" name="remorque"  id="remorque" class="form-control form-control-lg" placeholder="REMORQUE" required />
+
+          </div>
+             </div>
+
+                             <div class="form-row">
+        <div class="col-md-6 mb-6">
+            <label for="camion">Permis</label>
+            <input type="text" name="permis"  id="permis" class="form-control form-control-lg" placeholder="PERMIS" required />
+        </div>
+                                <div class="col-md-6 mb-6">
+            <label for="camion">Chauffeur</label>
+            <input type="text" name="chauffeur" id="chauffeur"  class="form-control form-control-lg"  required />
+        </div>
+                             </div>
+                                <div class="form-row">
+        <div class="col-md-6 mb-6">
+            <label for="camion">Trasporteur</label>
+            <input type="text" name="transporteur"  id="transporteur" class="form-control form-control-lg" required />
+        </div>
+                                  <div class="col-md-6 mb-6">
+            <label for="camion">Destination</label>
+            <input type="text" name="destination"  id="destination" class="form-control form-control-lg"  required />
+        </div>
+                                </div>
+           <div class="form-row">
+        <div class="col-md-6 mb-6">
+                                    <label for="camion">Statut Entree</label>
+                                    <select id="statut_entree" name="statut_entree"  class="form-control form-control-lg"  >
+
+                                        <option value="1">CHARGE</option>
+                                        <option value="0">DECHARGE</option>
+                                    </select>
+                            </div>
+            <div class="col-md-6 mb-6">
+                                    <label for="camion">Statut Sortiessss</label>
+                                    <select  id="statut_sortie" name="statut_sortie"  class="form-control form-control-lg"  >
+
+                                        <option value="1">CHARGE</option>
+                                        <option value="0">DECHARGE</option>
+                                    </select>
+                            </div>
+           </div>
+
+         <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+{% endblock content %}

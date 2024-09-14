@@ -7,7 +7,10 @@
         <div class="b-bg">
           <i class="feather icon-trending-up"></i>
         </div>
-          {% if  util.poste == 'A0' or util.poste == 'E0' or util.poste == 'S0'%}
+      {% if util.poste == 'SA' %}
+      <span class="b-title">SUPER ADMIN</span>
+      {% endif %}
+          {% if  util.poste == 'A0' or util.poste == 'E0' or util.poste == 'S0' or util.poste == 'C0'%}
         <span class="b-title">DKLOG</span>
           {% endif %}
        {% if  util.poste == 'A1' or util.poste == 'E1' or util.poste == 'S1'%}
@@ -52,10 +55,40 @@
           </ul>
         </li>
       {%  endif %}
+      {% if util.poste == 'C0' %}
+           <!--<li class=""><a href="/index/{#  #}{ util.id_user }}" class="">Dashboard</a></li>-->
+       <li
+          data-username="Authentication Sign up Sign in reset password Change password Personal information profile settings map form subscribe"
+          class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link "><span class="pcoded-micon">
+              <i class="fas fa-truck"></i>
+              </span><span class="pcoded-mtext">Controle Dklog</span></a>
+          <ul class="pcoded-submenu">
+            <!--<li class=""><a href="/liste_amion/2" class="">Camion</a></li>-->
+            <li class=""><a href="/index_controller/{{ util.id_user }}" class=""><span class="pcoded-micon">
+            </span><span class="pcoded-mtext">Camions</span></a></li>
+              <li class=""><a href="/liste_observations/{{ util.id_user }}" class=""><span class="pcoded-micon">
+            </span><span class="pcoded-mtext">Observations</span></a></li>
+
+          </ul>
+        </li>
+      {%  endif %}
            {% if util.poste == 'A0' %}
-           <li class=""><a href="/index_dk_log/{{ util.id_user }}" class=""><span class="pcoded-micon">
-               <i class="feather icon-grid"></i>
-           </span><span class="pcoded-mtext">Dashboard</span></a></li>
+             <li
+    data-username="Authentication Sign up Sign in reset password Change password Personal information profile settings map form subscribe"
+    class="nav-item pcoded-hasmenu">
+    <a href="javascript:" class="nav-link">
+        <span class="pcoded-micon">
+            <i class="feather icon-grid"></i>
+        </span>
+        <span class="pcoded-mtext">Dashboard</span>
+    </a>
+    <ul class="pcoded-submenu">
+         <li>
+            <a href="/index_dk_log0/{{ util.id_user }}" class="">Dashboard</a>
+        </li>
+    </ul>
+</li>
         <li
           data-username="Authentication Sign up Sign in reset password Change password Personal information profile settings map form subscribe"
           class="nav-item pcoded-hasmenu">
@@ -63,8 +96,11 @@
               </span><span class="pcoded-mtext">Administrateur</span></a>
           <ul class="pcoded-submenu">
               <li class=""><a href="/liste_amion/{{ util.id_user }}" class=""><i class="fas fa-car"></i></span><span class="pcoded-mtext"> Camion</span></a></li>
+              <li class=""><a href="/modif_mvt/{{ util.id_user }}" class=""><i class="bi bi-pencil"></i></span><span class="pcoded-mtext"> Modifications </span></a></li>
             <!--<li class=""><a href="/liste_user/{{ util.id_user }}" class="">Utilisateurs</a></li>-->
-              <li class=""><a href="/liste_tt_mvt0/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext"> Mouvement</span></a></li>
+              <li class=""><a href="/liste_tt_mvt00/{{ util.id_user }}" class=""><i class="fas fa-exchange-alt"></i></span><span class="pcoded-mtext"> Mouvements</span></a></li>
+              <li class=""><a href="/camion_zud/{{ util.id_user }}" class=""><i class="fas fa-truck"></i></span><span class="pcoded-mtext"> Camions ZUD</span></a></li>
+              <li class=""><a href="/liste_observationsadmin/{{ util.id_user }}" class=""><i class="bi bi-eye"></i></span><span class="pcoded-mtext"> Observations</span></a></li>
                <li class=""><a href="/parametrage/{{ util.id_user }}" class=""><i class="bi bi-gear"></i></span><span class="pcoded-mtext"> Parametres</span></a></li>
           </ul>
         </li>
@@ -261,16 +297,37 @@
         </li>
       {% endif %}
        {% if util.poste == 'E0' %}
+         <!--  ard</a></li>--><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
-       <li class="nav-item">
-          <a  href="/entreedecalog_view/{{ util.id_user }}" class="nav-link "><span class="pcoded-micon"><i
-                class="feather icon-zap text-c-green"></i></span><span class="pcoded-mtext">Entrée DK LOG</span></a>
+       <li
+          data-username="Authentication Sign up Sign in reset password Change password Personal information profile settings map form subscribe"
+          class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link "><span class="pcoded-micon">
+            <i class="fas fa-truck"></i>
+              </span><span class="pcoded-mtext">Entrée Dklog</span></a>
+          <ul class="pcoded-submenu">
+            <!--<li class=""><a href="/liste_amion/2" class="">Camion</a></li>-->
+            <li class=""><a href="/entreedecalog_view/{{ util.id_user }}" class=""><span class="pcoded-micon">
+            </span><span class="pcoded-mtext">ENTREES</span></a></li>
+          </ul>
         </li>
+
+   
       {% endif %}
       {% if util.poste == 'S0' %}
-       <li class="nav-item">
-          <a  href="/sortie_decalog_view/{{ util.id_user }}" class="nav-link "><span class="pcoded-micon"><i
-                class="feather icon-zap text-c-green"></i></span><span class="pcoded-mtext">Sortie DK LOG</span></a>
+           <!--  ard</a></li>--><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+       <li
+          data-username="Authentication Sign up Sign in reset password Change password Personal information profile settings map form subscribe"
+          class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link "><span class="pcoded-micon">
+            <i class="fas fa-truck"></i>
+              </span><span class="pcoded-mtext">Sortie Dklog</span></a>
+          <ul class="pcoded-submenu">
+            <!--<li class=""><a href="/liste_amion/2" class="">Camion</a></li>-->
+            <li class=""><a href="/sortie_decalog_view/{{ util.id_user }}" class=""><span class="pcoded-micon">
+            </span><span class="pcoded-mtext">SORTIES</span></a></li>
+          </ul>
         </li>
       {% endif %}
       {% if util.poste == 'E2' %}

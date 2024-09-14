@@ -7,7 +7,7 @@
 
     <style>
         .error-message {
-            color: red;
+            color: reFd;
             font-size: 0.9em;
         }
         .disabled-button {
@@ -34,33 +34,35 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <!--<th>Entité</th>-->
+                    <th>Entité</th>
                     <th>Type Camion</th>
-                    <th>Délais Maximal (mns)</th>
-                     <th>Délais Urgent (mns)</th>
+                    <th>Délais Maximal </th>
+                     <th>Délais Urgent </th>
                     <th>Nombre Maximum</th>
-                    <th>Actions</th>
+                    <!--th>Actions</th-->
                 </tr>
             </thead>
             <tbody>
                 {% for boite in boite %}
                 <tr>
-
+                      <td>
+                        <h6 class="m-0">{{ boite.entite.upper }}</h6>
+                    </td>
                     <td>
                         <h6 class="m-0">{{ boite.type }}</h6>
                     </td>
-                    <td>
-                        <h6 class="m-0">{{ boite.delais_maximal  }} mns</h6>
-                    </td>
-                     <td>
-                        <h6 class="m-0">{{ boite.delais_urgent }} mns</h6>
-                    </td>
-                    <td>
+                <td>
+    <h6 class="m-0">{{ boite.delais_maximal_hours }} H {{ boite.delais_maximal_minutes }} Mn</h6>
+</td>
+<td>
+    <h6 class="m-0">{{ boite.delais_urgent_hours }} H {{ boite.delais_urgent_minutes }} Mn</h6>
+</td><td>
+
                         <h6 class="m-0">{{ boite.nbr_max }}</h6>
                     </td>
-                    <td>
+                    <!--td>
                         <a href="#!" class="label theme-bg text-white f-12" data-toggle="modal" data-target="#editModal" data-id="{{ boite.id_para }}" data-duree="{{ boite.duree }}" data-nbr_max="{{ boite.nbr_max }}" data-delais_urgent="{{ boite.delais_urgent }}" data-type="{{ boite.type }}" data-delais_maximal="{{ boite.delais_maximal }}" >Modifier</a>
-                    </td>
+                    </td-->
                 </tr>
                 {% endfor %}
             </tbody>
@@ -83,15 +85,45 @@
         {% csrf_token %}
         <input type="hidden" id="boiteId" name="boite_id">
         <input type="hidden" name="id_user" value="{{ util.id_user }}">
-        <div class="form-group">
-            <label for="add_delais_maximal">Delais Maximal (mns)</label><br>
-            <input type="number" id="add_delais_maximal" name="delais_maximal" required class="form-control" min="1">
+                      <div class="form-group">
+            <label for="add_delais_maximal">Destination</label><br>
+                          <select type="number" id="add_delais_maximal" name="entite" required class="form-control" >
+                              <option value=""></option>
+                              <option value="dklog">PLT</option>
+                              <option value="icd">ICD</option>
+                              <option value="sacherie">SACHERIE</option>
+                              <option value="zud">ZUD</option>
+                          </select>
         </div>
-        <div class="form-group">
-            <label for="add_delais_urgent">Delais Urgent (mns)</label><br>
-            <input type="number" id="add_delais_urgent" name="delais_urgent" required class="form-control" min="1">
-            <span id="add_urgent-error" class="error-message"></span>
+      <div class="form-group">
+    <label for="delais_maximal">Delais Maximal</label>
+    <div class="row">
+        <div class="col">
+            <label for="add_delais_maximal_h">H</label>
+            <input type="number" id="add_delais_maximal_h" name="h_max" required class="form-control form-control-sm" value="0" min="0" placeholder="H">
         </div>
+        <div class="col">
+            <label for="add_delais_maximal_m">Mn</label>
+            <input type="number" id="add_delais_maximal_m" name="m_max" required class="form-control form-control-sm" value="0" min="0" max="59" placeholder="Mn">
+        </div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label for="delais_urgent">Delais Urgent</label>
+    <div class="row">
+        <div class="col">
+            <label for="add_delais_urgent_h">H</label>
+            <input type="number" id="add_delais_urgent_h" name="h_urg"  value="0" required class="form-control form-control-sm" min="0" placeholder="H">
+        </div>
+        <div class="col">
+            <label for="add_delais_urgent_m">Mn</label>
+            <input type="number" id="add_delais_urgent_m" name="m_urg" value="0" required class="form-control form-control-sm" min="0" max="59" placeholder="Mn">
+        </div>
+    </div>
+    <span style="color: red" id="add_urgent-error" class="error-message"></span>
+</div>
+
         <div class="form-group">
             <label for="nbr_max">Nombre Maximun de Camions</label><br>
             <input type="number" id="nbr_max" name="nbr_max" required class="form-control" min="1">
@@ -100,19 +132,29 @@
             <label for="type">Type</label><br>
             <select id="type" name="type" required class="form-control">
                  <option value=""></option>
-                            {% if  util.poste == 'A0' or util.poste == 'A1' or util.poste == 'A3' %}
+            {% if util.poste == 'A0'%}
+                    <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
+                                <option value="VRAC">VRAC</option>
+                                <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
+                                <option value="FRIGO">FRIGO</option>
+                                <option value="PLATEAU">PLATEAU</option>
+                                <option value="PORTE CHAR">PORTE CHAR</option>
+                                <option value="PORTE-VEHICULE">PORTE-VEHICULE</option>
+                                <option value="PLATEAU">PLATEAU</option>
+            {% endif %}
+                            {% if util.poste == 'A1' or util.poste == 'A3' %}
                             <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
                         {% endif %}
-                                {% if  util.poste == 'A0' or util.poste == 'A2' or util.poste == 'A3' %}
+                                {% if   util.poste == 'A2' or util.poste == 'A3' %}
                             <option value="VRAC">VRAC</option>
                                     {% endif %}
-                                {% if  util.poste == 'A0' or util.poste == 'A3' %}
+                                {% if  util.poste == 'A3' %}
                             <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
                             {% endif %}
             </select>
         </div>
         <div class="modal-footer">
-            <input type="submit" class="btn btn-primary" id="add_submit-button" value="Enregistrer" disabled>
+            <input type="submit" class="btn btn-primary" id="add_submit-button" value="Enregistrer" >
             <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
         </div>
     </form>
@@ -135,15 +177,31 @@
         {% csrf_token %}
         <input type="hidden" id="boiteId" name="boite_id">
         <input type="hidden" name="id_user" value="{{ util.id_user }}">
-        <div class="form-group">
-            <label for="edit_delais_maximal">Delais Maximal (mns)</label><br>
-            <input type="number" id="edit_delais_maximal" name="delais_maximal" required class="form-control" min="1">
+      <div class="form-group">
+    <label for="add_delais_maximal">Delais Maximal (H:Mn)</label>
+    <div class="d-flex">
+        <div class="mr-2">
+            <input type="number" id="add_delais_maximal_h" name="delais_maximal_h" required  min="0" placeholder="H">
         </div>
-        <div class="form-group">
-            <label for="edit_delais_urgent">Delais Urgent (mns)</label><br>
-            <input type="number" id="edit_delais_urgent" name="delais_urgent" required class="form-control" min="1">
-            <span id="edit_urgent-error" class="error-message"></span>
+        <div>
+            <input type="number" id="add_delais_maximal_m" name="delais_maximal_m" required  min="0" max="59" placeholder="Mn">
         </div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label for="add_delais_urgent">Delais Urgent (H:Mn)</label>
+    <div class="d-flex">
+        <div class="mr-2">
+            <input type="number" id="add_delais_urgent_h" name="delais_urgent_h" required class="form-control" min="0" placeholder="H">
+        </div>
+        <div>
+            <input type="number" id="add_delais_urgent_m" name="delais_urgent_m" required class="form-control" min="0" max="59" placeholder="Mn">
+        </div>
+    </div>
+    <span id="add_urgent-error" class="error-message"></span>
+</div>
+
         <div class="form-group">
             <label for="nbr_max">Nombre Maximun de Camions</label><br>
             <input type="number" id="nbr_max" name="nbr_max" required class="form-control" min="1">
@@ -152,19 +210,20 @@
             <label for="type">Type</label><br>
             <select id="type" name="type" required class="form-control">
                 <option value=""></option>
-                            {% if  util.poste == 'A0' or util.poste == 'A1' or util.poste == 'A3' %}
+
+                            {% if   util.poste == 'A1' or util.poste == 'A3' %}
                             <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
                         {% endif %}
-                                {% if  util.poste == 'A0' or util.poste == 'A2' or util.poste == 'A3' %}
+                                {% if  util.poste == 'A2' or util.poste == 'A3' %}
                             <option value="VRAC">VRAC</option>
                                     {% endif %}
-                                {% if  util.poste == 'A0' or util.poste == 'A3' %}
+                                {% if   util.poste == 'A3' %}
                             <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
                             {% endif %}
             </select>
         </div>
         <div class="modal-footer">
-            <input type="submit" class="btn btn-primary" id="edit_submit-button" value="Enregistrer" disabled>
+            <input type="submit" class="btn btn-primary" id="edit_submit-button" value="Enregistrer" >
             <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
         </div>
     </form>
@@ -175,6 +234,32 @@
     </div>
 </div>
 
+<script>
+    function convertToMinutes(hours, minutes) {
+        return (parseInt(hours) || 0) * 60 + (parseInt(minutes) || 0);
+    }
+    function validateDelais() {
+        const delaisMaximalH = document.getElementById("add_delais_maximal_h").value;
+        const delaisMaximalM = document.getElementById("add_delais_maximal_m").value;
+        const delaisUrgentH = document.getElementById("add_delais_urgent_h").value;
+        const delaisUrgentM = document.getElementById("add_delais_urgent_m").value;
+        const submitButton = document.getElementById("add_submit-button");
+        const errorMessage = document.getElementById("add_urgent-error");
+        const delaisMaximalTotal = convertToMinutes(delaisMaximalH, delaisMaximalM);
+        const delaisUrgentTotal = convertToMinutes(delaisUrgentH, delaisUrgentM);
+        if (delaisMaximalTotal <= delaisUrgentTotal || delaisUrgentTotal==0 || delaisMaximalTotal==0) {
+            errorMessage.textContent = "Le délai maximal doit être supérieur au délai urgent.";
+            submitButton.disabled = true;
+        } else {
+            errorMessage.textContent = "";
+            submitButton.disabled = false;
+        }
+    }
+    document.getElementById("add_delais_maximal_h").addEventListener("input", validateDelais);
+    document.getElementById("add_delais_maximal_m").addEventListener("input", validateDelais);
+    document.getElementById("add_delais_urgent_h").addEventListener("input", validateDelais);
+    document.getElementById("add_delais_urgent_m").addEventListener("input", validateDelais);
+</script>
 <!-- Inclure les scripts de Bootstrap et jQuery -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
@@ -199,7 +284,7 @@
     });
 </script>
     <!--------Script gestion duree-------------->
-          <script>
+          <!--script>
         function validateDelays(formPrefix) {
             const delaisMaximal = parseInt(document.getElementById(formPrefix + '_delais_maximal').value);
             const delaisUrgent = parseInt(document.getElementById(formPrefix + '_delais_urgent').value);
@@ -235,5 +320,5 @@
         document.getElementById('edit_delais_urgent').addEventListener('input', function() {
             validateDelays('edit');
         });
-    </script>
+    </script-->
 {% endblock content %}

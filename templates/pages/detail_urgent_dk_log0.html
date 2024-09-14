@@ -1,10 +1,121 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block breadcrumbs %}{% endblock breadcrumbs %}
+
+{% block content %}
+
+  <!-- [ Main Content ] start -->
+  <div class="row">
+
+    <!--[ daily sales section ] start-->
+    <div class="col-md-6 col-xl-4">
+      <div class="card daily-sales">
+        <div class="card-block">
+          <h3> Urgences </h3>
+          <div class="row d-flex align-items-center">
+            <div class="col-9">
+              <h3 class="f-w-300 d-flex align-items-center m-b-0"><i
+                  class="feather icon-arrow-up text-c-green f-30 m-r-10"></i>
+                {{ lg }}</h3>
+            </div>
+
+            <div class="col-3 text-right">
+              <p class="m-b-0">{{ pourcentage_urgent }}%</p>
+            </div>
+          </div>
+          <div class="progress m-t-30" style="height: 7px;">
+            <div class="progress-bar progress-c-theme" role="progressbar" style="width: 50%;"
+              aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        function fetchMouvements() {
+            $.ajax({
+                url: "/fect_urgent/12",
+                method: "GET",
+                success: function(data) {
+                    var tableBody = $('#mouvements-table tbody');
+                    tableBody.empty();
+                    data.forEach(function(mouvement_list) {
+
+                        var row = `
+                            <tr>
+                                <td>${statutText}</td>
+                                <td>${mouvement_list.camion.immatriculation}</td>
+                                <td>${mouvement_list.permis}</td>
+                                <td>${mouvement_list.remorque}</td>
+                                <td>${mouvement_list.camion.transporteur}</td>
+                                <td>${mouvement_list.chauffeur}</td>
+
+                            </tr>`;
+                        tableBody.append(row);
+                    });
+                }
+            });
+        }
+
+        fetchMouvements();
+        setInterval(fetchMouvements, 10000);
+    });
+</script>
+
+
+ <div class="container ">
+        <div class="table-responsive">
+    <div class="col-xl-8 col-md-12 m-b-30">
+              <table   class="table table-hover" >
+            <thead>
+              <tr>
+                   <th>Destination</th>
+
+                <th>Date Entree</th>
+
+
+                  <th>Pointeur Entree</th>
+                   <!--<th>Date Sortie</th>
+                  <th>Pointeur Sortie</th>-->
+
+                <th>Camion</th>
+
+                <th>Transporteur</th>
+                <th>chauffeur</th>
+
+
+              </tr>
+            </thead>
+            <tbody>
+            {%   for mvt in mvt  %}
+              <tr>
+              <td>{{  mvt.destination.upper }}  </td>
+
+
+                  <td>{{  mvt.date_entree }}  </td>
+
+                  <td>{{  mvt.pointeur }}  </td>
+                    <!--<td>{{  mvt.date_sortie }}  </td>
+                  <td>{{  mvt.pointeur_srt }}  </td>-->
+
+              <td>{{  mvt.imat }}  </td>
+                  <td>{{  mvt.trans }}  </td>
+                  <td>{{  mvt.chauffeur_name }}  </td>
+
+
+
+              </tr>
+            {% endfor %}
+
+            </tbody>
+              </table>
+    </div>
+        </div>
+ </div>
+
+
+
+{% endblock content %}

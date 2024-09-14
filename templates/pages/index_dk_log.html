@@ -7,47 +7,89 @@
  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
     $(document).ready(function() {
-        function fetchMouvements() {
-            $.ajax({
-                url: "{% url 'liste_mouvements'  id_user=util.id_user %}",
-                method: "GET",
-                success: function(data) {
-                    var tableBody = $('#mouvements-table tbody');
-                    tableBody.empty();
-                    data.forEach(function(mouvement_list) {
-                         var statutText = '';
-                            if (mouvement_list.statut_entree === 0) {
-                                statutText = 'DECHARGE';
-                            } else if (mouvement_list.statut_entree === 1) {
-                                statutText = 'CHARGE';
-                            }
-                        var row = `
-                            <tr>
-                                <td>${statutText}</td>
-                                 <td>${mouvement_list.destination}</td>
-                                <td>${mouvement_list.camion.immatriculation}</td>
-                                <td>${mouvement_list.permis}</td>
-                                <td>${mouvement_list.remorque}</td>
-                                <td>${mouvement_list.camion.transporteur}</td>
-                                <td>${mouvement_list.chauffeur}</td>
+          function fetchMouvements() {
+    fetch('/fetch_mouvementsdash/')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('table tbody');
+            tbody.innerHTML = '';  // Clear the table body
 
-                            </tr>`;
-                        tableBody.append(row);
-                    });
+            data.mouvements.forEach(mvt => {
+                let etatClass = '';
+                let etatText = '';
+
+                switch (mvt.etat) {
+                    case 1:
+                        etatClass = 'text-c-green';
+                        etatText = 'En Attente';
+                        break;
+                    case 2:
+                        etatClass = 'text-c-yellow';
+                        etatText = 'Urgent';
+                        break;
+                    case 3:
+                        etatClass = 'text-c-red';
+                        etatText = 'Retard';
+                        break;
                 }
-            });
-        }
 
-        fetchMouvements();
-        setInterval(fetchMouvements, 10000);
+                const row = `
+                    <tr>
+                        <td><h6 class="m-0">${mvt.cam}</h6></td>
+                        <td><h6 class="m-0">${mvt.chrono} mns</h6></td>
+                        <td><h6 class="m-0 ${etatClass}">${etatText}</h6></td>
+                        <td class="text-right"><i class="fas fa-circle ${etatClass} f-10"></i></td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        })
+        .catch(error => console.error('Error fetching mouvements:', error));
+}
+
+function fetchStats() {
+        $.ajax({
+            url: "{% url 'fetch_stats' id_user=util.id_user %}",
+            method: "GET",
+            success: function(data) {
+                $('#totalCours').text(data.total_cours);
+                $('#urgences').text(data.urg);
+                $('#retards').text(data.dep);
+                $('#totalTer').text(data.total_ter);
+                $('#lgMois').text(data.lg_mois);
+                $('#lg30').text(data.lg_30);
+            }
+        });
+    }
+    fetchMouvements();
+    fetchStats();
+    setInterval(fetchMouvements, 10000);
+    setInterval(fetchStats, 10000);
     });
 </script>
 
   <div class="row">
 
-
+ <ul class="nav nav-tabs" style="margin-left: 20px">
+  <li class="nav-item">
+    <a class="nav-link " aria-current="page" href="/index_dk_log0/{{ util.id_user }}">PLT</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" href="/index_dk_log/{{ util.id_user }}">ICD TOM</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="/index_dk_log1/{{ util.id_user }}">ICD CMA</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link disabled" href="/index_dk_log2/{{ util.id_user }}" tabindex="-1" >SACHERIE</a>
+  </li> <li class="nav-item">
+    <a class="nav-link disabled" href="/index_dk_log3/{{ util.id_user }}" tabindex="-1" >ZUD</a>
+  </li>     <li class="nav-item">
+    <a class="nav-link" href="/index_dk_logparticulier/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
+  </li>
+</ul>
     <!-- [ statistics year chart ] end
-    <!--[social-media section] start-->
+    [social-media section] start-->
     <div class="col-md-6 col-xl-6"  id="myTable">
       <div class="card card-social">
         <div class="card-block border-bottom">
@@ -56,10 +98,10 @@
 
                 <i class="fas fa-spinner fa-spin progress-icon text-primary f-36"></i>
             </div>
-            <div class="col text-right">
-              <h3>En Cours : {{ total_cours }}</h3>
-              <!--<h5 class="text-c-green mb-0">{{ total_cours }} <span class="text-muted">Total</span></h5>-->
-            </div>
+          <div class="col text-right">
+              <h3>En Cours : <span id="totalCours">{{ total_cours }}</span></h3>
+          </div>
+
           </div>
         </div>
         <div class="card-block">
@@ -67,7 +109,7 @@
 
             <div class="col-6">
                 <a href="/detail_urgent_dk_log/{{ util.id_user  }}" id="detailButton" class="detail-button">Détails</a>
-              <h6 class="text-center m-b-10"><span class="text-muted m-r-5">Urgences :</span>{{ urg }}</h6>
+             <h6 class="text-center m-b-10"><span class="text-muted m-r-5">Urgences :</span><span id="urgences">{{ urg }}</span></h6>
               <div class="progress">
                 <div class="progress-bar progress-c-theme" role="progressbar" style="width:60%;height:6px;"
                   aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
@@ -77,7 +119,7 @@
 
             <div class="col-6">
                 <a href="/detail_depassement_dk_log/{{ util.id_user  }}" id="detailButton1" class="detail-button1">Détails</a>
-              <h6 class="text-center  m-b-10"><span class="text-muted m-r-5">Retards :</span>{{ dep }}</h6>
+       <h6 class="text-center  m-b-10"><span class="text-muted m-r-5">Retards :</span><span id="retards">{{ dep }}</span></h6>
               <div class="progress">
                 <div class="progress-bar progress-c-theme1" role="progressbar" style="width:45%;height:6px;color: red"
                   aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
@@ -97,7 +139,7 @@
                 <i class="fas fa-check finish-icon text-c-blue f-36"></i>
             </div>
             <div class="col text-right">
-              <h3>Terminés : {{ total_ter }}</h3>
+<h3>Terminés : <span id="totalTer">{{ total_ter }}</span></h3>
               <!--<h5 class="text-c-purple mb-0">20 <span class="text-muted">Total</span>-->
                   <!--<h5 class="text-c-green mb-0">{{ total_ter }} <span class="text-muted">Total</span></h5>-->
               </h5>
@@ -108,7 +150,7 @@
           <div class="row align-items-center justify-content-center card-active">
             <div class="col-6">
                 <a href="/detail_moins_30_dk_log/{{ util.id_user  }}" id="detailButton2" class="detail-button2">Détails</a>
-              <h6 class="text-center m-b-10"><span class="text-muted m-r-5"> Dans les délais :</span>{{ lg_mois }} </h6>
+              <h6 class="text-center m-b-10"><span class="text-muted m-r-5">Dans les délais :</span><span id="lgMois">{{ lg_mois }}</span></h6>
               <div class="progress">
                 <div class="progress-bar progress-c-green" role="progressbar" style="width:40%;height:6px;"
                   aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
@@ -116,7 +158,7 @@
             </div>
             <div class="col-6">
                 <a href="/detail_plus_30_dk_log/{{ util.id_user  }}" id="detailButton3" class="detail-button3">Détails</a>
-              <h6 class="text-center  m-b-10"><span class="text-muted m-r-5"> Au dela des délais :</span> {{ lg_30 }} </h6>
+              <h6 class="text-center  m-b-10"><span class="text-muted m-r-5">Au-delà des délais :</span><span id="lg30">{{ lg_30 }}</span></h6>
               <div class="progress">
                 <div class="progress-bar progress-c-blue" role="progressbar" style="width:70%;height:6px;"
                   aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"></div>
@@ -134,7 +176,6 @@
             <thead>
               <tr>
                 <th>Camion</th>
-                  <th>Destination</th>
                 <!--<th>Date Entree</th>-->
                 <th>Chrono</th>
                 <th>Status</th>
@@ -144,54 +185,6 @@
               </tr>
             </thead>
             <tbody>
-            {% for mvt in mvt  %}
-              <tr>
-                <td>
-                  <h6 class="m-0"><img class="rounded-circle m-r-10" style="width:40px;"
-                      src="{% static 'assets/images/goodlogo.png' %}" alt="activity-user">{{ mvt.cam }}</h6>
-                </td>
-              <td>
-                  <h6 class="m-0">{{ mvt.destination}}</h6>
-                </td>
-                <!--<td>
-                  <h6 class="m-0">{{ mvt.date_entree }}</h6>
-                </td>-->
-                <td>
-                  <h6 class="m-0">{{ mvt.chrono }} mns</h6>
-                </td>
-                <td>
-                     {% if mvt.etat == 1 %}
-                         <h6 class="m-0 text-c-green">En Attente</h6>
-                  {% endif %}
-                     {% if mvt.etat == 2 %}
-                         <h6 class="m-0 text-c-yellow">Urgent</h6>
-                  {% endif %}
-                     {% if mvt.etat == 3 %}
-                         <h6 class="m-0 text-c-red">Retard</h6>
-                      {% endif %}
-
-
-                </td>
-
-                </td>
-                  {% if mvt.etat == 1 %}
-                      <td class="text-right"><i class="fas fa-circle text-c-green f-10"></i>
-
-              {% endif %}
-              {% if mvt.etat == 2 %}
-                  <td class="text-right"><i class="fas fa-circle text-c-yellow f-10"></i>
-
-              {% endif %}
-              {% if mvt.etat == 3 %}
-                  <td class="text-right"><i class="fas fa-circle text-c-red f-10"></i>
-
-              {% endif %}
-              <!--1<td class="text-right">
-                        <a href="#!" class="label theme-bg text-white f-12" data-toggle="modal" data-target="#myModal">Detail</a>
-
-                    </td>-->
-              </tr>
-            {% endfor %}
             </tbody>
       </table>
   </div>
@@ -204,14 +197,6 @@
           <!--
 
   [ Main Content ] end -->
-   <script type="text/javascript">
-        // Fonction pour rafraîchir la page
-        function refreshPage() {
-            location.reload();
-        }
 
-        // Définir un intervalle pour rafraîchir la page toutes les 30 secondes (30000 millisecondes)
-        setInterval(refreshPage, 10000);
-    </script>
-
+  </div>
 {% endblock content %}
