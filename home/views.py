@@ -1177,6 +1177,10 @@ def fetch_statsparticulier(request, id_user):
             delais_urg = timedelta(minutes=20)
         if mvt.date_sortie is None:
             # Mouvements en cours
+            if(mvt.date_entree):
+                pass
+            else:
+                mvt.date_entree = maintenant
             total_cours += 1
             if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
                 urg += 1
@@ -1353,9 +1357,83 @@ def fetch_stats1(request, id_user):
 ####################### FETCH DASHBORD INFORMATIONS SACHERIE ###########################
 def fetch_stats2(request, id_user):
     maintenant = timezone.now()
+
+    # Filtrer les mouvements (Mouvement2, Mouvement6, Mouvement7)
+    mouvements2 = Mouvement2.objects.filter(date_sortie__isnull=True) | Mouvement2.objects.filter(date_sortie__isnull=False)
+    mouvements6 = Mouvement6.objects.filter(date_sortie__isnull=True) | Mouvement6.objects.filter(date_sortie__isnull=False)
+    mouvements7 = Mouvement7.objects.filter(date_sortie__isnull=True) | Mouvement7.objects.filter(date_sortie__isnull=False)
+
+    # Combiner les mouvements des trois modèles
+    mouvements_combines = chain(mouvements2, mouvements6, mouvements7)
+
+    urg = 0
+    dep = 0
+    lg_30 = 0
+    lg_moins = 0
+    total_cours = 0
+
+    for mvt in mouvements_combines:
+        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        type = camion.type
+
+        # Gestion des délais via ParametrageDelais
+        try:
+            para = ParametrageDelais.objects.get(entite='sacherie', type=type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal))
+            delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except ParametrageDelais.DoesNotExist:
+            duree_dk = timedelta(minutes=30)
+            delais_urg = timedelta(minutes=20)
+
+        # Gestion de la variable destination selon le modèle de mouvement
+        if isinstance(mvt, Mouvement2):
+            destination = "TOM"
+        elif isinstance(mvt, Mouvement6):
+            destination = "ITS"
+        elif isinstance(mvt, Mouvement7):
+            destination = "TRANSEXPRESS"
+        else:
+            destination = "Non Assigné"
+
+        # Mouvements en cours
+        if mvt.date_sortie is None:
+            total_cours += 1
+
+            if not mvt.date_entree:
+                mvt.date_entree = maintenant
+
+            if delais_urg <= (maintenant - mvt.date_entree) < duree_dk:
+                urg += 1
+            elif (maintenant - mvt.date_entree) >= duree_dk:
+                dep += 1
+
+        # Mouvements sortis
+        else:
+            duree_mouvement = mvt.date_sortie - mvt.date_entree
+            if duree_mouvement >= duree_dk:
+                lg_30 += 1
+            else:
+                lg_moins += 1
+
+    totalter = lg_30 + lg_moins
+
+    return JsonResponse({
+        'urg': urg,
+        'dep': dep,
+        'lg_30': lg_30,
+        'lg_mois': lg_moins,
+        'total_cours': total_cours,
+        'total_ter': totalter,
+        'destination': destination,  # Inclure la variable destination
+    })
+####################### FETCH DASHBORD INFORMATIONS ZUD ###########################
+
+def fetch_stats3(request, id_user):
+    maintenant = timezone.now()
+
     # Filtrer les mouvements
-    mouvements = (Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='hangar')
-                  | Mouvement0.objects.filter(date_sortie__isnull=False, destination__contains='hangar'))# Si vous avez besoin d'ordonner les résultats, vous pouvez trier la liste
+    mouvements = (Mouvement3.objects.filter(date_sortie__isnull=True)
+                  | Mouvement3.objects.filter(date_sortie__isnull=False))
     urg = 0
     dep = 0
     lg_30 = 0
@@ -1365,7 +1443,7 @@ def fetch_stats2(request, id_user):
         camion = Camion.objects.get(id_cam=mvt.camion_id)
         type = camion.type
         try:
-            para = ParametrageDelais.objects.get(entite='sacherie', type=type)
+            para = ParametrageDelais.objects.get(entite='icd', type=type)
             duree_dk = timedelta(minutes=int(para.delais_maximal))
             delais_urg = timedelta(minutes=int(para.delais_urgent))
         except:
@@ -1379,54 +1457,6 @@ def fetch_stats2(request, id_user):
                 pass
             else:
                 mvt.date_entree = maintenant
-            if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
-                urg += 1
-            elif (maintenant - mvt.date_entree) >= duree_dk:
-                dep += 1
-        else:
-            # Mouvements sortis
-            duree_mouvement = mvt.date_sortie - mvt.date_entree
-            if duree_mouvement >= duree_dk:
-                lg_30 += 1
-            else:
-                lg_moins += 1
-
-        totalter = lg_30 + lg_moins
-
-        return JsonResponse({
-            'urg': urg,
-            'dep': dep,
-            'lg_30': lg_30,
-            'lg_mois': lg_moins,
-            'total_cours': total_cours,
-            'total_ter': totalter,
-        })
-####################### FETCH DASHBORD INFORMATIONS ZUD ###########################
-
-def fetch_stats3(request, id_user):
-    maintenant = timezone.now()
-    # Filtrer les mouvements
-    mouvements = (Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='zud')
-                  | Mouvement0.objects.filter(date_sortie__isnull=False,
-                                              destination__contains='hangar'))  # Si vous avez besoin d'ordonner les résultats, vous pouvez trier la liste
-    urg = 0
-    dep = 0
-    lg_30 = 0
-    lg_moins = 0
-    total_cours = 0
-    for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        type = camion.type
-        try:
-            para = ParametrageDelais.objects.get(entite='sacherie', type=type)
-            duree_dk = timedelta(minutes=int(para.delais_maximal))
-            delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
-            duree_dk = timedelta(minutes=30)
-            delais_urg = timedelta(minutes=20)
-        if mvt.date_sortie is None:
-            # Mouvements en cours
-            total_cours += 1
             if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
                 urg += 1
             elif (maintenant - mvt.date_entree) >= duree_dk:
@@ -1676,7 +1706,7 @@ def ajoutsortie(request):
             # Rediriger vers une vue après sauvegarde
             #return redirect(f'/index2_view/{util.id_user}')
             if (source=='icdtom'):
-                return redirect(f"/sortie_tom/{id_user}?success=true")
+                return redirect(f"/sortie_tom/{id_user.strip()}?success=true")
             elif(source == 'zud'):
                 return redirect(f"/index_sortie_zud/{id_user.strip()}?success=true")
             elif (source == 'icdcma'):
@@ -2057,36 +2087,157 @@ def liste_mouvements_sacherie(request):
 @csrf_exempt
 def modifier_mouvement(request):
     if request.method == 'POST':
-      boite_id = request.POST['mouvementId']
-      boite = get_object_or_404(Mouvement1, id_mvt=boite_id)
-      id_cam=boite.camion_id
-      id_chauff=boite.chauffeur_id
-      boite.mission = request.POST['mission']
-      boite.remorque = request.POST['remorque']
-      boite.statut_entree = request.POST['statut_entree']
-      boite.statut_sortie = request.POST['statut_sortie']
+        try:
+            ################# RECUPERATION DES VALEURS ###############
+            id_mvt = request.POST.get('id_mouvement')
+            id_user = request.POST.get('id_user')
+            navire = request.POST.get('navire')
+            camion_id = request.POST.get('camion')
+            chauffeur_id = request.POST.get('chauffeur')
+            client_id = request.POST.get('client')
+            representant_id = request.POST.get('representant')
+            marchandise = request.POST.get('marchandise')
+            mission = request.POST.get('mission')
+            date_validite = request.POST.get('date_validite')
+            tonnage = request.POST.get('tonnage') or 0
+            typeconteneur1 = request.POST.get('typeconteneur1')
+            numconteneur1 = request.POST.get('numconteneur1')
+            typeconteneur2 = request.POST.get('typeconteneur2')
+            numconteneur2 = request.POST.get('numconteneur2')
+            bl1 = request.POST.get('bl1')
+            bl2 = request.POST.get('bl2')
+            nbrcolis = request.POST.get('nbrcolis') or 0
+            entite = request.POST.get('entite')
+            destination = request.POST.get('destination')
+            remorque = request.POST.get('remorque')
+            transitaire_id = request.POST.get('transitaire')
+            mouvement0= Mouvement0.objects.filter(id_mvt=id_mvt).first()
+            # Mise à jour de Mouvement0
+            if typeconteneur1:
+                mouvement0.typeconteneur1 = typeconteneur1
+            if remorque:
+                mouvement0.remorque = remorque
+            if navire:
+                mouvement0.navire = navire
+            if numconteneur1:
+                mouvement0.numconteneur1 = numconteneur1
+            if typeconteneur2:
+                mouvement0.typeconteneur2 = typeconteneur2
+            if numconteneur2:
+                mouvement0.numconteneur2 = numconteneur2
+            if bl1:
+                mouvement0.bl1 = bl1
+            if date_validite:
+                mouvement0.date_validite = date_validite
+            if bl2:
+                mouvement0.bl2 = bl2
+            if nbrcolis:
+                mouvement0.nbrcolis = nbrcolis
+            if tonnage:
+                mouvement0.tonnage = tonnage
+            if mission:
+                mouvement0.mission = mission
+            if camion_id:
+                mouvement0.camion_id = camion_id
+            if transitaire_id:
+                mouvement0.transitaire_id = transitaire_id
+            if representant_id:
+                mouvement0.representant_id = representant_id
+            if chauffeur_id:
+                mouvement0.chauffeur_id = chauffeur_id
+            if client_id:
+                mouvement0.client_id = client_id
+            if marchandise:
+                mouvement0.marchandise = marchandise
+            if entite != destination:
+                destination = f"{entite} ({destination})"
+            else:
+                destination = entite
+            mouvement0.destination = destination
+            #camion = Camion.objects.get(id_cam=camion_id)
+            mouvement0.save()
+            # Mise à jour ou création des mouvements enfants en fonction du destination
+            movement_type = None
+            destination = destination
+            if 'icdtom' in destination:
+                movement_type = Mouvement1
+            elif 'cmaicd' in destination:
+                movement_type = Mouvement4
+            elif 'tom' in destination and 'hangar' in destination:
+                movement_type = Mouvement2
+            elif 'its' in destination and 'hangar' in destination:
+                movement_type = Mouvement6
+            elif 'transexpress' in destination and 'hangar' in destination:
+                movement_type = Mouvement7
+            elif 'zud' in destination:
+                movement_type = Mouvement3
 
-      if  request.POST['camion'] :
-          try :
-              cam_mof=Camion.objects.filter(immatriculation= request.POST['camion']).first()
-              boite.camion_id=cam_mof.id_cam
-          except :
-           pass
-      if  request.POST['permis'] :
-          try :
-              chau_mof=Chaffeur.objects.filter(permis= request.POST['permis']).first()
-              boite.chauffeur_id=chau_mof.id_chauffeur
-          except :
-           pass
+            if movement_type:
+                # Vérification si le mouvement enfant existe déjà
+                # Vérification si le mouvement enfant existe déjà
+                mouvement = movement_type.objects.filter(id_mvt_0=mouvement0).first()
 
+                if mouvement is not None:
+                    # Mise à jour de l'enfant
+                    if camion_id:
+                        mouvement.camion_id = camion_id
+                    if chauffeur_id:
+                        mouvement.chauffeur_id = chauffeur_id
+                    if client_id:
+                        mouvement.client_id = client_id
+                    if mission:
+                        mouvement.mission = mission
+                    if remorque:
+                        mouvement.remorque = remorque
+                else:
+                    # Si le mouvement n'existe pas, il faut le créer
+                    mouvement = movement_type(
+                        camion_id=camion_id,
+                        chauffeur_id=chauffeur_id,
+                        client_id=client_id,
+                        mission=mission,
+                        remorque=remorque,
+                        id_mvt_0=mouvement0
+                    )
 
+                # Mise à jour des champs spécifiques à Zud
+                if destination == 'zud':
+                    if marchandise:
+                        mouvement.marchandise = marchandise
+                    if bl1:
+                        mouvement.bl1 = bl1
+                    if bl2:
+                        mouvement.bl2 = bl2
+                    if transitaire_id:
+                        mouvement.transitaire_id = transitaire_id
+                    if representant_id:
+                        mouvement.representant_id = representant_id
+                    if navire:
+                        mouvement.navire = navire
+                    if tonnage:
+                        mouvement.tonnage = tonnage
+                    if nbrcolis:
+                        mouvement.nbrcolis = nbrcolis
 
-      boite.save()
-      #return redirect(reverse('index'))  # Redirigez vers la page index après la modification
-      return redirect("/liste_umvt/" + str(request.POST['id_user']))
+                # Sauvegarder l'objet mouvement enfant
+                mouvement.save()
+            if 'hangar' in destination:
+                return redirect(f"/modif_mvt1/{id_user}?success=true")
+            elif destination == 'zud':
+                return redirect(f"/modif_mvt2/{id_user}?success=true")
+            else:
+                return redirect(f"/modif_mvt/{id_user}?success=true")
+        except Exception as e:
+            error_message = str(e)
+            return redirect(f"/modif_mvt/{id_user}?error={error_message}")
 
-    return render(request, 'index.html')
-
+    else:
+        chauffeurs = Chaffeur.objects.all()
+        camions = Camion.objects.all()
+        return render(request, 'pages/mouvement_entre_0.html', {
+            'camions': camions,
+            'chauffeurs': chauffeurs,
+        })
 @csrf_exempt
 def modifier_mouvement0(request):
     if request.method == 'POST':
@@ -2644,8 +2795,7 @@ def fetch_mouvementsdash0(request):
 #################### ICD TOM  #################################
 def fetch_mouvementsdash(request):
     maintenant = timezone.now()
-    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='icdtom')[:50]
-
+    mouvements = Mouvement1.objects.filter(date_sortie__isnull=True)[:50]
     mouvements_avec_attributs = []
     for mvt in mouvements:
         camion = Camion.objects.get(id_cam=mvt.camion_id)
@@ -2658,7 +2808,10 @@ def fetch_mouvementsdash(request):
         except:
             duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
-
+        if (mvt.date_entree):
+            pass
+        else:
+            mvt.date_entree=maintenant
         diff = (maintenant - mvt.date_entree).total_seconds() / 60
         diff_seconds = (maintenant - mvt.date_entree).total_seconds()
         hours, remainder = divmod(diff_seconds, 3600)
@@ -2681,12 +2834,11 @@ def fetch_mouvementsdash(request):
 #################### ICD CMA  #################################
 def fetch_mouvementsdash1(request):
     maintenant = timezone.now()
-    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='cmaicd')[:50]
+    mouvements = Mouvement4.objects.filter(date_sortie__isnull=True)[:50]
     mouvements_avec_attributs = []
     for mvt in mouvements:
         camion = Camion.objects.get(id_cam=mvt.camion_id)
         mvt.cam = camion.immatriculation
-
         try:
             para = ParametrageDelais.objects.get(entite='icd', type=camion.type)
             duree_dk = timedelta(minutes=int(para.delais_maximal))
@@ -2694,7 +2846,10 @@ def fetch_mouvementsdash1(request):
         except:
             duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
-
+        if mvt.date_entree:
+            pass
+        else:
+            mvt.date_entree=maintenant
         diff = (maintenant - mvt.date_entree).total_seconds() / 60
         diff_seconds = (maintenant - mvt.date_entree).total_seconds()
         hours, remainder = divmod(diff_seconds, 3600)
@@ -2717,62 +2872,99 @@ def fetch_mouvementsdash1(request):
 #################### SACHERIE  #################################
 def fetch_mouvementsdash2(request):
     maintenant = timezone.now()
-    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='hangar')[:50]
+
+    # Récupérer les mouvements des trois modèles
+    mouvements2 = Mouvement2.objects.filter(date_sortie__isnull=True)
+    mouvements6 = Mouvement6.objects.filter(date_sortie__isnull=True)
+    mouvements7 = Mouvement7.objects.filter(date_sortie__isnull=True)
+
+    # Combiner les requêtes en une seule liste
+    mouvements_combines = chain(mouvements2, mouvements6, mouvements7)
 
     mouvements_avec_attributs = []
-    for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-
+    for mvt in mouvements_combines:
+        # Gestion du camion
         try:
-            para = ParametrageDelais.objects.get(entite='sacherie', type=camion.type)
-            duree_dk = timedelta(minutes=int(para.delais_maximal))
-            delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
-            duree_dk = timedelta(minutes=60)
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation if camion.immatriculation else "Non Assigné"
+        except Camion.DoesNotExist:
+            mvt.cam = "Non Assigné"
+
+        # Gestion des délais via ParametrageDelais
+        try:
+            para = ParametrageDelais.objects.get(entite='icd', type=camion.type)
+            duree_dk = timedelta(minutes=int(para.delais_maximal)) if para.delais_maximal else timedelta(minutes=30)
+            delais_urg = timedelta(minutes=int(para.delais_urgent)) if para.delais_urgent else timedelta(minutes=20)
+        except ParametrageDelais.DoesNotExist:
+            duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
 
+        # Calculer la date d'entrée si elle est manquante
+        mvt.date_entree = mvt.date_entree if mvt.date_entree else maintenant
+
+        # Calculer la différence en minutes et en secondes
         diff = (maintenant - mvt.date_entree).total_seconds() / 60
         diff_seconds = (maintenant - mvt.date_entree).total_seconds()
         hours, remainder = divmod(diff_seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
         mvt.chrono = f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
-        if timedelta(minutes=diff) >= duree_dk:
-            mvt.etat = 3
-        elif timedelta(minutes=diff) < duree_dk and timedelta(minutes=diff) >= delais_urg:
-            mvt.etat = 2
-        else:
-            mvt.etat = 1
 
+        # Définir l'état en fonction des délais
+        if timedelta(minutes=diff) >= duree_dk:
+            mvt.etat = 3  # Urgence
+        elif timedelta(minutes=diff) < duree_dk and timedelta(minutes=diff) >= delais_urg:
+            mvt.etat = 2  # Alerte
+        else:
+            mvt.etat = 1  # Normal
+
+        # Ajouter la variable Destination selon le modèle du mouvement
+        if isinstance(mvt, Mouvement2):
+            mvt.destination = "TOM"
+        elif isinstance(mvt, Mouvement6):
+            mvt.destination = "ITS"
+        elif isinstance(mvt, Mouvement7):
+            mvt.destination = "TRANSEXPRESS"
+        else:
+            mvt.destination = "Non Assigné"
+
+        # Ajouter les informations à la liste
         mouvements_avec_attributs.append({
             'cam': mvt.cam,
-            'destination': mvt.destination.upper(),
             'chrono': mvt.chrono,
-            'etat': mvt.etat
+            'etat': mvt.etat,
+            'destination': mvt.destination  # Inclure la destination
         })
+
+    # Limiter les résultats à 50 mouvements au total
+    mouvements_avec_attributs = mouvements_avec_attributs[:50]
 
     return JsonResponse({'mouvements': mouvements_avec_attributs})
 #################### ZUD  #################################
 def fetch_mouvementsdash3(request):
     maintenant = timezone.now()
-    mouvements = Mouvement0.objects.filter(date_sortie__isnull=True, destination__contains='zud')[:50]
+    mouvements = Mouvement3.objects.filter(date_sortie__isnull=True)[:50]
     mouvements_avec_attributs = []
     for mvt in mouvements:
         camion = Camion.objects.get(id_cam=mvt.camion_id)
         mvt.cam = camion.immatriculation
+
         try:
-            para = ParametrageDelais.objects.get(entite='zud', type=camion.type)
+            para = ParametrageDelais.objects.get(entite='icd', type=camion.type)
             duree_dk = timedelta(minutes=int(para.delais_maximal))
             delais_urg = timedelta(minutes=int(para.delais_urgent))
         except:
-            duree_dk = timedelta(minutes=1440)
+            duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
-
+        if (mvt.date_entree):
+            pass
+        else:
+            mvt.date_entree = maintenant
         diff = (maintenant - mvt.date_entree).total_seconds() / 60
         diff_seconds = (maintenant - mvt.date_entree).total_seconds()
         hours, remainder = divmod(diff_seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
         mvt.chrono = f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
+
         if timedelta(minutes=diff) >= duree_dk:
             mvt.etat = 3
         elif timedelta(minutes=diff) < duree_dk and timedelta(minutes=diff) >= delais_urg:
@@ -2785,7 +2977,6 @@ def fetch_mouvementsdash3(request):
             'chrono': mvt.chrono,
             'etat': mvt.etat
         })
-
     return JsonResponse({'mouvements': mouvements_avec_attributs})
 def fetch_mouvementsdashparticulier(request):
     maintenant = timezone.now()
@@ -2801,7 +2992,10 @@ def fetch_mouvementsdashparticulier(request):
         except:
             duree_dk = timedelta(minutes=60)
             delais_urg = timedelta(minutes=20)
-
+        if (mvt.date_entree):
+            pass
+        else:
+            mvt.date_entree=maintenant
         diff = (maintenant - mvt.date_entree).total_seconds() / 60
         diff_seconds = (maintenant - mvt.date_entree).total_seconds()
         hours, remainder = divmod(diff_seconds, 3600)
@@ -3302,33 +3496,44 @@ def detail_moins_30_sacherie(request, id):
 ###################### DETAIL URGENT PARTICULIER #####################################
 def detail_urgent_dk_logpar(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
+    delais_urg = timedelta(minutes=15)  # Par défaut 15 minutes pour l'urgence
+    duree_dk = timedelta(minutes=30)  # Par défaut 30 minutes pour le délai maximal
+
+    # Récupération des mouvements non sortis
     mouvements = Mouvement8.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
-    mouvements_avec_attributs = []
-    mouvements_filtrés=[]
+    mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Vehicule.objects.get(id_veh=mvt.vehicule_id)
-        mvt.cam = camion.immatriculation
         try:
-            para = 30
-            duree_dk = timedelta(minutes=int(para))
-            delais_urg = timedelta(minutes=int(para))
-        except:
-            duree_dk = timedelta(minutes=30)
-            delais_urg = timedelta(minutes=20)
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        mvt.imat = camion.immatriculation
-        if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk :
+            # Récupérer les informations du véhicule associé au mouvement
+            camion = Vehicule.objects.get(id_veh=mvt.vehicule_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+        except Vehicule.DoesNotExist:
+            mvt.cam = "Non assigné"
+            mvt.imat = "Non assigné"
+
+        try:
+            # Récupérer le pointeur d'entrée
+            pointeur_entree = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = pointeur_entree.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        # Calculer la durée du mouvement par rapport à l'urgence
+        temps_ecoule = maintenant - mvt.date_entree
+        if delais_urg <= temps_ecoule < duree_dk:
             mouvements_filtrés.append(mvt)
-        lg = len(mouvements_filtrés)
+
+    # Calcul du nombre total de mouvements et du pourcentage urgent
     total_encours = len(mouvements)
-    if total_encours >= 1:
-        pourcentage_urgent = (lg / total_encours) * 100
-    else:
-        pourcentage_urgent = 0
+    lg = len(mouvements_filtrés)
+    pourcentage_urgent = (lg / total_encours) * 100 if total_encours >= 1 else 0
+
+    # Récupération de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte à passer au template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
@@ -3336,6 +3541,8 @@ def detail_urgent_dk_logpar(request, id):
         'pourcentage_urgent': int(pourcentage_urgent),
         'util': user
     }
+
+    # Rendu du template avec le contexte
     return render(request, "pages/detail_urgent_dk_logpar.html", context)
 ###################### DETAIL URGENT PLT #####################################
 def detail_urgent_dk_log0(request, id):
@@ -3343,38 +3550,54 @@ def detail_urgent_dk_log0(request, id):
     duree_dk = 30
     delais_urg = 15
     mouvements = Mouvement0.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
-    mouvements_avec_attributs = []
-    mouvements_filtrés=[]
+    mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-        type = camion.type
+        try:
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            type = camion.type or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            type = "Non assigné"
+            mvt.trans = "Non assigné"
+            mvt.imat = "Non assigné"
+
         try:
             para = ParametrageDelais.objects.get(entite='dklog', type=type)
             duree_dk = timedelta(minutes=int(para.delais_maximal))
             delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
+        except ParametrageDelais.DoesNotExist:
             duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
-        if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk :
+
+        try:
+            pointeur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = pointeur.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        try:
+            chauffeur = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Filtrage basé sur les délais
+        if delais_urg <= (maintenant - mvt.date_entree) < duree_dk:
             mouvements_filtrés.append(mvt)
-        # Ajoutez l'objet mouvement enrichi à la liste
-        #mouvements_avec_attributs.append(mvt)
-    # Appliquez le filtre après avoir enrichi les objets mouvement
-    #mouvements_filtrés = [mvt for mvt in mouvements_avec_attributs if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk]
+
+    # Calcul des statistiques
     lg = len(mouvements_filtrés)
     total_encours = len(mouvements)
-    if total_encours >= 1:
-        pourcentage_urgent = (lg / total_encours) * 100
-    else:
-        pourcentage_urgent = 0
+    pourcentage_urgent = (lg / total_encours) * 100 if total_encours >= 1 else 0
+
+    # Récupération de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte à passer au template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
@@ -3382,6 +3605,7 @@ def detail_urgent_dk_log0(request, id):
         'pourcentage_urgent': int(pourcentage_urgent),
         'util': user
     }
+
     return render(request, "pages/detail_urgent_dk_log0.html", context)
 ###################### DETAIL URGENT ICD TOM #####################################
 def detail_urgent_dk_log(request, id):
@@ -3431,50 +3655,71 @@ def detail_urgent_dk_log(request, id):
 
     return render(request, "pages/detail_urgent_dk_log.html", context)
 ###################### DETAIL URGENT ICD CMA #####################################
+from datetime import timedelta
+from django.utils import timezone
+
 def detail_urgent_dk_log1(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
+    duree_dk = timedelta(minutes=30)  # Délai par défaut
+    delais_urg = timedelta(minutes=15)  # Délai urgent par défaut
+
+    # Récupérer les mouvements en cours (date_sortie est null)
     mouvements = Mouvement4.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
-    mouvements_avec_attributs = []
-    mouvements_filtrés=[]
+    mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-
-        type = camion.type
         try:
-            para = ParametrageDelais.objects.get(entite='dklog', type=type)
-            duree_dk = timedelta(minutes=int(para.delais_maximal))
-            delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
-            duree_dk = timedelta(minutes=30)
-            delais_urg = timedelta(minutes=20)
+            # Récupérer les informations du camion associé au mouvement
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+            type = camion.type
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            mvt.trans = "Non assigné"
+            mvt.imat = "Non assigné"
+            type = None
 
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
-        if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk :
+        # Récupérer les délais spécifiques pour ce type de camion
+        try:
+            if type:
+                para = ParametrageDelais.objects.get(entite='dklog', type=type)
+                duree_dk = timedelta(minutes=int(para.delais_maximal))
+                delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except ParametrageDelais.DoesNotExist:
+            pass  # Utiliser les valeurs par défaut
 
+        # Récupérer les informations du pointeur d'entrée
+        try:
+            poineur_entree = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = poineur_entree.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        # Récupérer les informations du chauffeur
+        try:
+            chauffeur = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Calculer la durée passée depuis l'entrée
+        temps_dans_zone = maintenant - mvt.date_entree
+
+        # Filtrer les mouvements en attente urgente
+        if delais_urg <= temps_dans_zone < duree_dk:
             mouvements_filtrés.append(mvt)
 
-        # Ajoutez l'objet mouvement enrichi à la liste
-        #mouvements_avec_attributs.append(mvt)
-
-    # Appliquez le filtre après avoir enrichi les objets mouvement
-    #mouvements_filtrés = [mvt for mvt in mouvements_avec_attributs if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk]
-
-    lg = len(mouvements_filtrés)
+    # Calcul du pourcentage de mouvements urgents
     total_encours = len(mouvements)
-    if total_encours >= 1:
-        pourcentage_urgent = (lg / total_encours) * 100
-    else:
-        pourcentage_urgent = 0
+    lg = len(mouvements_filtrés)
+    pourcentage_urgent = (lg / total_encours) * 100 if total_encours >= 1 else 0
 
+    # Récupérer les informations de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte à passer au template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
@@ -3482,7 +3727,10 @@ def detail_urgent_dk_log1(request, id):
         'pourcentage_urgent': int(pourcentage_urgent),
         'util': user
     }
+
+    # Rendu du template
     return render(request, "pages/detail_urgent_dk_log.html", context)
+
 ###################### DETAIL URGENT SACHERIE #####################################
 def detail_urgent_dk_log2(request, id):
     maintenant = timezone.now()
@@ -3587,44 +3835,52 @@ def detail_urgent_dk_log3(request, id):
 ####################### DETAIL DEPASSEMENT PLT ############################
 def detail_depassement_dk_logpar(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
+    duree_dk = timedelta(minutes=30)  # Par défaut 30 minutes pour le délai maximal
+
+    # Récupération des mouvements non sortis
     mouvements = Mouvement8.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
     mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Vehicule.objects.get(id_veh=mvt.vehicule_id)
-        mvt.cam = camion.immatriculation
         try:
-            para = 30
-            duree_dk = timedelta(minutes=int(para))
-            delais_urg = timedelta(minutes=int(para))
-        except:
-            duree_dk = timedelta(minutes=30)
-            delais_urg = timedelta(minutes=20)
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        mvt.imat = camion.immatriculation
+            # Récupérer les informations du véhicule associé au mouvement
+            camion = Vehicule.objects.get(id_veh=mvt.vehicule_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+        except Vehicule.DoesNotExist:
+            mvt.cam = "Non assigné"
+            mvt.imat = "Non assigné"
+
+        try:
+            # Récupérer le pointeur d'entrée
+            pointeur_entree = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = pointeur_entree.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        # Vérifier si la durée écoulée dépasse le délai maximal (dépassement)
         if (maintenant - mvt.date_entree) > duree_dk:
             mouvements_filtrés.append(mvt)
-    lg = len(mouvements_filtrés)
-    total_encours = len(mouvements)
-    if total_encours >= 1:
-        pourcentage_depassement = (lg / total_encours) * 100
-    else:
-        pourcentage_depassement = 0
 
+    # Calcul du nombre total de mouvements et du pourcentage de dépassement
+    total_encours = len(mouvements)
+    lg = len(mouvements_filtrés)
+    pourcentage_depassement = (lg / total_encours) * 100 if total_encours >= 1 else 0
+
+    # Récupération de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte à passer au template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
-        # 'products' : Product.objects.all()
         'lg': lg,
-        'pourcentage_depassement' : int(pourcentage_depassement),
+        'pourcentage_depassement': int(pourcentage_depassement),
         'util': user
     }
 
+    # Rendu du template avec le contexte
     return render(request, "pages/detail_depasseme_dk_logpar.html", context)
-
 ####################### DETAIL DEPASSEMENT PLT ############################
 def detail_depassement_dk_log0(request, id):
     maintenant = timezone.now()
@@ -3634,42 +3890,56 @@ def detail_depassement_dk_log0(request, id):
     mouvements_filtrés = []
 
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
+        try:
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            type = camion.type or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            type = "Non assigné"
+            mvt.trans = "Non assigné"
+            mvt.imat = "Non assigné"
 
-        type = camion.type
         try:
             para = ParametrageDelais.objects.get(entite='dklog', type=type)
             duree_dk = timedelta(minutes=int(para.delais_maximal))
             delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
+        except ParametrageDelais.DoesNotExist:
             duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
 
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
+        try:
+            pointeur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = pointeur.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
 
+        try:
+            chauffeur = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Filtrage des mouvements selon la durée dépassée
         if (maintenant - mvt.date_entree) > duree_dk:
             mouvements_filtrés.append(mvt)
 
+    # Calcul des statistiques
     lg = len(mouvements_filtrés)
     total_encours = len(mouvements)
-    if total_encours >= 1:
-        pourcentage_depassement = (lg / total_encours) * 100
-    else:
-        pourcentage_depassement = 0
+    pourcentage_depassement = (lg / total_encours) * 100 if total_encours >= 1 else 0
 
+    # Récupération de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte à passer au template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
-        # 'products' : Product.objects.all()
         'lg': lg,
-        'pourcentage_depassement' : int(pourcentage_depassement),
+        'pourcentage_depassement': int(pourcentage_depassement),
         'util': user
     }
 
@@ -3726,50 +3996,72 @@ def detail_depassement_dk_log(request, id):
 ####################### DETAIL DEPASSEMENT ICD CMA ############################
 def detail_depassement_dk_log1(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
+    duree_dk = timedelta(minutes=30)  # Valeur par défaut pour le délai maximal
+    delais_urg = timedelta(minutes=15)  # Valeur par défaut pour le délai urgent
+
+    # Récupérer les mouvements en cours (date_sortie est null)
     mouvements = Mouvement4.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
     mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-
-        type = camion.type
         try:
-            para = ParametrageDelais.objects.get(entite='dklog', type=type)
-            duree_dk = timedelta(minutes=int(para.delais_maximal))
-            delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
-            duree_dk = timedelta(minutes=30)
-            delais_urg = timedelta(minutes=20)
+            # Récupérer les informations du camion
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+            type = camion.type
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            mvt.trans = "Non assigné"
+            mvt.imat = "Non assigné"
+            type = None
 
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
+        # Récupérer les délais spécifiques en fonction du type de camion
+        try:
+            if type:
+                para = ParametrageDelais.objects.get(entite='dklog', type=type)
+                duree_dk = timedelta(minutes=int(para.delais_maximal))
+                delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except ParametrageDelais.DoesNotExist:
+            pass  # Utiliser les valeurs par défaut
 
+        # Récupérer les informations du pointeur d'entrée
+        try:
+            poineur_entree = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = poineur_entree.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        # Récupérer les informations du chauffeur
+        try:
+            chauffeur = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Vérifier si le mouvement dépasse la durée maximale autorisée
         if (maintenant - mvt.date_entree) > duree_dk:
             mouvements_filtrés.append(mvt)
 
+    # Calcul du nombre de mouvements en dépassement et du pourcentage
     lg = len(mouvements_filtrés)
     total_encours = len(mouvements)
-    if total_encours >= 1:
-        pourcentage_depassement = (lg / total_encours) * 100
-    else:
-        pourcentage_depassement = 0
+    pourcentage_depassement = (lg / total_encours) * 100 if total_encours >= 1 else 0
 
+    # Récupérer les informations de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte pour le rendu du template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
-        # 'products' : Product.objects.all()
         'lg': lg,
-        'pourcentage_depassement' : int(pourcentage_depassement),
+        'pourcentage_depassement': int(pourcentage_depassement),
         'util': user
     }
 
+    # Rendu du template
     return render(request, "pages/detail_depasseme_dk_log.html", context)
 ####################### DETAIL DEPASSEMENT SACHERIE ############################
 def detail_depassement_dk_log2(request, id):
@@ -3870,139 +4162,226 @@ def detail_depassement_dk_log3(request, id):
 ######################### DETAILS PLUS DE 30 MINUTES PLT  #######################
 def detail_plus_30_dk_log0(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
-    mouvements = Mouvement0.objects.filter(date_entree__isnull=False,date_sortie__isnull=False)
+    duree_dk = timedelta(minutes=30)
+    delais_urg = timedelta(minutes=15)
+    mouvements = Mouvement0.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
     mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-        type = camion.type
+        try:
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            type = camion.type or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            type = "Non assigné"
+            mvt.trans = "Non assigné"
+            mvt.imat = "Non assigné"
+
         try:
             para = ParametrageDelais.objects.get(entite='dklog', type=type)
             duree_dk = timedelta(minutes=int(para.delais_maximal))
             delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
+        except ParametrageDelais.DoesNotExist:
             duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
-        mvt.pointeur_srt = poineur_srt.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
+
+        try:
+            pointeur_entree = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = pointeur_entree.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        try:
+            pointeur_sortie = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+            mvt.pointeur_srt = pointeur_sortie.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur_srt = "Non assigné"
+
+        try:
+            chauffeur = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Filtrer les mouvements dont la durée entre l'entrée et la sortie dépasse duree_dk
         if (mvt.date_sortie - mvt.date_entree) > duree_dk:
             mouvements_filtrés.append(mvt)
+
+    # Calcul des statistiques
     lg = len(mouvements_filtrés)
     total_plus_30 = len(mouvements)
-    if total_plus_30 >= 1:
-      pourcentage_plus_30 = (lg / total_plus_30) * 100
-    else :
-      pourcentage_plus_30=0
+    pourcentage_plus_30 = (lg / total_plus_30) * 100 if total_plus_30 >= 1 else 0
+
+    # Récupération de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte à passer au template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
-        # 'products' : Product.objects.all()
         'lg': lg,
-        'util': user,
-        'pourcentage_plus_30' : int( pourcentage_plus_30)
+        'pourcentage_plus_30': int(pourcentage_plus_30),
+        'util': user
     }
-    return render(request, "pages/detail_plus_30_dk_log0.html", context)
 
+    # Rendu du template avec le contexte
+    return render(request, "pages/detail_plus_30_dk_log0.html", context)
 ######################### DETAILS PLUS DE 30 MINUTES ICD TOM  #######################
 def detail_plus_30_dk_log(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
-    mouvements = Mouvement1.objects.filter(date_entree__isnull=False,date_sortie__isnull=False)
+    duree_dk = timedelta(minutes=30)  # Par défaut, 30 minutes pour le délai maximal
+    delais_urg = timedelta(minutes=15)  # Par défaut, 15 minutes pour le délai urgent
+
+    # Récupération des mouvements avec date d'entrée et de sortie
+    mouvements = Mouvement1.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
     mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-        type = camion.type
         try:
-            para = ParametrageDelais.objects.get(entite='dklog', type=type)
-            duree_dk = timedelta(minutes=int(para.delais_maximal))
-            delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
-            duree_dk = timedelta(minutes=30)
-            delais_urg = timedelta(minutes=20)
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
-        mvt.pointeur_srt = poineur_srt.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
+            # Récupérer les informations du camion associé au mouvement
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            type = camion.type
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            mvt.imat = "Non assigné"
+            mvt.trans = "Non assigné"
+            type = None
+
+        # Récupérer les délais spécifiques, sinon utiliser les valeurs par défaut
+        try:
+            if type:
+                para = ParametrageDelais.objects.get(entite='dklog', type=type)
+                duree_dk = timedelta(minutes=int(para.delais_maximal))
+                delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except ParametrageDelais.DoesNotExist:
+            pass  # Garder les valeurs par défaut
+
+        # Récupérer le pointeur d'entrée et de sortie
+        try:
+            poineur_entree = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = poineur_entree.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        try:
+            poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+            mvt.pointeur_srt = poineur_srt.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur_srt = "Non assigné"
+
+        # Récupérer le chauffeur
+        try:
+            chauffeur = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Ajouter les mouvements dont la durée dépasse duree_dk
         if (mvt.date_sortie - mvt.date_entree) > duree_dk:
             mouvements_filtrés.append(mvt)
-    lg = len(mouvements_filtrés)
+
+    # Calcul du nombre total de mouvements et du pourcentage de dépassement des 30 minutes
     total_plus_30 = len(mouvements)
-    if total_plus_30 >= 1:
-      pourcentage_plus_30 = (lg / total_plus_30) * 100
-    else :
-      pourcentage_plus_30=0
+    lg = len(mouvements_filtrés)
+    pourcentage_plus_30 = (lg / total_plus_30) * 100 if total_plus_30 >= 1 else 0
+
+    # Récupération de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte à passer au template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
-        # 'products' : Product.objects.all()
         'lg': lg,
         'util': user,
-        'pourcentage_plus_30' : int( pourcentage_plus_30)
+        'pourcentage_plus_30': int(pourcentage_plus_30)
     }
+
+    # Rendu du template avec le contexte
     return render(request, "pages/detail_plus_30_dk_log.html", context)
 ######################### DETAILS PLUS DE 30 MINUTES ICD CMA  #######################
 def detail_plus_30_dk_log1(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
-    mouvements = Mouvement4.objects.filter(date_entree__isnull=False,date_sortie__isnull=False)
+    duree_dk_default = timedelta(minutes=30)  # Valeur par défaut pour le délai maximal
+    delais_urg_default = timedelta(minutes=15)  # Valeur par défaut pour le délai urgent
+
+    # Récupérer les mouvements avec dates d'entrée et de sortie définies
+    mouvements = Mouvement4.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
     mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-
-        type = camion.type
         try:
-            para = ParametrageDelais.objects.get(entite='dklog', type=type)
-            duree_dk = timedelta(minutes=int(para.delais_maximal))
-            delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
-            duree_dk = timedelta(minutes=30)
-            delais_urg = timedelta(minutes=20)
+            # Récupérer les informations du camion
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+            type = camion.type
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            mvt.trans = "Non assigné"
+            mvt.imat = "Non assigné"
+            type = None
 
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
-        mvt.pointeur_srt = poineur_srt.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
+        try:
+            # Récupérer les paramètres de délai spécifiques
+            if type:
+                para = ParametrageDelais.objects.get(entite='dklog', type=type)
+                duree_dk = timedelta(minutes=int(para.delais_maximal))
+                delais_urg = timedelta(minutes=int(para.delais_urgent))
+            else:
+                duree_dk = duree_dk_default
+                delais_urg = delais_urg_default
+        except ParametrageDelais.DoesNotExist:
+            duree_dk = duree_dk_default
+            delais_urg = delais_urg_default
 
+        try:
+            # Récupérer les informations du pointeur d'entrée
+            poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = poineur.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        try:
+            # Récupérer les informations du pointeur de sortie
+            poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+            mvt.pointeur_srt = poineur_srt.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur_srt = "Non assigné"
+
+        try:
+            # Récupérer les informations du chauffeur
+            chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur_name.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Ajouter le mouvement à la liste s'il dépasse la durée maximale
         if (mvt.date_sortie - mvt.date_entree) > duree_dk:
             mouvements_filtrés.append(mvt)
 
+    # Calcul du nombre de mouvements filtrés et du pourcentage
     lg = len(mouvements_filtrés)
     total_plus_30 = len(mouvements)
-    if total_plus_30 >= 1:
-      pourcentage_plus_30 = (lg / total_plus_30) * 100
-    else :
-      pourcentage_plus_30=0
+    pourcentage_plus_30 = (lg / total_plus_30) * 100 if total_plus_30 >= 1 else 0
+
+    # Récupérer les informations de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
 
+    # Contexte pour le rendu du template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
-        # 'products' : Product.objects.all()
         'lg': lg,
         'util': user,
-        'pourcentage_plus_30' : int( pourcentage_plus_30)
+        'pourcentage_plus_30': int(pourcentage_plus_30)
     }
 
     return render(request, "pages/detail_plus_30_dk_log.html", context)
@@ -4194,141 +4573,224 @@ def detail_plus_30_dk_logpar(request, id):
 ###################### DETAILS MOINS DE 30 MINUTES ICD TOM ############################
 def detail_moins_30_dk_log0(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
+    duree_dk = timedelta(minutes=30)
+    delais_urg = timedelta(minutes=15)
     mouvements = Mouvement0.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
     mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-        type = camion.type
+        try:
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            type = camion.type or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            type = "Non assigné"
+            mvt.trans = "Non assigné"
+            mvt.imat = "Non assigné"
+
         try:
             para = ParametrageDelais.objects.get(entite='dklog', type=type)
             duree_dk = timedelta(minutes=int(para.delais_maximal))
             delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
+        except ParametrageDelais.DoesNotExist:
             duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
-        mvt.pointeur_srt = poineur_srt.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
+
+        try:
+            pointeur_entree = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = pointeur_entree.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        try:
+            pointeur_sortie = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+            mvt.pointeur_srt = pointeur_sortie.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur_srt = "Non assigné"
+
+        try:
+            chauffeur = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Filtrer les mouvements dont la durée entre l'entrée et la sortie est inférieure ou égale à duree_dk
         if (mvt.date_sortie - mvt.date_entree) <= duree_dk:
             mouvements_filtrés.append(mvt)
-    lg = len(mouvements_filtrés)
+
+    # Calcul des statistiques
     lg = len(mouvements_filtrés)
     total_moins_30 = len(mouvements)
-    if  total_moins_30 >= 1 :
-       pourcentage_moins_30 = (lg / total_moins_30) * 100
-    else :
-        pourcentage_moins_30=0
+    pourcentage_moins_30 = (lg / total_moins_30) * 100 if total_moins_30 >= 1 else 0
+
+    # Récupération de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte à passer au template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
-        # 'products' : Product.objects.all()
         'lg': lg,
-        'pourcentage_moins_30' :int(pourcentage_moins_30),
+        'pourcentage_moins_30': int(pourcentage_moins_30),
         'util': user
     }
-    #return render(request, "pages/detail_depassement.html", context)
-    return render(request, "pages/detail_moins_30_dk_log0.html", context)
 
+    # Rendu du template avec le contexte
+    return render(request, "pages/detail_moins_30_dk_log0.html", context)
 ###################### DETAILS MOINS DE 30 MINUTES ICD TOM ############################
 def detail_moins_30_dk_log(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
+    duree_dk = timedelta(minutes=30)  # Par défaut, 30 minutes pour le délai maximal
+    delais_urg = timedelta(minutes=15)  # Par défaut, 15 minutes pour le délai urgent
+
+    # Récupération des mouvements avec date d'entrée et de sortie
     mouvements = Mouvement1.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
     mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-        type = camion.type
         try:
-            para = ParametrageDelais.objects.get(entite='dklog', type=type)
-            duree_dk = timedelta(minutes=int(para.delais_maximal))
-            delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
-            duree_dk = timedelta(minutes=30)
-            delais_urg = timedelta(minutes=20)
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
-        mvt.pointeur_srt = poineur_srt.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
+            # Récupérer les informations du camion associé au mouvement
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            type = camion.type
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            mvt.imat = "Non assigné"
+            mvt.trans = "Non assigné"
+            type = None
+
+        # Récupérer les délais spécifiques, sinon utiliser les valeurs par défaut
+        try:
+            if type:
+                para = ParametrageDelais.objects.get(entite='dklog', type=type)
+                duree_dk = timedelta(minutes=int(para.delais_maximal))
+                delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except ParametrageDelais.DoesNotExist:
+            pass  # Garde les valeurs par défaut
+
+        # Récupérer le pointeur d'entrée et de sortie
+        try:
+            poineur_entree = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = poineur_entree.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        try:
+            poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+            mvt.pointeur_srt = poineur_srt.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur_srt = "Non assigné"
+
+        # Récupérer le chauffeur
+        try:
+            chauffeur = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Ajouter les mouvements qui respectent la condition (durée <= duree_dk)
         if (mvt.date_sortie - mvt.date_entree) <= duree_dk:
             mouvements_filtrés.append(mvt)
-    lg = len(mouvements_filtrés)
-    lg = len(mouvements_filtrés)
+
+    # Calcul du nombre total de mouvements et du pourcentage de moins de 30 minutes
     total_moins_30 = len(mouvements)
-    if  total_moins_30 >= 1 :
-       pourcentage_moins_30 = (lg / total_moins_30) * 100
-    else :
-        pourcentage_moins_30=0
+    lg = len(mouvements_filtrés)
+    pourcentage_moins_30 = (lg / total_moins_30) * 100 if total_moins_30 >= 1 else 0
+
+    # Récupération de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte à passer au template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
-        # 'products' : Product.objects.all()
         'lg': lg,
-        'pourcentage_moins_30' :int(pourcentage_moins_30),
+        'pourcentage_moins_30': int(pourcentage_moins_30),
         'util': user
     }
-    #return render(request, "pages/detail_depassement.html", context)
+
+    # Rendu du template avec le contexte
     return render(request, "pages/detail_moins_30_dk_log.html", context)
 ###################### DETAILS MOINS DE 30 MINUTES ICD CMA ############################
 def detail_moins_30_dk_log1(request, id):
     maintenant = timezone.now()
-    duree_dk = 30
-    delais_urg = 15
+    duree_dk = timedelta(minutes=30)  # Valeur par défaut pour le délai maximal
+    delais_urg = timedelta(minutes=15)  # Valeur par défaut pour le délai urgent
+
+    # Récupérer les mouvements avec dates d'entrée et de sortie définies
     mouvements = Mouvement4.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
     mouvements_filtrés = []
+
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
-        mvt.cam = camion.immatriculation
-        type = camion.type
         try:
-            para = ParametrageDelais.objects.get(entite='dklog', type=type)
-            duree_dk = timedelta(minutes=int(para.delais_maximal))
-            delais_urg = timedelta(minutes=int(para.delais_urgent))
-        except:
-            duree_dk = timedelta(minutes=30)
-            delais_urg = timedelta(minutes=20)
-        poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
-        mvt.pointeur = poineur.fullname
-        poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
-        mvt.pointeur_srt = poineur_srt.fullname
-        mvt.trans = camion.transporteur
-        mvt.imat = camion.immatriculation
-        chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
-        mvt.chauffeur_name = chauffeur_name.fullname
+            # Récupérer les informations du camion
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+            mvt.cam = camion.immatriculation or "Non assigné"
+            mvt.trans = camion.transporteur or "Non assigné"
+            mvt.imat = camion.immatriculation or "Non assigné"
+            type = camion.type
+        except Camion.DoesNotExist:
+            mvt.cam = "Non assigné"
+            mvt.trans = "Non assigné"
+            mvt.imat = "Non assigné"
+            type = None
+
+        try:
+            # Récupérer les paramètres de délai spécifiques
+            if type:
+                para = ParametrageDelais.objects.get(entite='dklog', type=type)
+                duree_dk = timedelta(minutes=int(para.delais_maximal))
+                delais_urg = timedelta(minutes=int(para.delais_urgent))
+        except ParametrageDelais.DoesNotExist:
+            pass  # Utiliser les valeurs par défaut
+
+        try:
+            # Récupérer les informations du pointeur d'entrée
+            poineur_entree = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
+            mvt.pointeur = poineur_entree.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur = "Non assigné"
+
+        try:
+            # Récupérer les informations du pointeur de sortie
+            poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
+            mvt.pointeur_srt = poineur_srt.fullname or "Non assigné"
+        except Utilisateurs.DoesNotExist:
+            mvt.pointeur_srt = "Non assigné"
+
+        try:
+            # Récupérer les informations du chauffeur
+            chauffeur = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
+            mvt.chauffeur_name = chauffeur.fullname or "Non assigné"
+        except Chaffeur.DoesNotExist:
+            mvt.chauffeur_name = "Non assigné"
+
+        # Ajouter le mouvement à la liste s'il est dans le délai maximal
         if (mvt.date_sortie - mvt.date_entree) <= duree_dk:
             mouvements_filtrés.append(mvt)
-    lg = len(mouvements_filtrés)
+
+    # Calcul du nombre de mouvements filtrés et du pourcentage
     lg = len(mouvements_filtrés)
     total_moins_30 = len(mouvements)
-    if  total_moins_30 >= 1 :
-       pourcentage_moins_30 = (lg / total_moins_30) * 100
-    else :
-        pourcentage_moins_30=0
+    pourcentage_moins_30 = (lg / total_moins_30) * 100 if total_moins_30 >= 1 else 0
+
+    # Récupérer les informations de l'utilisateur
     user = Utilisateurs.objects.get(id_user=id)
+
+    # Contexte pour le rendu du template
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
-        # 'products' : Product.objects.all()
         'lg': lg,
-        'pourcentage_moins_30' :int(pourcentage_moins_30),
+        'pourcentage_moins_30': int(pourcentage_moins_30),
         'util': user
     }
-    #return render(request, "pages/detail_depassement.html", context)
+
     return render(request, "pages/detail_moins_30_dk_log.html", context)
 ###################### DETAILS MOINS DE 30 MINUTES SACHERIE ############################
 def detail_moins_30_dk_log2(request, id):
@@ -5527,10 +5989,10 @@ def liste_modifs(request):
 def liste_modifs1(request):
     mouvements = Mouvement0.objects.filter(destination__icontains='hangar', date_sortie__isnull=True).values(
         'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
-        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination', 'mission', 'client_id', 'marchandise'
+        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination', 'transitaire_id', 'mission',
+        'client_id', 'marchandise'
     )
     mouvement_list = list(mouvements)
-
     for mouvement in mouvement_list:
         client_id = mouvement.get('client_id')
         # Récupérer les informations du camion
@@ -5549,12 +6011,10 @@ def liste_modifs1(request):
             'transporteur': 'Non assigné',
             'type': 'Non assigné'
         }
-
         # Récupérer les informations du pointeur d'entrée
         user_entre_id = mouvement.get('pointeur_entree_id')
         user_entre = Utilisateurs.objects.filter(id_user=user_entre_id).values('fullname').first()
         mouvement['user_ert'] = user_entre if user_entre else {'fullname': 'Non assigné'}
-
         # Récupérer les informations du pointeur de sortie
         user_sortie_id = mouvement.get('pointeur_sortie_id')
         if user_sortie_id:
@@ -5562,7 +6022,6 @@ def liste_modifs1(request):
         else:
             user_sortie = {'fullname': 'null'}
         mouvement['user_srt'] = user_sortie
-
         # Récupérer les informations du chauffeur
         chauffeur_id = mouvement.get('chauffeur_id')
         chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
@@ -5572,15 +6031,13 @@ def liste_modifs1(request):
             'fullname': 'Non assigné',
             'permis': 'N/A'
         }
-
         # Assigner des valeurs par défaut pour les autres champs
         mouvement['remorque'] = mouvement.get('remorque', 'Non assigné')
         mouvement['mission'] = mouvement.get('mission', 'Non assigné')
-        mouvement['marchandise']= mouvement.get('marchandise', 'Non Assigné')
+        mouvement['marchandise'] = mouvement.get('marchandise', 'Non Assigné')
         mouvement['date_entree'] = mouvement.get('date_entree', 'Non assigné')
         mouvement['date_sortie'] = mouvement.get('date_sortie', 'Non assigné')
         mouvement['destination'] = mouvement.get('destination', 'Non assigné')
-
     return JsonResponse(mouvement_list, safe=False)
 ########## ZUD ################
 def liste_modifs2(request):
@@ -5589,7 +6046,6 @@ def liste_modifs2(request):
         'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination', 'transitaire_id','mission', 'client_id', 'marchandise'
     )
     mouvement_list = list(mouvements)
-
     for mouvement in mouvement_list:
         client_id = mouvement.get('client_id')
         # Récupérer les informations du camion
@@ -5608,12 +6064,10 @@ def liste_modifs2(request):
             'transporteur': 'Non assigné',
             'type': 'Non assigné'
         }
-
         # Récupérer les informations du pointeur d'entrée
         user_entre_id = mouvement.get('pointeur_entree_id')
         user_entre = Utilisateurs.objects.filter(id_user=user_entre_id).values('fullname').first()
         mouvement['user_ert'] = user_entre if user_entre else {'fullname': 'Non assigné'}
-
         # Récupérer les informations du pointeur de sortie
         user_sortie_id = mouvement.get('pointeur_sortie_id')
         if user_sortie_id:
@@ -5621,7 +6075,6 @@ def liste_modifs2(request):
         else:
             user_sortie = {'fullname': 'null'}
         mouvement['user_srt'] = user_sortie
-
         # Récupérer les informations du chauffeur
         chauffeur_id = mouvement.get('chauffeur_id')
         chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',

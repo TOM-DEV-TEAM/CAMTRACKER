@@ -5,18 +5,20 @@
 
 {% block content %}
 
- <ul class="nav nav-tabs" style="margin-left: 20px">
-  <li class="nav-item">
-    <a class="nav-link " href="/modif_mvt/{{ util.id_user }}">ICD</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link " href="/modif_mvt1/{{ util.id_user }}" tabindex="-1" >SACHERIE</a>
-  </li> <li class="nav-item">
-    <a class="nav-link active" href="/modif_mvt2/{{ util.id_user }}" tabindex="-1" >ZUD</a>
-  </li>     <li class="nav-item">
-    <a class="nav-link" href="/modif_mvtpar/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
-  </li>
-</ul><br>
+    <ul class="nav nav-tabs" style="margin-left: 20px">
+        <li class="nav-item">
+            <a class="nav-link " href="/modif_mvt/{{ util.id_user }}">ICD</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link " href="/modif_mvt1/{{ util.id_user }}" tabindex="-1">SACHERIE</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/modif_mvt2/{{ util.id_user }}" tabindex="-1">ZUD</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/modif_mvtpar/{{ util.id_user }}" tabindex="-1">PARTICULIER</a>
+        </li>
+    </ul><br>
     <!-- [ rating list ] end-->
     <div class="col-xl-8 col-md-12 m-b-30">
         <!--<p class="label theme-bg text-white f-12"  class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModalajout">Ajouter</p>-->
@@ -39,8 +41,8 @@
                                     statutText = 'CHARGE';
                                 } else if (mouvement_list.statut_entree === 2) {
                                     statutText = 'COMPLET';
-                                }else {
-                                    statutText='Non Assigné';
+                                } else {
+                                    statutText = 'Non Assigné';
                                 }
                                 var row = `
                             <tr>
@@ -102,7 +104,8 @@
         <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>
 
        Modal -->
-        <div class="modal fade" id="myModal" style="overflow-y: auto;" role="dialog" class="modal fade" tabindex="-1" role="dialog"
+        <div class="modal fade" id="myModal" style="overflow-y: auto;" role="dialog" class="modal fade" tabindex="-1"
+             role="dialog"
              aria-labelledby="editModalLabel" aria-hidden="true">
 
             <div class="modal-dialog" role="document">
@@ -114,16 +117,18 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form method="POST" action="{% url 'ajoutmouvement0' util.id_user %}"
-                            enctype="multipart/form-data">
+                        <form method="POST" action="{% url 'modifier_mouvement' %}"
+                              enctype="multipart/form-data">
 
                             <div class="text-center mb-4">
                                 <!--<p style="color: #000; font-size: 25px;">ENTREE DK LOG</p>--->
                             </div>
                             {% csrf_token %}
                             {{ form.non_field_errors }}
+                            <input type="hidden" name="id_user" value="{{ util.id_user }}">
                             <input type="hidden" name="destination" value="zud">
                             <input type="hidden" name="entite" value="zud">
+                            <input type="hidden" id="idMvt" name="id_mouvement">
                             <div class="form-row">
                                 <div class="col-md-3 mb-3">
                                     <label for="camion-select">Camion</label>
@@ -173,7 +178,7 @@
                                     </button>
                                 </div>
                             </div>
-                                                        <div class="form-row">
+                            <div class="form-row">
                                 <div class="col-md-4 mb-3">
                                     <label for="chauffeur-select">Chauffeur</label>
                                     <select name="chauffeur" class="form-control form-control-lg" id="chauffeur-select"
@@ -189,69 +194,75 @@
                                 <div class="col-md-4 mb-3">
                                     <label>&nbsp;</label>
                                     <!-- Utilisez un label vide pour aligner verticalement le bouton -->
-                                   <button type="button" class="btn btn-info btn-block" data-toggle="modal"
+                                    <button type="button" class="btn btn-info btn-block" data-toggle="modal"
                                             data-target="#myModalajoutchauffeur">
                                         <i class="fas fa-plus-circle"></i>
                                     </button>
                                 </div>
                             </div>
-<div class="row" id="conteneurs-div" style="display: none;">
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="conteneur1">Conteneur 1</label>
-            <input type="text" class="form-control form-control-lg" name="numconteneur1" id="numconteneur1" placeholder="Entrez le conteneur" />
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="typeconteneur1">Type</label>
-            <select name="typeconteneur1" id="typeconteneur1" class="form-control form-control-lg">
-                <option value="">Sélectionnez un type</option>
-                <option value="20">20'</option>
-                <option value="40">40'</option>
-            </select>
-        </div>
-    </div>
-</div>
+                            <div class="row" id="conteneurs-div" style="display: none;">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="conteneur1">Conteneur 1</label>
+                                        <input type="text" class="form-control form-control-lg" name="numconteneur1"
+                                               id="numconteneur1" placeholder="Entrez le conteneur"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="typeconteneur1">Type</label>
+                                        <select name="typeconteneur1" id="typeconteneur1"
+                                                class="form-control form-control-lg">
+                                            <option value="">Sélectionnez un type</option>
+                                            <option value="20">20'</option>
+                                            <option value="40">40'</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
 
-<div class="row" id="conteneur2-div" style="display: none;">
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="conteneur2">Conteneur 2</label>
-            <input type="text" class="form-control form-control-lg" name="numconteneur2" id="numconteneur2" placeholder="Entrez le conteneur">
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="typeconteneur2">Type</label>
-            <select name="typeconteneur2" id="typeconteneur2" class="form-control form-control-lg">
-                <option value="">Sélectionnez un type</option>
-                <option value="20">20'</option>
-                <option value="40">40'</option>
-            </select>
-        </div>
-    </div>
-</div>
+                            <div class="row" id="conteneur2-div" style="display: none;">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="conteneur2">Conteneur 2</label>
+                                        <input type="text" class="form-control form-control-lg" name="numconteneur2"
+                                               id="numconteneur2" placeholder="Entrez le conteneur">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="typeconteneur2">Type</label>
+                                        <select name="typeconteneur2" id="typeconteneur2"
+                                                class="form-control form-control-lg">
+                                            <option value="">Sélectionnez un type</option>
+                                            <option value="20">20'</option>
+                                            <option value="40">40'</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
 
-<div class="row" id="conteneur3-div" style="display: none;">
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="conteneur3">Conteneur 3</label>
-            <input type="text" class="form-control form-control-lg" name="numconteneur3" id="numconteneur3" placeholder="Entrez le conteneur">
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="form-group">
-            <label for="typeconteneur3">Type</label>
-            <select name="typeconteneur3" id="typeconteneur3" class="form-control form-control-lg">
-                <option value="">Sélectionnez un type</option>
-                <option value="20">20'</option>
-            </select>
-        </div>
-    </div>
-</div>
+                            <div class="row" id="conteneur3-div" style="display: none;">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="conteneur3">Conteneur 3</label>
+                                        <input type="text" class="form-control form-control-lg" name="numconteneur3"
+                                               id="numconteneur3" placeholder="Entrez le conteneur">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="typeconteneur3">Type</label>
+                                        <select name="typeconteneur3" id="typeconteneur3"
+                                                class="form-control form-control-lg">
+                                            <option value="">Sélectionnez un type</option>
+                                            <option value="20">20'</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
 
-                           <!-------------------Ajouter Transitaire -------------------------->
+                            <!-------------------Ajouter Transitaire -------------------------->
                             <div class="form-row">
                                 <div class="col-md-4 mb-3">
                                     <label for="transitaire-select">Transitaire</label>
@@ -315,12 +326,13 @@
                             <div class="form-row" id="inputsforangards2" style="display: none">
                                 <div class="form-group col-md-6">
                                     <label for="statut_entree">Tonnage</label>
-                                    <input type="number" min="0"  class="form-control" name="tonnage"
+                                    <input type="number" min="0" class="form-control" name="tonnage"
                                            placeholder="Tonnage">
                                 </div>
                                 <div class="form-group col-md-6">
                                     <label for="statut_entree">Nbr Colis</label>
-                                    <input type="number" min="0" class="form-control" name="nbrcolis" placeholder="Nbr Coli">
+                                    <input type="number" min="0" class="form-control" name="nbrcolis"
+                                           placeholder="Nbr Coli">
                                 </div>
                             </div>
 
@@ -336,7 +348,8 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="marchandise">Marchandise</label>
-                                        <input type="text" name="marchandise" id="marchandise" class="form-control form-control-lg"
+                                        <input type="text" name="marchandise" id="marchandise"
+                                               class="form-control form-control-lg"
                                                placeholder="MARCHANDISE" required/>
                                     </div>
                                 </div>
@@ -349,8 +362,9 @@
                                     </div>
                                 </div>
                             </div>
-                                <input name="mission" type="hidden" value="DEPOTAGE" class="form-control form-control-lg" id="mission-select"
-                                        required/>
+                            <input name="mission" type="hidden" value="DEPOTAGE" class="form-control form-control-lg"
+                                   id="mission-select"
+                                   required/>
                             <div class="modal-footer">
                                 <input type="submit" class="btn btn-primary" value="Enregistrer">
                                 <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
@@ -394,50 +408,50 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
-   document.addEventListener('DOMContentLoaded', function () {
-    var typeConteneur1 = document.getElementById('typeconteneur1');
-    var typeConteneur2 = document.getElementById('typeconteneur2');
-    var conteneur2Div = document.getElementById('conteneur2-div');
-    var conteneur3Div = document.getElementById('conteneur3-div');
+        document.addEventListener('DOMContentLoaded', function () {
+            var typeConteneur1 = document.getElementById('typeconteneur1');
+            var typeConteneur2 = document.getElementById('typeconteneur2');
+            var conteneur2Div = document.getElementById('conteneur2-div');
+            var conteneur3Div = document.getElementById('conteneur3-div');
 
-    function toggleConteneurs() {
-        console.log('Conteneur1 Value:', typeConteneur1.value);
-        console.log('Conteneur2 Value:', typeConteneur2.value);
+            function toggleConteneurs() {
+                console.log('Conteneur1 Value:', typeConteneur1.value);
+                console.log('Conteneur2 Value:', typeConteneur2.value);
 
-        // Afficher ou cacher conteneur2Div basé sur le type de conteneur1
-        if (typeConteneur1.value.startsWith('20')) {
-            conteneur2Div.style.display = 'block';
-             if (typeConteneur2.value.startsWith('20')) {
-            conteneur3Div.style.display = 'block';
-        } else {
-            conteneur3Div.style.display = 'none';
-        }
-        } else {
-            conteneur2Div.style.display = 'none';
-            conteneur3Div.style.display = 'none'; // Cacher aussi conteneur3Div si conteneur2 est caché
-            return; // Sortir de la fonction si conteneur2 est caché
-        }
+                // Afficher ou cacher conteneur2Div basé sur le type de conteneur1
+                if (typeConteneur1.value.startsWith('20')) {
+                    conteneur2Div.style.display = 'block';
+                    if (typeConteneur2.value.startsWith('20')) {
+                        conteneur3Div.style.display = 'block';
+                    } else {
+                        conteneur3Div.style.display = 'none';
+                    }
+                } else {
+                    conteneur2Div.style.display = 'none';
+                    conteneur3Div.style.display = 'none'; // Cacher aussi conteneur3Div si conteneur2 est caché
+                    return; // Sortir de la fonction si conteneur2 est caché
+                }
 
-        // Afficher ou cacher conteneur3Div basé sur le type de conteneur2
+                // Afficher ou cacher conteneur3Div basé sur le type de conteneur2
 
-    }
+            }
 
-    // Ajouter les gestionnaires d'événements pour les changements de type de conteneur
-    typeConteneur1.addEventListener('change', function() {
-        console.log('Conteneur1 changed');
-        toggleConteneurs();
-    });
+            // Ajouter les gestionnaires d'événements pour les changements de type de conteneur
+            typeConteneur1.addEventListener('change', function () {
+                console.log('Conteneur1 changed');
+                toggleConteneurs();
+            });
 
-    typeConteneur2.addEventListener('change', function() {
-        console.log('Conteneur2 changed');
-        toggleConteneurs();
-    });
+            typeConteneur2.addEventListener('change', function () {
+                console.log('Conteneur2 changed');
+                toggleConteneurs();
+            });
 
-    // Initialiser l'état des conteneurs
-    toggleConteneurs();
-});
+            // Initialiser l'état des conteneurs
+            toggleConteneurs();
+        });
 
-     function actualiserListeCamions() {
+        function actualiserListeCamions() {
             var select = $('#camion-select');
             var selectedValue = select.val();
 
@@ -564,7 +578,8 @@
                 error: function (xhr, status, error) {
                     console.error('Erreur lors de la récupération des transitaires:', error);
                 }
-            });}
+            });
+        }
 
         function actualiserListeRepresentants() {
             var select = $('#transitairerep-select');  // Updated to match the correct ID
@@ -584,7 +599,9 @@
                 error: function (xhr, status, error) {
                     console.error('Erreur lors de la récupération des transitaires:', error);
                 }
-            });}
+            });
+        }
+
         $(document).ready(function () {
             actualiserListeCamions();
             actualiserListeCamionsVrac();
@@ -626,6 +643,7 @@
                     $('#conteneurs-div').show(); // Affiche le div pour le premier conteneur
                 }
             }
+
             // Fonction pour afficher ou masquer le deuxième conteneur en fonction du type du premier conteneur
             // Événement de changement pour le sélecteur de camion
             $('#camion-select').on('change', function () {
@@ -665,48 +683,48 @@
         });
     </script>
 
-<script>
-  $(document).ready(function() {
-    // Lors de l'ouverture du modal
-    $('#myModal').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget); // Bouton qui a déclenché le modal
-      var idmvt = button.data('idmvt');
-      var marchandise =  button.data('marchandise');
-      var remorque = button.data('remorque');
-      var permis = button.data('permis');
-      var chauffeur = button.data('chauffeur');
-      var telephone = button.data('telephone');
-      var client = button.data('client')
-      var idcam = button.data('idcam');
-      var mission = button.data('mission')
-      var type = button.data('type');
-      var transporteur = button.data('transporteur');
-      var destination = button.data('destination');
-      // Récupérer le modal actuel
-      var modal = $(this);
-      // Assigner les valeurs aux éléments du modal
-      modal.find('#type').val(type);
-      modal.find('#marchandise').val(marchandise)
-      modal.find('#remorque').val(remorque)
-      modal.find('#permis').val(permis)
-      modal.find('#chauffeur-select').val(chauffeur)
-      modal.find('#telephone').val(telephone);
-      modal.find('#client-select').val(client);
-      modal.find('#mission-select').val(mission);
-      modal.find('#transporteur').val(transporteur);
-      modal.find('#camion-select').val(idcam);
-      modal.find('#idMvt').val(idmvt);
-      modal.find('#destination-select').val(destination);
-      modal.find('#destination-final-select').val(destination);
-    });
+    <script>
+        $(document).ready(function () {
+            // Lors de l'ouverture du modal
+            $('#myModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget); // Bouton qui a déclenché le modal
+                var idmvt = button.data('idmvt');
+                var marchandise = button.data('marchandise');
+                var remorque = button.data('remorque');
+                var permis = button.data('permis');
+                var chauffeur = button.data('chauffeur');
+                var telephone = button.data('telephone');
+                var client = button.data('client')
+                var idcam = button.data('idcam');
+                var mission = button.data('mission')
+                var type = button.data('type');
+                var transporteur = button.data('transporteur');
+                var destination = button.data('destination');
+                // Récupérer le modal actuel
+                var modal = $(this);
+                // Assigner les valeurs aux éléments du modal
+                modal.find('#type').val(type);
+                modal.find('#marchandise').val(marchandise)
+                modal.find('#remorque').val(remorque)
+                modal.find('#permis').val(permis)
+                modal.find('#chauffeur-select').val(chauffeur)
+                modal.find('#telephone').val(telephone);
+                modal.find('#client-select').val(client);
+                modal.find('#mission-select').val(mission);
+                modal.find('#transporteur').val(transporteur);
+                modal.find('#camion-select').val(idcam);
+                modal.find('#idMvt').val(idmvt);
+                modal.find('#destination-select').val(destination);
+                modal.find('#destination-final-select').val(destination);
+            });
 
-    // Lorsque la valeur de destination change, mettre à jour destination-final
-    $('#destination-select').on('change', function() {
-      var selectedDestination = $(this).val();
-      $('#destination-final-select').val(selectedDestination);
-    });
-  });
-</script>
+            // Lorsque la valeur de destination change, mettre à jour destination-final
+            $('#destination-select').on('change', function () {
+                var selectedDestination = $(this).val();
+                $('#destination-final-select').val(selectedDestination);
+            });
+        });
+    </script>
 
     </div>
     </div>
@@ -730,7 +748,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="editForm" method="post" action="/modifier_camion/">
+                    <form id="editForm" method="post" action="/ajout_camion/">
                         {% csrf_token %}
                         <input type="hidden" id="boiteId" name="boite_id">
                         <div class="form-group">
@@ -799,7 +817,7 @@
                             <label for="type">Type</label><br>
                             <select id="type" name="type" required class="form-control">
                                 <option value=""></option>
-                                                                <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
+                                <option value="SEMI-REMORQUE">SEMI-REMORQUE</option>
                                 <option value="VRAC">VRAC</option>
                                 <option value="TRANSPORT-VEHICULE">TRANSPORT-VEHICULE</option>
                                 <option value="FRIGO">FRIGO</option>

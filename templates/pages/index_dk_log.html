@@ -5,9 +5,10 @@
 
 {% block content %}
  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
+        <script>
+
     $(document).ready(function() {
-          function fetchMouvements() {
+    function fetchMouvements() {
     fetch('/fetch_mouvementsdash/')
         .then(response => response.json())
         .then(data => {
@@ -17,7 +18,6 @@
             data.mouvements.forEach(mvt => {
                 let etatClass = '';
                 let etatText = '';
-
                 switch (mvt.etat) {
                     case 1:
                         etatClass = 'text-c-green';
@@ -32,22 +32,24 @@
                         etatText = 'Retard';
                         break;
                 }
+const row = `
+    <tr>
+        <td><h6 class="m-0">${mvt.cam}</h6></td>
+        <td><h6 class="m-0">${mvt.chrono}</h6></td>
+        <td><h6 class="m-0 ${etatClass}">${etatText}</h6></td>
+        <td class="text-right"><i class="fas fa-circle ${etatClass} f-10"></i></td>
+    </tr>
+`;
+tbody.innerHTML += row;
 
-                const row = `
-                    <tr>
-                        <td><h6 class="m-0">${mvt.cam}</h6></td>
-                        <td><h6 class="m-0">${mvt.chrono} mns</h6></td>
-                        <td><h6 class="m-0 ${etatClass}">${etatText}</h6></td>
-                        <td class="text-right"><i class="fas fa-circle ${etatClass} f-10"></i></td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
             });
         })
         .catch(error => console.error('Error fetching mouvements:', error));
 }
 
-function fetchStats() {
+// Fetch every 10 seconds
+
+     function fetchStats() {
         $.ajax({
             url: "{% url 'fetch_stats' id_user=util.id_user %}",
             method: "GET",
@@ -63,10 +65,11 @@ function fetchStats() {
     }
     fetchMouvements();
     fetchStats();
-    setInterval(fetchMouvements, 10000);
-    setInterval(fetchStats, 10000);
+    setInterval(fetchMouvements, 60);
+    setInterval(fetchStats, 60);
     });
 </script>
+
 
   <div class="row">
 
@@ -81,9 +84,9 @@ function fetchStats() {
     <a class="nav-link" href="/index_dk_log1/{{ util.id_user }}">ICD CMA</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link disabled" href="/index_dk_log2/{{ util.id_user }}" tabindex="-1" >SACHERIE</a>
+    <a class="nav-link " href="/index_dk_log2/{{ util.id_user }}" tabindex="-1" >SACHERIE</a>
   </li> <li class="nav-item">
-    <a class="nav-link disabled" href="/index_dk_log3/{{ util.id_user }}" tabindex="-1" >ZUD</a>
+    <a class="nav-link " href="/index_dk_log3/{{ util.id_user }}" tabindex="-1" >ZUD</a>
   </li>     <li class="nav-item">
     <a class="nav-link" href="/index_dk_logparticulier/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
   </li>

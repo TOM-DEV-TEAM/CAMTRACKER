@@ -5,9 +5,10 @@
 
 {% block content %}
  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
+        <script>
+
     $(document).ready(function() {
-     function fetchMouvements() {
+    function fetchMouvements() {
     fetch('/fetch_mouvementsdash1/')
         .then(response => response.json())
         .then(data => {
@@ -17,7 +18,6 @@
             data.mouvements.forEach(mvt => {
                 let etatClass = '';
                 let etatText = '';
-
                 switch (mvt.etat) {
                     case 1:
                         etatClass = 'text-c-green';
@@ -32,22 +32,24 @@
                         etatText = 'Retard';
                         break;
                 }
+const row = `
+    <tr>
+        <td><h6 class="m-0">${mvt.cam}</h6></td>
+        <td><h6 class="m-0">${mvt.chrono}</h6></td>
+        <td><h6 class="m-0 ${etatClass}">${etatText}</h6></td>
+        <td class="text-right"><i class="fas fa-circle ${etatClass} f-10"></i></td>
+    </tr>
+`;
+tbody.innerHTML += row;
 
-                const row = `
-                    <tr>
-                        <td><h6 class="m-0">${mvt.cam}</h6></td>
-                       <td><h6 class="m-0">${mvt.chrono}</h6></td>
-                        <td><h6 class="m-0 ${etatClass}">${etatText}</h6></td>
-                        <td class="text-right"><i class="fas fa-circle ${etatClass} f-10"></i></td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
             });
         })
         .catch(error => console.error('Error fetching mouvements:', error));
 }
 
-function fetchStats() {
+// Fetch every 10 seconds
+
+     function fetchStats() {
         $.ajax({
             url: "{% url 'fetch_stats1' id_user=util.id_user %}",
             method: "GET",
@@ -61,14 +63,13 @@ function fetchStats() {
             }
         });
     }
-
     fetchMouvements();
     fetchStats();
-
-    setInterval(fetchMouvements, 10000);
-    setInterval(fetchStats, 10000);
+    setInterval(fetchMouvements, 60);
+    setInterval(fetchStats, 60);
     });
 </script>
+
 
 
   <div class="row">
