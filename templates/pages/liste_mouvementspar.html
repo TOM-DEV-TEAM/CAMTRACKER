@@ -30,13 +30,13 @@
                 <a class="nav-link" href="/liste_tt_mvt01/{{ util.id_user }}">ICD CMA</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" href="/liste_tt_mvt02/{{ util.id_user }}" tabindex="-1">SACHERIE</a>
+                <a class="nav-link " href="/liste_tt_mvt02/{{ util.id_user }}" tabindex="-1">SACHERIE</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/liste_tt_mvt03/{{ util.id_user }}" tabindex="-1">ZUD</a>
+                <a class="nav-link " href="/liste_tt_mvt03/{{ util.id_user }}" tabindex="-1">ZUD</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/liste_tt_mvtpar/{{ util.id_user }}" tabindex="-1">PARTICULIER</a>
+                <a class="nav-link active" href="/liste_tt_mvtpar/{{ util.id_user }}" tabindex="-1">PARTICULIER</a>
             </li>
         </ul>
         <br>
@@ -48,17 +48,14 @@
             <table id="mouvements-table" class="table table-hover">
                 <thead class="thead-light">
                 <tr>
+                    <th scope="col">Véhicule</th>
                     <th scope="col">Destination</th>
-                    <th scope="col">Camion</th>
-                    <th scope="col">Remorque</th>
-                    <th scope="col">Transporteur</th>
-                    <th scope="col">Chauffeur</th>
-                    <th scope="col">Permis</th>
                     <th scope="col">Date Entrée</th>
                     <th scope="col">Pointeur Entrée</th>
-                    <th scope="col">Statut</th>
                     <th scope="col">Date Sortie</th>
                     <th scope="col">Pointeur Sortie</th>
+                    <!--th scope="col">Action</th-->
+
                 </tr>
                 </thead>
                 <tbody>
@@ -75,59 +72,32 @@
   <h2>Modal Example</h2>
    Trigger the modal with a button
   <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>
-
-
-
-Inclure les scripts de Bootstrap et jQuery -->
-
-
+ Inclure les scripts de Bootstrap et jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
             function fetchMouvements() {
                 $.ajax({
-                    url: "{% url 'liste_mouvements_dk2' %}",
+                    url: "{% url 'liste_mouvements_dkpar' %}",
                     method: "GET",
                     success: function (data) {
                         var tableBody = $('#mouvements-table tbody');
                         tableBody.empty();
                         data.forEach(function (mouvement_list) {
-                            var statutText = '';
-                            if (mouvement_list.statut_entree === 0) {
-                                statutText = 'DECHARGE';
-                            } else if (mouvement_list.statut_entree === 1) {
-                                statutText = 'CHARGE';
-                            } else {
-                                statutText = 'Non Assigné'
-                            }
-                            var statutTextsortie = '';
-                            if (mouvement_list.statut_sortie === 0) {
-                                statutTextsortie = 'DECHARGE';
-                            } else if (mouvement_list.statut_sortie === 1) {
-                                statutTextsortie = 'CHARGE';
-                            } else {
-                                statutTextsortie = 'Non Assigné'
-                            }
                             var row = `
                             <tr>
-<td style="text-transform: uppercase">${mouvement_list.destination}</td>
-                                <td>${mouvement_list.camion.immatriculation}</td>
-                                <td>${mouvement_list.remorque}</td>
-                                <td>${mouvement_list.camion.transporteur}</td>
-                                <td>${mouvement_list.chauffeur.fullname}</td>
-<td>${mouvement_list.chauffeur.permis}</td>
+                                <td>${mouvement_list.vehicule.immatriculation}</td>
+                                <td>${mouvement_list.destination}</td>
 <td>${mouvement_list.date_entree || 'Non Assigné'}</td>
-<td>${mouvement_list.user_ert.fullname || 'Non Assigné'}</td>
-<td>${statutText}</td>
+<td>${mouvement_list.user_ert.fullname}</td>
 <td>${mouvement_list.date_sortie || 'Non Assigné'}</td>
-<td >${mouvement_list.user_srt.fullname ? mouvement_list.user_srt.fullname : 'Non Assigné'}</td>
+<td>${mouvement_list.user_srt && mouvement_list.user_srt.fullname ? mouvement_list.user_srt.fullname : 'Non assigné'}</td>
                             </tr>`;
                             tableBody.append(row);
                         });
                     }
                 });
             }
-
             fetchMouvements();
             setInterval(fetchMouvements, 10000);
             $('#mouvements-table').on('click', '.btn-edit', function () {
@@ -244,11 +214,4 @@ Inclure les scripts de Bootstrap et jQuery -->
             </div>
         </div>
     </div>
-
-
-
-
-
-
-
 {% endblock content %}

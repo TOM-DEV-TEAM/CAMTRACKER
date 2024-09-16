@@ -97,9 +97,10 @@ urlpatterns = [
     path('liste_tt_mvt01/<int:id_mvt>', tout_mouvement01, name='tout_tt_mouvement01'),
     ################### LISTE TOUS MOUVEMENT ADMINDKLOG SACHERIE #######################"
     path('liste_tt_mvt02/<int:id_mvt>', tout_mouvement02, name='tout_tt_mouvement02'),
-
     ################### LISTE TOUS MOUVEMENT ADMINDKLOG ZUD #######################"
     path('liste_tt_mvt03/<int:id_mvt>', tout_mouvement03, name='tout_tt_mouvement03'),
+    ################### LISTE TOUS MOUVEMENT ADMINDKLOG PARTICULIER #######################"
+    path('liste_tt_mvtpar/<int:id_mvt>', tout_mouvementpar, name='tout_tt_mouvementpar'),
     path('liste_tt_mvt2/<int:id_mvt>', tout_mouvement2, name='tout_tt_mouvement2'),
     ###################### FETCH TOUT MOUVEMENT PLT #########################
     path('liste_mouvements_dk0/', liste_mouvements_dk0, name='liste_mouvements_dk0'),
@@ -111,9 +112,14 @@ urlpatterns = [
     path('liste_mouvements_dk2/', liste_mouvements_dk2, name='liste_mouvements_dk2'),
     ###################### FETCH TOUT MOUVEMENT ZUD #########################
     path('liste_mouvements_dk3/', liste_mouvements_dk3, name='liste_mouvements_dk3'),
+    ###################### FETCH TOUT MOUVEMENT PARTICULIERS #########################
+    path('liste_mouvements_dkpar/', liste_mouvements_dkpar, name='liste_mouvements_dkpar'),
     path('liste_mouvements_sacherie/', liste_mouvements_sacherie, name='liste_mouvements_sacherie'),
     path('liste_mouvements2/', liste_mouvements2, name='liste_mouvements2'),
+    ############################## MODIFICATION MOUVEMENTS DKLOG #########################
     path('modifier_mouvement/', modifier_mouvement, name='modifier_mouvement'),
+    #################### MODIFICATION MOUVEMENTS PARTICULIERS ################
+    path('modifier_mouvementpar/', modifier_mouvementpar, name='modifier_mouvementpar'),
     path('modifier_mouvement0/', modifier_mouvement0, name='liste_mouvements2hfhfhgfhjj0'),
     path('modifier_mouvement2/', modifier_mouvement2, name='liste_mouvements2hfhfhgfhjj2'),
     path('activer_desactiver_user/', activer_desactiver_user, name='liste_mouvements2hfhfhgfhfhfhgfhjgjjj'),

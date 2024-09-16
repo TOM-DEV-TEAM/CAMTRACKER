@@ -156,9 +156,10 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form method="POST" action="{% url 'ajoutmouvement0' util.id_user %}"
+                        <form method="POST" action="{% url 'modifier_mouvementpar' %}"
                               enctype="multipart/form-data">
  <input type="hidden" name="id_mouvement" id="idMvt">
+                            <input type="hidden" name="id_user" value="{{ util.id_user }}">
                             <div class="text-center mb-4">
                                 <!--<p style="color: #000; font-size: 25px;">ENTREE DK LOG</p>--->
                             </div>

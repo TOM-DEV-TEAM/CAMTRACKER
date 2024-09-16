@@ -20,6 +20,7 @@ from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.decorators import login_required
 from datetime import timedelta, datetime
 from django.utils import timezone
+
 from numpy.random import poisson
 from openpyxl.workbook import Workbook
 from .forms import MouvementForm, SortieForm, ChauffeurForm, CamionForm, TransitaireForm, ClientForm, VehiculeForm
@@ -1876,14 +1877,18 @@ def tout_mouvement0(request, id_mvt):
 def tout_mouvement01(request, id_mvt):
     user=Utilisateurs.objects.get(id_user=id_mvt)
     return render(request, 'pages/liste_mouvements01.html', {'util': user})
-########################## TOUT MOUVEMENT ADMIN DKLOG TOM ICD #####################
+########################## TOUT MOUVEMENT ADMIN DKLOG SACHERIE #####################
 def tout_mouvement02(request, id_mvt):
     user=Utilisateurs.objects.get(id_user=id_mvt)
     return render(request, 'pages/liste_mouvements02.html', {'util': user})
-########################## TOUT MOUVEMENT ADMIN DKLOG TOM ICD #####################
+########################## TOUT MOUVEMENT ADMIN DKLOG ZUD #####################
 def tout_mouvement03(request, id_mvt):
     user=Utilisateurs.objects.get(id_user=id_mvt)
     return render(request, 'pages/liste_mouvements03.html', {'util': user})
+########################## TOUT MOUVEMENT ADMIN DKLOG PARTICULIERS #####################
+def tout_mouvementpar(request, id_mvt):
+    user=Utilisateurs.objects.get(id_user=id_mvt)
+    return render(request, 'pages/liste_mouvementspar.html', {'util': user})
 def tout_mouvement2(request, id_mvt):
     user=Utilisateurs.objects.get(id_user=id_mvt)
     return render(request, 'pages/liste_mouvement2.html', {'util': user})
@@ -1916,117 +1921,191 @@ def liste_mouvements2(request):
         mouvement['chauffeur'] = chauffeur
     return JsonResponse(list(mouvement_list), safe=False)
 ################################# FETCH TOUTU MOUVEMENTS ADMIN ICD TOM #########################
-
 def liste_mouvements_dk0(request):
-    mouvements = Mouvement0.objects.all().values('id_mvt','destination', 'camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
+    mouvements = Mouvement0.objects.all().values(
+        'id_mvt', 'destination', 'camion_id', 'statut_entree', 'statut_sortie',
+        'chauffeur_id', 'remorque', 'date_entree', 'date_sortie',
+        'pointeur_sortie_id', 'pointeur_entree_id'
+    )
+
     mouvement_list = list(mouvements)
+
     for mouvement in mouvement_list:
-        camion_id = mouvement['camion_id']
+        # Camion details
+        camion_id = mouvement.get('camion_id')
         camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur').first()
-        mouvement['camion'] = camion
-        user_entre=Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
-        if mouvement['pointeur_sortie_id']  :
-            user_sortie= Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values('fullname').first()
+        mouvement['camion'] = camion or {'id_cam': 'Non Assigné', 'immatriculation': 'Non Assigné',
+                                         'transporteur': 'Non Assigné'}
+
+        # Pointeur entrée
+        user_entre = Utilisateurs.objects.filter(id_user=mouvement.get('pointeur_entree_id')).values('fullname').first()
+        mouvement['user_ert'] = user_entre or {'fullname': 'Non Assigné'}
+
+        # Pointeur sortie
+        if mouvement.get('pointeur_sortie_id'):
+            user_sortie = Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values(
+                'fullname').first()
         else:
-            user_sortie = Utilisateurs.objects.filter(id_user=1).values('fullname').first()
-            #for user_sortie in user_sortie :
-                # Mettre l'attribut fullname vide
-            user_sortie = {'fullname': 'original_name'}
-            user_sortie['fullname'] = 'Non Assigné'
+            user_sortie = {'fullname': 'Non Assigné'}
 
-            #user_sortie='oo'
-
-        mouvement['user_ert'] = user_entre
         mouvement['user_srt'] = user_sortie
-        chauffeur_id = mouvement['chauffeur_id']
+
+        # Chauffeur details
+        chauffeur_id = mouvement.get('chauffeur_id')
         chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
                                                                               'permis').first()
-        mouvement['chauffeur'] = chauffeur
-    return JsonResponse(list(mouvement_list), safe=False)
+        mouvement['chauffeur'] = chauffeur or {'id_chauffeur': 'Non Assigné', 'fullname': 'Non Assigné',
+                                               'permis': 'Non Assigné'}
+
+    return JsonResponse(mouvement_list, safe=False)
+
+
 ################################# FETCH TOUTU MOUVEMENTS ADMIN ICD TOM #########################
-
 def liste_mouvements_dk(request):
-    mouvements = Mouvement1.objects.all().values('id_mvt','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
+    mouvements = Mouvement1.objects.all().values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie',
+        'chauffeur_id', 'remorque', 'date_entree', 'date_sortie',
+        'pointeur_sortie_id', 'pointeur_entree_id'
+    )
+
     mouvement_list = list(mouvements)
+
     for mouvement in mouvement_list:
-        camion_id = mouvement['camion_id']
+        # Camion details
+        camion_id = mouvement.get('camion_id')
         camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur').first()
-        mouvement['camion'] = camion
-        user_entre=Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
-        if mouvement['pointeur_sortie_id']  :
-            user_sortie= Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values('fullname').first()
+        mouvement['camion'] = camion or {'id_cam': 'Non Assigné', 'immatriculation': 'Non Assigné',
+                                         'transporteur': 'Non Assigné'}
+
+        # Pointeur entrée
+        user_entre = Utilisateurs.objects.filter(id_user=mouvement.get('pointeur_entree_id')).values('fullname').first()
+        mouvement['user_ert'] = user_entre or {'fullname': 'Non Assigné'}
+
+        # Pointeur sortie
+        if mouvement.get('pointeur_sortie_id'):
+            user_sortie = Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values(
+                'fullname').first()
         else:
-            user_sortie = Utilisateurs.objects.filter(id_user=1).values('fullname').first()
-            #for user_sortie in user_sortie :
-                # Mettre l'attribut fullname vide
-            user_sortie = {'fullname': 'original_name'}
-            user_sortie['fullname'] = 'null'
+            user_sortie = {'fullname': 'Non Assigné'}
 
-            #user_sortie='oo'
-
-        mouvement['user_ert'] = user_entre
         mouvement['user_srt'] = user_sortie
-        chauffeur_id = mouvement['chauffeur_id']
+
+        # Chauffeur details
+        chauffeur_id = mouvement.get('chauffeur_id')
         chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
                                                                               'permis').first()
-        mouvement['chauffeur'] = chauffeur
-    return JsonResponse(list(mouvement_list), safe=False)
+        mouvement['chauffeur'] = chauffeur or {'id_chauffeur': 'Non Assigné', 'fullname': 'Non Assigné',
+                                               'permis': 'Non Assigné'}
+
+        # Remorque
+        mouvement['remorque'] = mouvement.get('remorque') or 'Non Assigné'
+
+        # Date d'entrée et sortie
+        mouvement['date_entree'] = mouvement.get('date_entree') or 'Non Assigné'
+        mouvement['date_sortie'] = mouvement.get('date_sortie') or 'Non Assigné'
+
+    return JsonResponse(mouvement_list, safe=False)
+
+
 ################################# FETCH TOUTU MOUVEMENTS ADMIN ICD CMA #########################
 
 def liste_mouvements_dk1(request):
-    mouvements = Mouvement4.objects.all().values('id_mvt','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
+    mouvements = Mouvement4.objects.all().values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie',
+        'chauffeur_id', 'remorque', 'date_entree', 'date_sortie',
+        'pointeur_sortie_id', 'pointeur_entree_id'
+    )
+
     mouvement_list = list(mouvements)
+
     for mouvement in mouvement_list:
-        camion_id = mouvement['camion_id']
+        # Gestion du camion
+        camion_id = mouvement.get('camion_id')
         camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur').first()
-        mouvement['camion'] = camion
-        user_entre=Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
-        if mouvement['pointeur_sortie_id']  :
-            user_sortie= Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values('fullname').first()
+        mouvement['camion'] = camion or {'id_cam': 'Non Assigné', 'immatriculation': 'Non Assigné',
+                                         'transporteur': 'Non Assigné'}
+
+        # Gestion du pointeur d'entrée
+        user_entre = Utilisateurs.objects.filter(id_user=mouvement.get('pointeur_entree_id')).values('fullname').first()
+        mouvement['user_ert'] = user_entre or {'fullname': 'Non Assigné'}
+
+        # Gestion du pointeur de sortie
+        if mouvement.get('pointeur_sortie_id'):
+            user_sortie = Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values(
+                'fullname').first()
         else:
-            user_sortie = Utilisateurs.objects.filter(id_user=1).values('fullname').first()
-            #for user_sortie in user_sortie :
-                # Mettre l'attribut fullname vide
-            user_sortie = {'fullname': 'original_name'}
-            user_sortie['fullname'] = 'null'
+            user_sortie = {'fullname': 'Non Assigné'}
 
-            #user_sortie='oo'
-
-        mouvement['user_ert'] = user_entre
         mouvement['user_srt'] = user_sortie
-        chauffeur_id = mouvement['chauffeur_id']
+
+        # Gestion du chauffeur
+        chauffeur_id = mouvement.get('chauffeur_id')
         chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
                                                                               'permis').first()
-        mouvement['chauffeur'] = chauffeur
-    return JsonResponse(list(mouvement_list), safe=False)
+        mouvement['chauffeur'] = chauffeur or {'id_chauffeur': 'Non Assigné', 'fullname': 'Non Assigné',
+                                               'permis': 'Non Assigné'}
+
+        # Gestion de la remorque
+        mouvement['remorque'] = mouvement.get('remorque') or 'Non Assigné'
+
+        # Gestion des dates d'entrée et de sortie
+        mouvement['date_entree'] = mouvement.get('date_entree') or 'Non Assigné'
+        mouvement['date_sortie'] = mouvement.get('date_sortie') or 'Non Assigné'
+
+    return JsonResponse(mouvement_list, safe=False)
+
+
 ################################# FETCH TOUTU MOUVEMENTS ADMIN SACHERIE #########################
 
+from django.db.models import Q
+
 def liste_mouvements_dk2(request):
-    mouvements = Mouvement0.objects.filter(destination__contains='hangar').values('id_mvt', 'destination','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
-    mouvement_list = list(mouvements)
+    # Combiner les valeurs de Mouvement2, Mouvement6, et Mouvement7
+    mouvements = Mouvement2.objects.all().values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie',
+                                                 'chauffeur_id', 'remorque', 'date_entree', 'date_sortie',
+                                                 'pointeur_sortie_id', 'pointeur_entree_id')
+
+    mouvements6 = Mouvement6.objects.all().values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie',
+                                                  'chauffeur_id', 'remorque', 'date_entree', 'date_sortie',
+                                                  'pointeur_sortie_id', 'pointeur_entree_id')
+
+    mouvements7 = Mouvement7.objects.all().values('id_mvt', 'camion_id', 'statut_entree', 'statut_sortie',
+                                                  'chauffeur_id', 'remorque', 'date_entree', 'date_sortie',
+                                                  'pointeur_sortie_id', 'pointeur_entree_id')
+
+    # Fusionner les mouvements
+    mouvement_list = list(mouvements) + list(mouvements6) + list(mouvements7)
+
+    # Ajouter la variable destination et remplir les champs
     for mouvement in mouvement_list:
         camion_id = mouvement['camion_id']
         camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur').first()
-        mouvement['camion'] = camion
-        user_entre=Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
-        if mouvement['pointeur_sortie_id']  :
-            user_sortie= Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values('fullname').first()
-        else:
-            user_sortie = Utilisateurs.objects.filter(id_user=1).values('fullname').first()
-            #for user_sortie in user_sortie :
-                # Mettre l'attribut fullname vide
-            user_sortie = {'fullname': 'original_name'}
-            user_sortie['fullname'] = 'null'
+        mouvement['camion'] = camion if camion else "Non Assigné"
 
-            #user_sortie='oo'
+        # Récupérer les informations du pointeur d'entrée et de sortie
+        user_entre = Utilisateurs.objects.filter(id_user=mouvement['pointeur_entree_id']).values('fullname').first()
+        user_sortie = Utilisateurs.objects.filter(id_user=mouvement.get('pointeur_sortie_id', 1)).values('fullname').first() or {'fullname': 'Non Assigné'}
 
-        mouvement['user_ert'] = user_entre
+        mouvement['user_ert'] = user_entre if user_entre else {'fullname': 'Non Assigné'}
         mouvement['user_srt'] = user_sortie
+
+        # Récupérer les informations du chauffeur
         chauffeur_id = mouvement['chauffeur_id']
-        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname',
-                                                                              'permis').first()
-        mouvement['chauffeur'] = chauffeur
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname', 'permis').first()
+        mouvement['chauffeur'] = chauffeur if chauffeur else "Non Assigné"
+
+        # Ajouter la variable destination
+        if mouvement in mouvements:
+            mouvement['destination'] = "TOM"
+        elif mouvement in mouvements6:
+            mouvement['destination'] = "ITS"
+        elif mouvement in mouvements7:
+            mouvement['destination'] = "TRANSEXPRESS"
+        else:
+            mouvement['destination'] = "Non Assigné"
+
     return JsonResponse(list(mouvement_list), safe=False)
+
 ################################# FETCH TOUTU MOUVEMENTS ADMIN ZUD #########################
 
 def liste_mouvements_dk3(request):
@@ -2056,6 +2135,32 @@ def liste_mouvements_dk3(request):
                                                                               'permis').first()
         mouvement['chauffeur'] = chauffeur
     return JsonResponse(list(mouvement_list), safe=False)
+####################### FETCH TOUT MOUVEMENTS PARTICULIERS ##############################
+################################# FETCH TOUTU MOUVEMENTS ADMIN ZUD #########################
+
+def liste_mouvements_dkpar(request):
+    mouvements = Mouvement8.objects.all().values('id_mvt', 'vehicule_id',
+                                                 'destination', 'date_entree', 'date_sortie',
+                                                 'pointeur_sortie_id', 'pointeur_entree_id')
+    mouvement_list = list(mouvements)
+    for mouvement in mouvement_list:
+        # Gestion du vehicule
+        vehicule_id = mouvement.get('vehicule_id')
+        vehicule = Vehicule.objects.filter(id_veh=vehicule_id).values('id_veh', 'immatriculation').first()
+        mouvement['vehicule'] = vehicule if vehicule else {'immatriculation': 'non assigné'}
+        # Gestion du pointeur d'entrée
+        user_entre = Utilisateurs.objects.filter(id_user=mouvement.get('pointeur_entree_id')).values('fullname').first()
+        mouvement['user_ert'] = user_entre if user_entre else {'fullname': 'non assigné'}
+        # Gestion du pointeur de sortie
+        if mouvement.get('pointeur_sortie_id'):
+            user_sortie = Utilisateurs.objects.filter(id_user=mouvement['pointeur_sortie_id']).values(
+                'fullname').first()
+        else:
+            # Valeur par défaut si pointeur_sortie_id est null
+            user_sortie = {'fullname': 'non assigné'}
+        mouvement['user_srt'] = user_sortie if user_sortie else {'fullname': 'non assigné'}
+    return JsonResponse(list(mouvement_list), safe=False)
+####################### FETCH TOUT MOUVEMENTS SACHERIE ##############################
 def liste_mouvements_sacherie(request):
     mouvements = Mouvement2.objects.all().values('id_mvt','mission','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
     mouvement_list = list(mouvements)
@@ -2082,7 +2187,23 @@ def liste_mouvements_sacherie(request):
                                                                               'permis').first()
         mouvement['chauffeur'] = chauffeur
     return JsonResponse(list(mouvement_list), safe=False)
-
+################# MODIFICATION MOUVEMENTS PARTICULIER ~########################
+def modifier_mouvementpar(request):
+    if request.method == 'POST':
+        try:
+            id_mvt = request.POST.get('id_mouvement')
+            id_user = request.POST.get('id_user')
+            destination = request.POST.get('destination')
+            vehicule_id = request.POST.get('vehicule_id')
+            mouvement = Mouvement8.objects.filter(id_mvt=id_mvt).first()
+            mouvement.destination = destination
+            mouvement.vehicule_id = vehicule_id
+            mouvement.save()
+            return redirect(f"/modif_mvtpar/{id_user}?success=true")
+        except Exception as e:
+            error_message = str(e)
+            return redirect(f"/modif_mvtpar/{id_user}?error={error_message}")
+##################### MODIFIATION MOUVEMENTS DKLOG #############################
 
 @csrf_exempt
 def modifier_mouvement(request):

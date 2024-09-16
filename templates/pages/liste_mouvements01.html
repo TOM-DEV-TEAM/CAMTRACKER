@@ -33,7 +33,7 @@
   </li> <li class="nav-item">
     <a class="nav-link" href="/liste_tt_mvt03/{{ util.id_user }}" tabindex="-1" >ZUD</a>
   </li>     <li class="nav-item">
-    <a class="nav-link" href="/index_dk_logparticulier/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
+    <a class="nav-link" href="/liste_tt_mvtpar/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
   </li>
 </ul><br>
         <div class="table-responsive">
@@ -54,7 +54,6 @@
                             <th scope="col">Statut Entree</th>
                             <th scope="col">Date Sortie </th>
                             <!--th scope="col">Pointeurkjsd Sortie</th-->
-                            <th scope="col">Action</th>
 
                         </tr>
                     </thead>
@@ -112,26 +111,11 @@
                                 <td>${mouvement_list.camion.transporteur}</td>
                                 <td>${mouvement_list.chauffeur.fullname}</td>
 <td>${mouvement_list.chauffeur.permis}</td>
-<td>${mouvement_list.date_entree }</td>
-<td>${mouvement_list.user_ert.fullname }</td>
+<td>${mouvement_list.date_entree  || 'Non Assigné'}</td>
+<td>${mouvement_list.user_ert.fullname  || 'Non Assigné'}</td>
 <td>${statutText}</td>
 <td>${mouvement_list.date_sortie || 'Non Assigné'}</td>
 <!--td>${mouvement_list.user_srt && mouvement_list.user_srt.fullname ? mouvement_list.user_srt.fullname : 'Non assigné'}</td-->
-<td>
-            <button  class="btn btn-primary btn-edit"
-                data-id="${mouvement_list.id_mvt}"
-                data-camion="${mouvement_list.camion.immatriculation}"
-                data-transporteur="${mouvement_list.camion.transporteur}"
-                data-chauffeur="${mouvement_list.chauffeur.fullname}"
-                data-permis="${mouvement_list.chauffeur.permis}"
-                data-remorque="${mouvement_list.remorque}"
-                 data-statut-entree="${mouvement_list.statut_entree}"
-    data-statut-sortie="${mouvement_list.statut_sortie}"
-                data-destination="${mouvement_list.destination}"
-                data-toggle="modal"
-                data-target="#editModal"
->Modifier</button>
-        </td>
 
 
                             </tr>`;
