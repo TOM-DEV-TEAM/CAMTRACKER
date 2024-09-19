@@ -1081,7 +1081,8 @@ def entredecalon_view2(request, id_user):
     util = Utilisateurs.objects.get(id_user=id_user)
     mouvements = Mouvement0.objects.filter(destination__icontains='zud', date_sortie__isnull=True).values(
         'id_mvt', 'camion_id', 'statut_entree', 'zone_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
-        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination'
+        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'numconteneur1', 'typeconteneur1', 'numconteneur2', 'typeconteneur2',
+        'numconteneur3', 'typeconteneur3','destination'
     )
     mouvement_list = list(mouvements)
 
@@ -2844,10 +2845,13 @@ def ajoutmouvement0(request, id_user):
             mission = request.POST.get('mission')
             date_validite = request.POST.get('date_validite')
             tonnage = request.POST.get('tonnage') or 0
-            typeconteneur1 = request.POST.get('typeconteneur1')
+
             numconteneur1 = request.POST.get('numconteneur1')
-            typeconteneur2 = request.POST.get('typeconteneur2')
+            typeconteneur1 = request.POST.get('typeconteneur1')
             numconteneur2 = request.POST.get('numconteneur2')
+            typeconteneur2 = request.POST.get('typeconteneur2')
+            numconteneur3 = request.POST.get('numconteneur3')
+            typeconteneur3 = request.POST.get('typeconteneur3')
             bl1 = request.POST.get('bl1')
             bl2 = request.POST.get('bl2')
             nbrcolis = request.POST.get('nbrcolis') or 0
@@ -2857,12 +2861,14 @@ def ajoutmouvement0(request, id_user):
             transitaire_id = request.POST.get('transitaire')
             # Création d'un Mouvement0
             mouvement0 = Mouvement0(
-                typeconteneur1=typeconteneur1,
                 remorque= remorque,
                 navire = navire,
                 numconteneur1=numconteneur1,
-                typeconteneur2=typeconteneur2,
+                typeconteneur1=typeconteneur1,
                 numconteneur2=numconteneur2,
+                typeconteneur2=typeconteneur2,
+                numconteneur3=numconteneur3,
+                typeconteneur3=typeconteneur3,
                 bl1=bl1,
                 zone_entree = zone,
                 date_validite=date_validite,
@@ -2930,6 +2936,12 @@ def ajoutmouvement0(request, id_user):
                     mouvement.marchandise = marchandise
                     mouvement.bl1 = bl1
                     mouvement.bl2 = bl2
+                    mouvement.numconteneur1 = numconteneur3
+                    mouvement.typeconteneur1 = typeconteneur3
+                    mouvement.numconteneur2 = numconteneur3
+                    mouvement.typeconteneur2 = typeconteneur3
+                    mouvement.numconteneur3 = numconteneur3
+                    mouvement.typeconteneur3 = typeconteneur3
                     mouvement.transitaire_id = transitaire_id
                     mouvement.representant_id = representant_id
                     mouvement.navire = navire
