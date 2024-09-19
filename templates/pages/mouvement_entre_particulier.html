@@ -1,6 +1,27 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
+<style>
+    .btn-outline-primary.custom-checked {
+        background-color: #00FFFF; /* Bleu clair */
+        color: white; /* Texte blanc pour contraste */
+        border-color: #00ffff;
+    }
 
+    .btn-outline-primary {
+        border-color:#00FFFF; /* Bordure bleu clair */
+        color: #00FFFF; /* Texte bleu clair */
+    }
+</style>
+<script>
+    // Ajout d'un événement pour modifier l'apparence des boutons sélectionnés
+    const radios = document.querySelectorAll('input[name="zone"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('custom-checked'));
+            document.querySelector(`label[for="${this.id}"]`).classList.add('custom-checked');
+        });
+    });
+</script>
 {% block breadcrumbs %}{% endblock breadcrumbs %}
 
 {% block content %}
@@ -23,7 +44,7 @@
         <!--<p class="label theme-bg text-white f-12"  class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModalajout">Ajouter</p>-->
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
+        <!--script>
             $(document).ready(function () {
                 function fetchMouvementsParticuliers() {
                     $.ajax({
@@ -68,7 +89,7 @@ console.log(row);
                 fetchMouvementsParticuliers();
                 setInterval(fetchMouvementsParticuliers, 10000);
             });
-        </script>
+        </script-->
         <p class="label theme-bg text-white f-12" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"
            style="font-size: large">Ajouter</p>
 
@@ -76,18 +97,27 @@ console.log(row);
 
         <div class="container  ">
             <div class="table-responsive w-100">
-                <table id="mouvements-table" class="table table-hover" style="margin-top: 15px;">
-                    <thead class="thead-light">
+   <table id="mouvements-table" class="table table-hover" style="margin-top: 15px;">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col" class="d-md-table-cell">Zone</th>
+            <th scope="col" class="d-md-table-cell">Date entrée</th>
+            <th scope="col" class="d-md-table-cell">Véhicule</th>
+            <th scope="col" class="d-md-table-cell">Destination</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for mouvement in mouvements %}
+        <tr>
+            <td>{{ mouvement.zone_entree }}</td>
+            <td>{{ mouvement.date_entree|date:"d/m/Y H:i" }}</td>
+            <td>{{ mouvement.vehicule.immatriculation }}</td>
+            <td>{{ mouvement.destination }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-                    <tr>
-                        <th scope="col" class=" d-md-table-cell">Date entrée</th>
-                        <th scope="col" class=" d-md-table-cell">Véhicule</th>
-                        <th scope="col" class=" d-md-table-cell">Destination</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
             </div>
         </div>
 
@@ -160,6 +190,14 @@ console.log(row);
                             </div>
                             {% csrf_token %}
                             {{ form.non_field_errors }}
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="zone" id="option-nord" value="Nord"
+                                       autocomplete="off" checked>
+                                <label class="btn btn-outline-primary custom-checked" for="option-nord">Nord</label>
+                                <input type="radio" class="btn-check" name="zone" id="option-sud" value="Sud"
+                                       autocomplete="off">
+                                <label class="btn btn-outline-primary" for="option-sud">Sud</label>
+                            </div>
                             <div class="form-group mb-4">
                                 <label for="camion">Destination</label>
                                 <select name="destination" class="form-control form-control-lg" required>

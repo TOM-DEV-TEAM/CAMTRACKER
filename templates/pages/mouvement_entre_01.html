@@ -1,6 +1,27 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
+<style>
+    .btn-outline-primary.custom-checked {
+        background-color: #00FFFF; /* Bleu clair */
+        color: white; /* Texte blanc pour contraste */
+        border-color: #00ffff;
+    }
 
+    .btn-outline-primary {
+        border-color:#00FFFF; /* Bordure bleu clair */
+        color: #00FFFF; /* Texte bleu clair */
+    }
+</style>
+<script>
+    // Ajout d'un événement pour modifier l'apparence des boutons sélectionnés
+    const radios = document.querySelectorAll('input[name="zone"]');
+    radios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('custom-checked'));
+            document.querySelector(`label[for="${this.id}"]`).classList.add('custom-checked');
+        });
+    });
+</script>
 {% block breadcrumbs %}{% endblock breadcrumbs %}
 
 {% block content %}
@@ -79,6 +100,7 @@
                 <table id="mouvements-table" class="table table-hover" style="margin-top: 15px;">
     <thead class="thead-light">
         <tr>
+            <th scope="col" class="d-md-table-cell">Zone Entrée</th>
             <th scope="col" class="d-md-table-cell">Date Entrée</th>
             <th scope="col" class="d-md-table-cell">Camion</th>
             <th scope="col" class="d-md-table-cell">Type</th>
@@ -93,6 +115,7 @@
         {% if mouvements %}
             {% for mouvement in mouvements %}
                 <tr>
+                    <td>{{ mouvement.zone_entree }}</td>
                     <td>{{ mouvement.date_entree }}</td>
                     <td>{{ mouvement.camion.immatriculation }}</td>
                     <td>{{ mouvement.camion.type }}</td>
@@ -152,6 +175,14 @@
                             </div>
                             {% csrf_token %}
                             {{ form.non_field_errors }}
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="zone" id="option-nord" value="Nord"
+                                       autocomplete="off" checked>
+                                <label class="btn btn-outline-primary custom-checked" for="option-nord">Nord</label>
+                                <input type="radio" class="btn-check" name="zone" id="option-sud" value="Sud"
+                                       autocomplete="off">
+                                <label class="btn btn-outline-primary" for="option-sud">Sud</label>
+                            </div>
                             <div class="form-row">
                                 <div class="col">
                                     <label for="destination">Entité</label>

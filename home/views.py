@@ -270,6 +270,7 @@ def ajout_observation(request):
         dd = request.POST.get('dd')
         bd = request.POST.get('bd')
         enpanne = request.POST.get('enpanne')
+        commentaire = request.POST.get('commentaire')
         motif_stationnement = request.POST.get('motif_stationnement')
         statut = request.POST.get('statut')
         user_id = request.POST.get('id_user')
@@ -283,6 +284,7 @@ def ajout_observation(request):
                     'bd': int(bd) if bd else None,
                     'dd': int(dd) if dd else None,
                     'enpanne': int(enpanne) if enpanne else None,
+                    'commentaire': str(commentaire) if commentaire else None,
                     'motif_stationnement': str(motif_stationnement) if motif_stationnement else None,
                     'user': user,
                 }
@@ -969,7 +971,7 @@ def sortie_tom(request, id_user):
 def entredecalon_view(request, id_user):
     util = Utilisateurs.objects.get(id_user=id_user)
     mouvements = Mouvement0.objects.filter(destination__icontains='icd', date_sortie__isnull=True).values(
-        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
+        'id_mvt', 'zone_entree', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
         'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination'
     )
     mouvement_list = list(mouvements)
@@ -1017,11 +1019,18 @@ def entredecalon_view(request, id_user):
     return render(request, 'pages/mouvement_entre_0.html', {'util': util, 'mouvements': mouvement_list})
 def entreedecalog_particulier(request, id_user):
       util = Utilisateurs.objects.get(id_user=id_user)
-      return render(request, 'pages/mouvement_entre_particulier.html', {'util': util})
+      mouvements = Mouvement8.objects.filter(date_sortie__isnull=True).values('id_mvt', 'destination', 'vehicule_id', 'zone_entree',
+                                                                              'date_entree')
+      mouvement_list = list(mouvements)
+      for mouvement in mouvement_list:
+          vehicule_id = mouvement['vehicule_id']
+          vehicule = Vehicule.objects.filter(id_veh=vehicule_id).values('id_veh', 'immatriculation').first()
+          mouvement['vehicule'] = vehicule
+      return render(request, 'pages/mouvement_entre_particulier.html', {'util': util, 'mouvements': mouvements})
 def entredecalon_view1(request, id_user):
     util = Utilisateurs.objects.get(id_user=id_user)
     mouvements = Mouvement0.objects.filter(destination__icontains='hangar', date_sortie__isnull=True).values(
-        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
+        'id_mvt', 'camion_id', 'statut_entree', 'zone_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
         'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination'
     )
     mouvement_list = list(mouvements)
@@ -1072,7 +1081,7 @@ def entredecalon_view1(request, id_user):
 def entredecalon_view2(request, id_user):
     util = Utilisateurs.objects.get(id_user=id_user)
     mouvements = Mouvement0.objects.filter(destination__icontains='zud', date_sortie__isnull=True).values(
-        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
+        'id_mvt', 'camion_id', 'statut_entree', 'zone_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
         'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination'
     )
     mouvement_list = list(mouvements)
@@ -1736,35 +1745,32 @@ def ajoutsortiepar(request):
     if request.method == 'POST':
         try:
             id_mvt = request.POST.get('id_mvt')
+            zone_sortie = request.POST.get('zone')
             mouvement8 = Mouvement8.objects.get(id_mvt=id_mvt)
             mouvement8.date_sortie = timezone.now()
+            mouvement8.zone_sortie = zone_sortie
             mouvement8.pointeur_sortie_id = util.id_user
             mouvement8.save()
-
             # Si tout se passe bien, on renvoie un paramètre de succès
             query_params = urlencode({'success': 'true'})
             return HttpResponseRedirect(f'/sortie_decalog_viewparticulier/{util.id_user}?{query_params}')
-
         except Mouvement8.DoesNotExist:
             # Gérer le cas où le mouvement n'existe pas
             query_params = urlencode({'error': 'Le mouvement spécifié n\'existe pas.'})
             return HttpResponseRedirect(f'/sortie_decalog_viewparticulier/{util.id_user}?{query_params}')
-
         except Exception as e:
             # Gérer toute autre erreur
             query_params = urlencode({'error': 'Une erreur s\'est produite: ' + str(e)})
             return HttpResponseRedirect(f'/sortie_decalog_viewparticulier/{util.id_user}?{query_params}')
-
     # Si la méthode n'est pas POST, on renvoie simplement la vue sans action
     return render(request, 'pages/ajoutsortiepar.html')
-
-
 def ajoutsortiedk(request):
     id_user = request.POST.get('id_user')
     util = get_object_or_404(Utilisateurs, id_user=id_user)
     if request.method == 'POST':
         form = SortieForm(request.POST)
         if form.is_valid():
+            zone_sortie = request.POST.get('zone')
             code_camion = request.POST.get('code_camion')
             poids = request.POST.get('poids') or 0
             poids_autorise = request.POST.get('poinds_autorise')
@@ -1783,11 +1789,13 @@ def ajoutsortiedk(request):
                 mouvement0 = Mouvement0.objects.get(id_mvt=id_mvt)
                 mouvement0.date_sortie = timezone.now()
                 mouvement0.pointeur_sortie_id = util.id_user
+                mouvement0.zone_sortie = zone_sortie
                 mouvement0.num_ticket = num_ticket
                 mouvement0.save()
                 mouvement = Mouvement3.objects.get(id_mvt_0_id=id_mvt)
                 mouvement.num_ticket = num_ticket
                 mouvement.pointeur_sortie_id = util.id_user
+                mouvement.zone_sortie = zone_sortie
                 if not mouvement.date_entree:
                     mouvement.date_entree = timezone.now()
                 if not mouvement.date_sortie:
@@ -1810,6 +1818,7 @@ def ajoutsortiedk(request):
                     mouvement.pont_bascule = pont_bascule
                     mouvement.remorque = remorque
                     mouvement.code_camion = code_camion
+                    mouvement.zone_sortie = zone_sortie
                     mouvement.destination_final = destination
                     if not mouvement.date_entree:
                         mouvement.date_entree = timezone.now()
@@ -1821,6 +1830,7 @@ def ajoutsortiedk(request):
                     mouvement.poids = poids
                     mouvement.poids_autorise = poids_autorise
                     mouvement.pont_bascule = pont_bascule
+                    mouvement.zone_sortie = zone_sortie
                     mouvement.remorque = remorque
                     mouvement.code_camion = code_camion
                     mouvement.destination_final = destination
@@ -1837,6 +1847,7 @@ def ajoutsortiedk(request):
                     mouvement.remorque = remorque
                     mouvement.code_camion = code_camion
                     mouvement.destination_final = destination
+                    mouvement.zone_sortie = zone_sortie
                     if not mouvement.date_entree:
                         mouvement.date_entree = timezone.now()
                     if not mouvement.date_sortie:
@@ -1856,6 +1867,7 @@ def ajoutsortiedk(request):
             # Mettre à jour les informations du mouvement
                 mouvement.date_sortie = timezone.now()
                 mouvement.pointeur_sortie_id = util.id_user
+                mouvement.zone_sortie = zone_sortie
                 if not mouvement.date_entree:
                     mouvement.date_entree = timezone.now()
                 if not mouvement.date_sortie:
@@ -1865,6 +1877,7 @@ def ajoutsortiedk(request):
                 mouvement0=Mouvement0.objects.get(id_mvt=mouvement.id_mvt_0_id)
                 mouvement0.date_sortie = timezone.now()
                 mouvement0.pointeur_sortie_id = util.id_user
+                mouvement0.zone_sortie = zone_sortie
                 mouvement0.save()
             # Rediriger vers une vue après sauvegarde avec un paramètre de succès
             query_params = urlencode({'success': 'true'})
@@ -2794,7 +2807,7 @@ def ajoutmouvementparticulier(request, id_user):
             try:
                 vehicule = request.POST.get('vehicule')
                 destination = request.POST.get('destination')
-
+                zone_entree = request.POST.get('zone')
               #  mouvement0 = Mouvement0(
                #     date_entree =  datetime.now(),
                 #    pointeur_entree_id= util.id_user,
@@ -2802,30 +2815,27 @@ def ajoutmouvementparticulier(request, id_user):
                   #  destination=destination,
                 #)
                 #mouvement0.save()
-
                 mouvement8 = Mouvement8(
                     date_entree=datetime.now(),
+                    zone_entree = zone_entree,
                     pointeur_entree_id=util.id_user,
                     vehicule_id=vehicule,
                     destination=destination,
              #       id_mvt_0_id=mouvement0.id_mvt
                 )
                 mouvement8.save()
-
                 # Optional: You might want to redirect to a success page or do something else after saving
                 return redirect(f"/entreedecalog_particulier/{util.id_user}?success=true")
-
             except Exception as e:
                 error_message = str(e)
                 return redirect(f"/entreedecalog_particulier/{util.id_user}?error={error_message}")
-
-
 ########################## AJOUT MOUVEMENT 0 #####################################
 def ajoutmouvement0(request, id_user):
     util = get_object_or_404(Utilisateurs, id_user=id_user)
 
     if request.method == 'POST':
         try:
+            zone = request.POST.get('zone')
             navire = request.POST.get('navire')
             camion_id = request.POST.get('camion')
             chauffeur_id = request.POST.get('chauffeur')
@@ -2855,6 +2865,7 @@ def ajoutmouvement0(request, id_user):
                 typeconteneur2=typeconteneur2,
                 numconteneur2=numconteneur2,
                 bl1=bl1,
+                zone_entree = zone,
                 date_validite=date_validite,
                 bl2=bl2,
                 nbrcolis=nbrcolis,
@@ -2890,6 +2901,7 @@ def ajoutmouvement0(request, id_user):
             common_attrs = {
                 'camion_id':camion_id,
                 'chauffeur_id':chauffeur_id,
+                'zone_entree' : zone,
                 'client_id':client_id,
                 'mission': mission,
                 'remorque': remorque,

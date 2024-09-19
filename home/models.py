@@ -28,6 +28,8 @@ class Mouvement1(models.Model):
     statut_sortie = models.IntegerField(null=True, blank=True)
     date_sortie = models.DateTimeField(null=True, blank=True)
     date_entree = models.DateTimeField(null=True, blank=True)
+    zone_entree = models.CharField(null=True, blank=True, max_length=55)
+    zone_sortie = models.CharField(null=True, blank=True, max_length=55)
     ########## INTEGRATION  DES POINTEUR ############
     pointeur_entree = models.ForeignKey('Utilisateurs', on_delete=models.CASCADE, related_name='mouvements_entree1', null=True, blank=True)
     pointeur_sortie = models.ForeignKey('Utilisateurs', on_delete=models.CASCADE, related_name='mouvements_sortie1', null=True, blank=True)
@@ -50,7 +52,8 @@ class Mouvement4(models.Model):
     statut_sortie = models.IntegerField(null=True, blank=True)
     date_sortie = models.DateTimeField(null=True, blank=True)
     date_entree = models.DateTimeField(null=True, blank=True)
-
+    zone_entree = models.CharField(null=True, blank=True, max_length=55)
+    zone_sortie = models.CharField(null=True, blank=True, max_length=55)
     ########## INTEGRATION  DES POINTEUR ############
     pointeur_entree = models.ForeignKey('Utilisateurs', on_delete=models.CASCADE, related_name='mouvements_entree4', null=True, blank=True)
     pointeur_sortie = models.ForeignKey('Utilisateurs', on_delete=models.CASCADE, related_name='mouvements_sortie4', null=True, blank=True)
@@ -75,6 +78,8 @@ class Mouvement5(models.Model):
     statut_sortie = models.IntegerField(null=True, blank=True)
     date_sortie = models.DateTimeField(null=True, blank=True)
     date_entree = models.DateTimeField(null=True, blank=True)
+    zone_entree = models.CharField(null=True, blank=True, max_length=55)
+    zone_sortie = models.CharField(null=True, blank=True, max_length=55)
     #################Client
     client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='client5', null=True,
                                blank=True)
@@ -105,6 +110,8 @@ class Mouvement6(models.Model):
     statut_sortie = models.IntegerField(null=True, blank=True)
     date_sortie = models.DateTimeField(null=True, blank=True)
     date_entree = models.DateTimeField(null=True, blank=True)
+    zone_entree = models.CharField(null=True, blank=True, max_length=55)
+    zone_sortie = models.CharField(null=True, blank=True, max_length=55)
     #################Client
     client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='client6', null=True,
                                blank=True)
@@ -138,8 +145,9 @@ class Mouvement8(models.Model):
         id_mvt = models.AutoField(primary_key=True)
         date_sortie = models.DateTimeField(null=True, blank=True)
         date_entree = models.DateTimeField(null=True, blank=True)
-        destination = models.CharField(null=True
-                                       , blank=True)
+        destination = models.CharField(null=True, blank=True)
+        zone_entree = models.CharField(null=True, blank=True, max_length=55)
+        zone_sortie = models.CharField(null=True, blank=True, max_length=55)
         ########## INTEGRATION  DES POINTEUR ############
         pointeur_entree = models.ForeignKey('Utilisateurs', on_delete=models.CASCADE, related_name='mouvements7_entreepart',
                                             null=True, blank=True)
@@ -157,6 +165,8 @@ class Mouvement7(models.Model):
     statut_sortie = models.IntegerField(null=True, blank=True)
     date_sortie = models.DateTimeField(null=True, blank=True)
     date_entree = models.DateTimeField(null=True, blank=True)
+    zone_entree = models.CharField(null=True, blank=True, max_length=55)
+    zone_sortie = models.CharField(null=True, blank=True, max_length=55)
     navire = models.CharField(max_length=255,null=True, blank=True)
     poids = models.CharField(null=True, blank=True, max_length=255)
     poids_autorise = models.CharField(null=True, blank=True, max_length=255)
@@ -191,6 +201,8 @@ class Mouvement2(models.Model):
     statut_sortie = models.IntegerField(null=True, blank=True)
     date_sortie = models.DateTimeField(null=True, blank=True)
     date_entree = models.DateTimeField(null=True, blank=True)
+    zone_entree = models.CharField(null=True, blank=True, max_length=55)
+    zone_sortie = models.CharField(null=True, blank=True, max_length=55)
     poids = models.CharField(null=True, blank=True, max_length=255)
     poids_autorise = models.CharField(null=True, blank=True, max_length=255)
     pont_bascule = models.IntegerField(null=True, blank=True)
@@ -265,6 +277,8 @@ class Mouvement0(models.Model):
     statut_sortie = models.IntegerField(null=True, blank=True)
     date_sortie = models.DateTimeField(null=True, blank=True)
     date_entree = models.DateTimeField(null=True, blank=True)
+    zone_entree = models.CharField(null=True, blank=True, max_length=55)
+    zone_sortie = models.CharField(null=True, blank=True, max_length=55)
     mission = models.CharField(max_length=255, null=True)
     num_ticket = models.CharField(max_length=255, null=True)
     code_camion = models.CharField(null=True, blank=True)
@@ -336,6 +350,8 @@ class Mouvement3(models.Model):
         statut_sortie = models.IntegerField(null=True, blank=True)
         date_sortie = models.DateTimeField(null=True, blank=True)
         date_entree = models.DateTimeField(null=True, blank=True)
+        zone_entree = models.CharField(null=True, blank=True, max_length=55)
+        zone_sortie = models.CharField(null=True, blank=True, max_length=55)
         num_ticket= models.CharField(max_length=255,null=True)
         ########## INTEGRATION  DES POINTEUR ############
         pointeur_entree = models.ForeignKey('Utilisateurs', on_delete=models.CASCADE, related_name='mouvements_entree3',
@@ -392,6 +408,7 @@ class Observation (models.Model):
     dd = models.IntegerField(null=True, blank=True)
     enpanne = models.IntegerField(null=True, blank=True)
     motif_stationnement = models.CharField(null=True, blank=True)
+    commentaire = models.CharField(null=True, blank=True, max_length=255)
     camion = models.ForeignKey(Camion, on_delete=models.CASCADE)
     id_mvt_0 = models.ForeignKey('Mouvement0', on_delete=models.CASCADE, related_name='mouvements3sdjhsdd', null=True,
                                  blank=True)
