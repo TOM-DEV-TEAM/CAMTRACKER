@@ -24,7 +24,7 @@
         <!--<p class="label theme-bg text-white f-12"  class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModalajout">Ajouter</p>-->
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
+        <!--script>
             $(document).ready(function () {
                 function fetchMouvements() {
                     $.ajax({
@@ -67,7 +67,7 @@
                 fetchMouvements();
                 setInterval(fetchMouvements, 10000);
             });
-        </script>
+        </script-->
         <p class="label theme-bg text-white f-12" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"
            style="font-size: large">Ajouter</p>
         <h3 class="modal-title" id="editModalLabel">Entrée Camions ICD </h3>
@@ -77,6 +77,7 @@
                     <thead class="thead-light">
 
                     <tr>
+                        <th scope="col" class=" d-md-table-cell">Date Entrée</th>
                         <th scope="col" class=" d-md-table-cell">Camion</th>
                         <th scope="col" class=" d-md-table-cell">Type</th>
                         <th scope="col" class=" d-md-table-cell">Transporteur</th>
@@ -86,8 +87,36 @@
                         <th scope="col" class=" d-md-table-cell">Statut</th>
                     </tr>
                     </thead>
-                    <tbody>
-                    </tbody>
+                   <tbody>
+        {% if mouvements %}
+            {% for mouvement in mouvements %}
+                <tr>
+                    <td>{{ mouvement.date_entree }}</td>
+                    <td>{{ mouvement.camion.immatriculation }}</td>
+                    <td>{{ mouvement.camion.type }}</td>
+                    <td>{{ mouvement.camion.transporteur }}</td>
+                    <td>{{ mouvement.destination }}</td>
+                    <td>{{ mouvement.chauffeur.fullname }}</td>
+                    <td>{{ mouvement.chauffeur.permis }}</td>
+                    <td>
+                        {% if mouvement.statut_entree  == 0 %}
+                            Vide
+                        {% elif mouvement.statut_entree == 1 %}
+                            Partielle
+                        {% elif mouvement.statut_entree == 2 %}
+                            Plein
+                        {% else %}
+                            Non Assigné
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="7">Aucun mouvement disponible</td>
+            </tr>
+        {% endif %}
+    </tbody>
                 </table>
             </div>
         </div>
@@ -509,11 +538,11 @@ $('#camionvrac-select').on('change', function () {
         actualiserListeChauffeurs();
         actualiserListeTransitaires();
         actualiserListeClients()
-        setInterval(actualiserListeTransitaires, 2000);
-        setInterval(actualiserListeClients, 2000);
-        setInterval(actualiserListeCamions, 2000); // 20000 ms = 20 secondes
-        setInterval(actualiserListeChauffeurs, 2000);
-        setInterval(actualiserListeCamionsVrac, 2000); // 20000 ms = 20 secondes
+        setInterval(actualiserListeTransitaires, 5000);
+        setInterval(actualiserListeClients, 5000);
+        setInterval(actualiserListeCamions, 5000); // 20000 ms = 20 secondes
+        setInterval(actualiserListeChauffeurs, 5000);
+    // 20000 ms = 20 secondes
 
         // Fonction pour filtrer les camions en fonction de la destination sélectionnée
         $('#destination-select').on('change', function () {

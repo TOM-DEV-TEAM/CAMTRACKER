@@ -52,10 +52,10 @@
 <td>${mouvement_list.camion.transporteur}</td>
 
                                 <td style="text-transform: uppercase;">${mouvement_list.destination}</td>
-                                <td>${mouvement_list.chauffeur.permis}</td>
-                                <td>${mouvement_list.chauffeur.fullname}</td>
+   <td>${mouvement_list.chauffeur.fullname}</td>
+<td>${mouvement_list.chauffeur.permis}</td>
                                 <td>${statutText}</td>
-            <td> <a href="#!" class="label theme-bg text-white f-12" data-remorque="${mouvement_list.remorque}" data-permis="${mouvement_list.chauffeur.permis}" data-marchandise="${mouvement_list.marchandise}" data-chauffeur="${mouvement_list.chauffeur.id_chauffeur}" data-client="${mouvement_list.client.id_client}" data-mission="${mouvement_list.mission}" data-toggle="modal" data-target="#myModal" data-type="${mouvement_list.camion.type}" data-transporteur="${mouvement_list.camion.transporteur}" data-telephone="${mouvement_list.client.telephone}"data-idmvt="${mouvement_list.id_mvt}" data-destination="${mouvement_list.destination}" data-idcam="${mouvement_list.camion.id_cam}">
+            <td> <a href="#!" class="label theme-bg text-white f-12"  data-telrepresentant="${mouvement_list.representant.telephone}" data-representant="${mouvement_list.representant.id_transit}" data-remorque="${mouvement_list.remorque}" data-permis="${mouvement_list.chauffeur.permis}" data-marchandise="${mouvement_list.marchandise}" data-chauffeur="${mouvement_list.chauffeur.id_chauffeur}" data-client="${mouvement_list.client.id_client}" data-mission="${mouvement_list.mission}" data-toggle="modal" data-target="#myModal" data-type="${mouvement_list.camion.type}" data-transporteur="${mouvement_list.camion.transporteur}" data-telephone="${mouvement_list.client.telephone}"data-idmvt="${mouvement_list.id_mvt}" data-destination="${mouvement_list.destination}" data-idcam="${mouvement_list.camion.id_cam}">
                                                             Modifier
                                                         </a></td>
 
@@ -65,7 +65,6 @@
                         }
                     });
                 }
-
                 fetchMouvements();
                 setInterval(fetchMouvements, 10000);
             });
@@ -689,21 +688,25 @@
             $('#myModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget); // Bouton qui a déclenché le modal
                 var idmvt = button.data('idmvt');
+                var representant = button.data('representant');
                 var marchandise = button.data('marchandise');
                 var remorque = button.data('remorque');
                 var permis = button.data('permis');
                 var chauffeur = button.data('chauffeur');
                 var telephone = button.data('telephone');
-                var client = button.data('client')
+                var client = button.data('client');
                 var idcam = button.data('idcam');
                 var mission = button.data('mission')
                 var type = button.data('type');
                 var transporteur = button.data('transporteur');
                 var destination = button.data('destination');
+                var telrepresentant = button.data('telrepresentant')
                 // Récupérer le modal actuel
                 var modal = $(this);
                 // Assigner les valeurs aux éléments du modal
                 modal.find('#type').val(type);
+                modal.find('#transitairerep-select').val(representant);
+                modal.find('#telephonetransitrep').val(telrepresentant)
                 modal.find('#marchandise').val(marchandise)
                 modal.find('#remorque').val(remorque)
                 modal.find('#permis').val(permis)
@@ -716,6 +719,16 @@
                 modal.find('#idMvt').val(idmvt);
                 modal.find('#destination-select').val(destination);
                 modal.find('#destination-final-select').val(destination);
+                if (type === 'SEMI-REMORQUE') {
+                    $('#conteneurs-div').show(); 
+                    $('#inputsforangards2').show();
+                    $('#inputsforangards1').show();
+                }
+                else {
+                     $('#conteneurs-div').hide(); 
+                     $('#inputsforangards2').hide();
+                     $('#inputsforangards1').hide();
+                }
             });
 
             // Lorsque la valeur de destination change, mettre à jour destination-final

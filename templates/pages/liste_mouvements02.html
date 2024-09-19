@@ -61,9 +61,40 @@
                     <th scope="col">Pointeur Sortie</th>
                 </tr>
                 </thead>
-                <tbody>
+           <tbody>
+    {% for mouvement in mouvements %}
+        <tr>
+            <td>{{ mouvement.destination|upper }}</td> <!-- Corrected upper usage -->
+            <td>{{ mouvement.camion.immatriculation }}</td>
+            <td>{{ mouvement.remorque }}</td>
+            <td>{{ mouvement.camion.transporteur }}</td>
+            <td>{{ mouvement.chauffeur.fullname }}</td>
+            <td>{{ mouvement.chauffeur.permis }}</td>
+            <td>{{ mouvement.date_entree }}</td>
+            <td>{{ mouvement.user_ert.fullname }}</td>
+            <td>
+                {% if mouvement.statut_entree == 0 %}
+                    Vide
+                {% elif mouvement.statut_entree == 1 %}
+                    Partielle
+                {% elif mouvement.statut_entree == 2 %}
+                    Plein
+                {% else %}
+                    Non Assigné
+                {% endif %}
+            </td>
+            <td>
+                {% if mouvement.date_sortie %}
+                    {{ mouvement.date_sortie }}
+                {% else %}
+                    Non Assigné
+                {% endif %}
+            </td>
+            <td>{{ mouvement.user_srt.fullname }}</td>
+        </tr>
+    {% endfor %}
+</tbody>
 
-                </tbody>
             </table>
 
 
@@ -82,7 +113,7 @@ Inclure les scripts de Bootstrap et jQuery -->
 
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
+    <!--script>
         $(document).ready(function () {
             function fetchMouvements() {
                 $.ajax({
@@ -153,7 +184,7 @@ Inclure les scripts de Bootstrap et jQuery -->
             });
         });
 
-    </script>
+    </script-->
 
     </div>
     </div>
@@ -239,7 +270,7 @@ Inclure les scripts de Bootstrap et jQuery -->
                             <button type="submit" class="btn btn-primary">Enregistrer</button>
                             <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
 
-                    </form>
+                        </div></form>
                 </div>
             </div>
         </div>

@@ -31,14 +31,34 @@
                         method: "GET",
                         success: function (data) {
                             var tableBody = $('#mouvements-table tbody');
+
                             tableBody.empty();
                             data.mouvements.forEach(function (mouvement_list) {
-                             row = `
-                            <tr>
-                                <td>${mouvement_list.date_entree}</td>
-                                <td>${mouvement_list.vehicule.immatriculation}</td>
-                                <td style="text-transform: uppercase;">${mouvement_list.destination}</td>
-                            </tr>`;
+                             // Supposons que `mouvement_list.date_entree` soit au format ISO
+let dateEntree = new Date(mouvement_list.date_entree);
+
+// Formatage manuel de la date
+let jour = dateEntree.getDate();
+let mois = dateEntree.toLocaleString('fr-FR', { month: 'long' });
+let annee = dateEntree.getFullYear();
+let heures = dateEntree.getHours().toString().padStart(2, '0');
+let minutes = dateEntree.getMinutes().toString().padStart(2, '0');
+
+// Création de la chaîne de texte formatée pour la date
+let formattedDate = `${jour} ${mois} ${annee} ${heures}:${minutes}`;
+
+// Construction de la ligne du tableau avec la date formatée
+let row = `
+    <tr>
+        <td>${formattedDate}</td>
+        <td>${mouvement_list.vehicule.immatriculation}</td>
+        <td style="text-transform: uppercase;">${mouvement_list.destination}</td>
+    </tr>
+`;
+
+// Exemple de console.log pour vérifier le résultat
+console.log(row);
+
                                 tableBody.append(row);
                             });
                         }
@@ -148,13 +168,13 @@
                                     <option value="AGL">AGL</option>
                                     <option value="TOM">TOM</option>
                                     <option value="TRANSEXPRESS">TRANSEXPRESS</option>
-                                    <option value="ITS">TIS</option>
+                                    <option value="ITS">ITS</option>
                                     <option value="SNTT">SNTT</option>
                                     <option value="DEX">DEX</option>
                                     <option value="EMASE">EMASE</option>
                                     <option value="VISITAIRE">VISITAIRE</option>
-                                    <option value="TRANSITAIRE">TRANSITAIRE</option>
-                                    <option value="RIVERAIN">RIVERAIN</option>
+                                    <option value="TRANSITEUR">TRANSITEUR</option>
+                                    <!--option value="RIVERAIN">RIVERAIN</option-->
                                     <option value="PERSONNEL DOUANE">PERSONNEL DOUANE</option>
                                     <option value="PERSONNEL GENDARMERIE">PERSONNEL GENDARMERIE</option>
                                     <option value="AGS">AGS</option>

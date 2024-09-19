@@ -199,7 +199,7 @@
 
 
 
-        </div>
+          </form></div>
         <div class="modal-footer">
             <input type="submit" class="btn btn-primary" value="Enregistrer">
           <button type="button"  class="btn btn-danger"  data-dismiss="modal">Fermer</button>
@@ -385,12 +385,12 @@
             <input type="submit" class="btn btn-primary" value="Enregistrer">
           <button type="button"  class="btn btn-danger"  data-dismiss="modal">Fermer</button>
         </div>
-                </form>
+</div></form>
             </div>
         </div>
     </div>
 </div>
-<script>
+<!--script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('editForm');
 
@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-</script>
+</script-->
 
 
 <!-- Inclure les scripts de Bootstrap et jQuery -->
@@ -452,53 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 $(document).ready(function () {
-    $('#editForm').on('submit', function (event) {
-        event.preventDefault(); // Empêche le comportement par défaut du formulaire
 
-        $.ajax({
-            url: $(this).attr('action'),
-            type: 'POST',
-            data: $(this).serialize(),
-            success: function (response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Effectué',
-                        text: response.message,
-                        timer: 1500,  
-                        showConfirmButton: false
-                    }).then(() => {
-                        $('#observationModal').modal('hide');
-
-                        // Vérifiez si un autre modal est ouvert
-                        if ($('.modal.show').length) {
-                            $('body').addClass('modal-open');
-                        } else {
-                            $('body').removeClass('modal-open');
-                        }
-
-                        // Forcer le retrait de tout overflow appliqué sur le body
-                        $('body').css('overflow', '');
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: response.message,
-                        confirmButtonText: 'OK'
-                    });
-                }
-            },
-            error: function (xhr, status, error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Erreur AJAX: ' + error,
-                    confirmButtonText: 'OK'
-                });
-            }
-        });
-    });
 
     $('#observationModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget); // Bouton qui a déclenché le modal
@@ -510,7 +464,30 @@ $(document).ready(function () {
     });
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
 
+    if (success === 'true') {
+        Swal.fire({
+            icon: 'success',
+            title: 'Effectué',
+            text: 'L\'ajout a été effectué avec succès.',
+            showConfirmButton: false,  // Ne pas afficher le bouton OK
+            timer: 1000  // Afficher le message pendant 3 secondes
+        });
+    } else if (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: error,
+            confirmButtonText: 'OK'
+        });
+    }
+});
+</script>
 <!-- Script Modal si l'heure est W 96-->
 <script>
 $(document).ready(function () {

@@ -1,12 +1,8 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
-
 {% block breadcrumbs %}{% endblock breadcrumbs %}
-
 {% block content %}
-
  <ul class="nav nav-tabs" style="margin-left: 20px">
-
   <li class="nav-item">
     <a class="nav-link" href="/entreedecalog_view/{{ util.id_user }}">ICD</a>
   </li>
@@ -21,9 +17,8 @@
     <!-- [ rating list ] end-->
     <div class="col-xl-8 col-md-12 m-b-30">
         <!--<p class="label theme-bg text-white f-12"  class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModalajout">Ajouter</p>-->
-
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
+        <!--script>
             $(document).ready(function () {
                 function fetchMouvements() {
                     $.ajax({
@@ -66,7 +61,7 @@
                 fetchMouvements();
                 setInterval(fetchMouvements, 10000);
             });
-        </script>
+        </script-->
         <p class="label theme-bg text-white f-12" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"
            style="font-size: large">Ajouter</p>
 
@@ -74,22 +69,51 @@
 
         <div class="container  ">
             <div class="table-responsive">
-                <table id="mouvements-table" class="table table-hover" style="margin-top: 15px;">
-                    <thead class="thead-light">
+           <table id="mouvements-table" class="table table-hover" style="margin-top: 15px;">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col" class="d-md-table-cell">Date Entrée</th>
+            <th scope="col" class="d-md-table-cell">Camion</th>
+            <th scope="col" class="d-md-table-cell">Type</th>
+            <th scope="col" class="d-md-table-cell">Transporteur</th>
+            <th scope="col" class="d-md-table-cell">Destination</th>
+            <th scope="col" class="d-md-table-cell">Chauffeur</th>
+            <th scope="col" class="d-md-table-cell">Permis</th>
+            <th scope="col" class="d-md-table-cell">Statut</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if mouvements %}
+            {% for mouvement in mouvements %}
+                <tr>
+                    <td>{{ mouvement.date_entree }}</td>
+                    <td>{{ mouvement.camion.immatriculation }}</td>
+                    <td>{{ mouvement.camion.type }}</td>
+                    <td>{{ mouvement.camion.transporteur }}</td>
+                    <td>{{ mouvement.destination }}</td>
+                    <td>{{ mouvement.chauffeur.fullname }}</td>
+                    <td>{{ mouvement.chauffeur.permis }}</td>
+                    <td>
+                        {% if mouvement.statut_entree == 0 %}
+                            Vide
+                        {% elif mouvement.statut_entree == 1 %}
+                            Partielle
+                        {% elif mouvement.statut_entree == 2 %}
+                            Plein
+                        {% else %}
+                            Non Assigné
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="7">Aucun mouvement disponible</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
 
-                    <tr>
-                        <th scope="col" class=" d-md-table-cell">Camion</th>
-                        <th scope="col" class=" d-md-table-cell">Type</th>
-                        <th scope="col" class=" d-md-table-cell">Transporteur</th>
-                        <th scope="col" class=" d-md-table-cell">Destination</th>
-                        <th scope="col" class=" d-md-table-cell">Chauffeur</th>
-                        <th scope="col" class=" d-md-table-cell">Permis</th>
-                        <th scope="col" class=" d-md-table-cell">Statut</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
             </div>
         </div>
 
@@ -591,12 +615,12 @@
             actualiserListeTransitaires();
             actualiserListeClients();
             actualiserListeRepresentants();
-            setInterval(actualiserListeClients, 2000);
-            setInterval(actualiserListeRepresentants, 2000);
-            setInterval(actualiserListeTransitaires, 2000);
-            setInterval(actualiserListeCamions, 2000); // 20000 ms = 20 secondes
-            setInterval(actualiserListeChauffeurs, 2000);
-            setInterval(actualiserListeCamionsVrac, 2000); // 20000 ms = 20 secondes
+            setInterval(actualiserListeClients, 5000);
+            setInterval(actualiserListeRepresentants, 5000);
+            setInterval(actualiserListeTransitaires, 5000);
+            setInterval(actualiserListeCamions, 5000); // 20000 ms = 20 secondes
+            setInterval(actualiserListeChauffeurs, 5000);
+            setInterval(actualiserListeCamionsVrac, 5000); // 20000 ms = 20 secondes
 
             // Fonction pour filtrer les camions en fonction de la destination sélectionnée
             $('#destination-select').on('change', function () {
@@ -650,11 +674,12 @@
             var initialTypeConteneur1 = $('#typeconteneur1').val();
             toggleConteneur2(initialTypeConteneur1);
             // Fonction pour afficher les détails du permis du chauffeur sélectionné
-            $('#chauffeur-select').on('change', function () {
-                var selectedOption = $(this).find('option:selected');
-                var permis = selectedOption.data('permis');
-                $('#permis').val(permis);
-            });
+                   $('#chauffeur-select').on('change', function () {
+            var selectedOption = $(this).find('option:selected');
+            var permis = selectedOption.data('permis');
+            $('#permis').val(permis);
+        });
+
             // Fonction pour afficher le téléphone du transitaire sélectionné
             $('#transitaire-select').on('change', function () {
                 var selectedOption = $(this).find('option:selected');

@@ -6,32 +6,30 @@
 {% block content %}
 
 
-    <ul class="nav nav-tabs" style="margin-left: 20px">
+ <ul class="nav nav-tabs" style="margin-left: 20px">
 
-        <li class="nav-item">
-            <a class="nav-link" href="/modifdecalog_view/{{ util.id_user }}">ICD</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link active" href="/modifdecalog_view1/{{ util.id_user }}" tabindex="-1">SACHERIE</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link " href="/modifdecalog_view2/{{ util.id_user }}" tabindex="-1">ZUD</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/modifdecalog_viewpar/{{ util.id_user }}" tabindex="-1">PARTICULIER</a>
-        </li>
-    </ul><br>
+  <li class="nav-item">
+    <a class="nav-link" href="/entreedecalog_view/{{ util.id_user }}">ICD</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" href="/entreedecalog_view1/{{ util.id_user }}" tabindex="-1" >SACHERIE</a>
+  </li> <li class="nav-item">
+    <a class="nav-link " href="/entreedecalog_view2/{{ util.id_user }}" tabindex="-1" >ZUD</a>
+  </li>     <li class="nav-item">
+    <a class="nav-link" href="/entreedecalog_particulier/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
+  </li>
+</ul><br>
 
     <!-- [ rating list ] end-->
     <div class="col-xl-8 col-md-12 m-b-30">
         <!--<p class="label theme-bg text-white f-12"  class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModalajout">Ajouter</p>-->
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
+        <!--script>
             $(document).ready(function () {
                 function fetchMouvements() {
                     $.ajax({
-                        url: "{% url 'liste_modifs1' %}",
+                        url: "{% url 'liste_mouvements01' %}",
                         method: "GET",
                         success: function (data) {
                             var tableBody = $('#mouvements-table tbody');
@@ -44,9 +42,9 @@
                                     statutText = 'CHARGE';
                                 } else if (mouvement_list.statut_entree === 2) {
                                     statutText = 'COMPLET';
-                                } else {
-                                    statutText = 'NON ASSIGNE'
-                                }
+                                }else {
+                            statutText='NON ASSIGNE'
+                        }
                                 var row = `
                             <tr>
 
@@ -58,12 +56,7 @@
                                 <td>${mouvement_list.chauffeur.permis}</td>
                                 <td>${mouvement_list.chauffeur.fullname}</td>
                                 <td>${statutText}</td>
-                          <td>
-            <a href="#!" class="label theme-bg text-white f-12" data-toggle="modal" data-target="#myModal"
-               data-idMvt="${mouvement_list.id_mvt}" data-marchandise="${mouvement_list.marchandise}" data-remorque="${mouvement_list.remorque}" data-perchauf="${mouvement_list.chauffeur.permis}"  data-telcli="${mouvement_list.client.telephone}"data-typecam="${mouvement_list.camion.type}" data-transcam="${mouvement_list.camion.transporteur}" data-idcli="${mouvement_list.client.id_client}" data-destination="${mouvement_list.destination}" data-idcam="${mouvement_list.camion.id_cam}" data-idchauffeur="${mouvement_list.chauffeur.id_chauffeur}" data-mission="${mouvement_list.mission}">
-                Modifier
-            </a>
-        </td>
+
 
                             </tr>`;
                                 tableBody.append(row);
@@ -75,120 +68,59 @@
                 fetchMouvements();
                 setInterval(fetchMouvements, 10000);
             });
-        </script>
-        <!-- SCRIPT POUR LA GESTION DU MODAL -->
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-    $('#myModal').on('show.bs.modal', function (event) {
-        // Récupérez le lien cliqué
-        var button = $(event.relatedTarget);
-
-        // Récupérez les données des attributs data-*
-        var idMvt = button.data('idmvt');
-        var marchandise = button.data('marchandise');
-        var remorque = button.data('remorque');
-        var perchauf = button.data('perchauf');
-        var transcam = button.data('transcam');
-        var typecam = button.data('typecam');
-        var destination = button.data('destination'); // Assurez-vous que destination est récupéré
-        var telcli = button.data('telcli');
-        var idcli = button.data('idcli');
-        var idcam = button.data('idcam');
-        var idchauffeur = button.data('idchauffeur');
-        var mission = button.data('mission');
-
-        // Initialiser les variables pour l'entité et le hangar
-        var destinationEntity = '';
-        var destinationFinal = '';
-
-        // Définir des mots-clés pour l'entité et les plages de hangars
-        var entities = {
-            'tom': ['hangar-a', 'hangar-b', 'hangar-c', 'hangar-d', 'hangar-g', 'hangar-h'],
-            'its': ['hangar-e'],
-            'transexpress': ['hangar-f']
-        };
-
-        // Convertir destination en minuscule pour éviter les problèmes de casse
-        var destinationLower = destination.toLowerCase();
-        console.log('Destination:', destinationLower); // Déboguer la valeur de destination
-
-        // Vérifier les mots-clés pour l'entité
-        for (var entity in entities) {
-            if (destinationLower.includes(entity)) {
-                destinationEntity = entity;
-                console.log('Entity found:', destinationEntity); // Déboguer l'entité trouvée
-                // Définir la liste des hangars pour l'entité trouvée
-                var possibleHangars = entities[entity];
-                console.log('Possible hangars:', possibleHangars); // Déboguer les hangars possibles
-
-                // Chercher le hangar dans la liste des hangars possibles
-                for (var k = 0; k < possibleHangars.length; k++) {
-                    if (destination.includes(possibleHangars[k])) {
-                        destinationFinal = possibleHangars[k];
-                        console.log('Final hangar found:', destinationFinal); // Déboguer le hangar final trouvé
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-
-        // Mettez à jour les champs du formulaire dans le modal
-        var modal = $(this);
-        modal.find('#destination-select').val(destinationEntity); // ENTITIE
-
-        // Mettre à jour les options du sélecteur de hangar en fonction de l'entité
-        var hangarSelect = modal.find('#destination-final-select');
-        hangarSelect.empty(); // Vider les options existantes
-
-        // Ajouter les options disponibles pour l'entité sélectionnée
-        if (destinationEntity && entities[destinationEntity]) {
-            entities[destinationEntity].forEach(function(hangar) {
-                hangarSelect.append(new Option(hangar, hangar));
-            });
-        }
-
-        // Définir la valeur sélectionnée pour le hangar
-        hangarSelect.val(destinationFinal); // hangar
-
-        // Définir les autres champs du formulaire
-        modal.find('#idMvt').val(idMvt);
-        modal.find('#permis').val(perchauf);
-        modal.find('#telephone').val(telcli);
-        modal.find('#type').val(typecam);
-        modal.find('#transporteur').val(transcam);
-        modal.find('#client-select').val(idcli);
-        modal.find('#camion-select').val(idcam);
-        modal.find('#chauffeur-select').val(idchauffeur);
-        modal.find('#mission-select').val(mission);
-        modal.find('#marchandise').val(marchandise);
-        modal.find('#remorque').val(remorque);
-    });
-});
-
-        </script>
+        </script-->
+        <p class="label theme-bg text-white f-12" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"
+           style="font-size: large">Ajouter</p>
 
         <h3 class="modal-title" id="editModalLabel">Entrée Camions SACHERIE</h3>
 
         <div class="container  ">
             <div class="table-responsive">
                 <table id="mouvements-table" class="table table-hover" style="margin-top: 15px;">
-                    <thead class="thead-light">
+    <thead class="thead-light">
+        <tr>
+            <th scope="col" class="d-md-table-cell">Date Entrée</th>
+            <th scope="col" class="d-md-table-cell">Camion</th>
+            <th scope="col" class="d-md-table-cell">Type</th>
+            <th scope="col" class="d-md-table-cell">Transporteur</th>
+            <th scope="col" class="d-md-table-cell">Destination</th>
+            <th scope="col" class="d-md-table-cell">Chauffeur</th>
+            <th scope="col" class="d-md-table-cell">Permis</th>
+            <th scope="col" class="d-md-table-cell">Statut</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if mouvements %}
+            {% for mouvement in mouvements %}
+                <tr>
+                    <td>{{ mouvement.date_entree }}</td>
+                    <td>{{ mouvement.camion.immatriculation }}</td>
+                    <td>{{ mouvement.camion.type }}</td>
+                    <td>{{ mouvement.camion.transporteur }}</td>
+                    <td>{{ mouvement.destination.upper }}</td>
+                    <td>{{ mouvement.chauffeur.fullname }}</td>
+                    <td>{{ mouvement.chauffeur.permis }}</td>
+                    <td>
+                        {% if mouvement.statut_entree == 0 %}
+                            Vide
+                        {% elif mouvement.statut_entree == 1 %}
+                            Partielle
+                        {% elif mouvement.statut_entree == 2 %}
+                            Plein
+                        {% else %}
+                            Non Assigné
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="7">Aucun mouvement disponible</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
 
-                    <tr>
-                        <th scope="col" class=" d-md-table-cell">Camion</th>
-                        <th scope="col" class=" d-md-table-cell">Type</th>
-                        <th scope="col" class=" d-md-table-cell">Transporteur</th>
-                        <th scope="col" class=" d-md-table-cell">Destination</th>
-                        <th scope="col" class=" d-md-table-cell">Chauffeur</th>
-                        <th scope="col" class=" d-md-table-cell">Permis</th>
-                        <th scope="col" class=" d-md-table-cell">Statut</th>
-                        <th scope="col" class=" d-md-table-cell">Action</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
             </div>
         </div>
 
@@ -200,8 +132,7 @@
         <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>
       
        Modal -->
-        <div class="modal fade" id="myModal" style="overflow-y: auto;" role="dialog" class="modal fade" tabindex="-1"
-             role="dialog"
+        <div class="modal fade" id="myModal" style="overflow-y: auto;" role="dialog" class="modal fade" tabindex="-1" role="dialog"
              aria-labelledby="editModalLabel" aria-hidden="true">
 
             <div class="modal-dialog" role="document">
@@ -213,9 +144,9 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form method="POST" action="{% url 'modif_mouvement0' util.id_user %}"
-                              enctype="multipart/form-data">
- <input type="hidden" name="id_mouvement" id="idMvt">
+                        <form method="POST" action="{% url 'ajoutmouvement0' util.id_user %}"
+                             enctype="multipart/form-data">
+
                             <div class="text-center mb-4">
                                 <!--<p style="color: #000; font-size: 25px;">ENTREE DK LOG</p>--->
                             </div>
@@ -234,7 +165,7 @@
                                 </div>
                                 <div class="col">
                                     <label for="destination-final">Destination</label>
-                                    <select style="text-transform: uppercase" name="destination" class="form-control form-control-lg"
+                                    <select name="destination" class="form-control form-control-lg"
                                             id="destination-final-select" required>
                                         <option value=""></option>
                                     </select>
@@ -267,28 +198,26 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="form-row">
+                                                  <div class="form-row">
                                 <div class="col-md-4 mb-3">
-                                    <label for="client-select">Client</label>
-                                    <select name="client" class="form-control form-control-lg" id="client-select"
-                                            required>
-                                        <option value="" data-telephone=""></option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="telephone">Téléphone</label>
-                                    <input type="text" name="telephone" id="telephone"
-                                           class="form-control form-control-lg" placeholder="" readonly/>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label>&nbsp;</label>
-                                    <!-- Utilisez un label vide pour aligner verticalement le bouton -->
-                                    <button type="button" class="btn btn-info btn-block" data-toggle="modal"
+        <label for="client-select">Client</label>
+        <select name="client" class="form-control form-control-lg" id="client-select" required>
+            <option value="" data-telephone=""></option>
+        </select>
+    </div>
+       <div class="col-md-4 mb-3">
+        <label for="telephone">Téléphone</label>
+        <input type="text" name="telephone" id="telephone" class="form-control form-control-lg" placeholder="" readonly/>
+    </div>
+      <div class="col-md-4 mb-3">
+        <label>&nbsp;</label>
+        <!-- Utilisez un label vide pour aligner verticalement le bouton -->
+<button type="button" class="btn btn-info btn-block" data-toggle="modal"
                                             data-target="#myModalajoutclient">
                                         <i class="fas fa-plus-circle"></i>
                                     </button>
-                                </div>
-                            </div>
+    </div>
+</div>
                             <div class="form-row">
                                 <div class="col-md-4 mb-3">
                                     <label for="chauffeur-select">Chauffeur</label>
@@ -305,14 +234,15 @@
                                 <div class="col-md-4 mb-3">
                                     <label>&nbsp;</label>
                                     <!-- Utilisez un label vide pour aligner verticalement le bouton -->
-                                    <button type="button" class="btn btn-info btn-block" data-toggle="modal"
+                                   <button type="button" class="btn btn-info btn-block" data-toggle="modal"
                                             data-target="#myModalajoutchauffeur">
                                         <i class="fas fa-plus-circle"></i>
                                     </button>
                                 </div>
                             </div>
+                            
+                                <!-------------------Ajouter Transitaire -------------------------->
 
-                            <!-------------------Ajouter Transitaire -------------------------->
 
 
                             <div class="form-group mb-4">
@@ -322,347 +252,341 @@
                                        placeholder="REMORQUE" required/>
                             </div>
 
-                            <div class="form-group mb-4" >
+                            <div class="form-group mb-4" id="marchandise">
                                 <label for="marchandise">Marchandise</label>
-                                <input type="text" name="marchandise" id="marchandise" class="form-control form-control-lg"
+                                <input type="text" name="marchandise" class="form-control form-control-lg"
                                        placeholder="MARCHANDISE" required/>
                             </div>
 
-                            <div class="form-group mb-4">
-                                <label for="camion">Mission</label>
-                                <select name="mission" class="form-control form-control-lg" id="mission-select"
-                                        required>
-                                    <option value="">Sélectionnez une mission</option>
-                                    <option value="LIVRAISON">LIVRAISON</option>
-                                    <option value="RECEPTION">RECEPTION</option>
-                                    <option value="TRANSFERT">TRANSFERT</option>
-                                </select>
+                     <div class="form-group mb-4">
+                                    <label for="camion">Mission</label>
+                                    <select  name="mission"  class="form-control form-control-lg" id="mission-select" required >
+                                        <option value="">Sélectionnez une mission</option>
+                                         <option value="LIVRAISON">LIVRAISON</option>
+                                        <option value="RECEPTION">RECEPTION</option>
+                                        <option value="TRANSFERT">TRANSFERT</option>
+                                    </select>
                             </div>
 
                             <div class="modal-footer">
                                 <input type="submit" class="btn btn-primary" value="Enregistrer">
                                 <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                        </form></div></div></div></div></div>
     <!-- SweetAlert2 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            const success = urlParams.get('success');
-            const error = urlParams.get('error');
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
 
-            if (success === 'true') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Effectué',
-                    text: 'L\'ajout a été effectué avec succès.',
-                    showConfirmButton: false,  // Ne pas afficher le bouton OK
-                    timer: 3000  // Afficher le message pendant 3 secondes
+    if (success === 'true') {
+        Swal.fire({
+            icon: 'success',
+            title: 'Effectué',
+            text: 'L\'ajout a été effectué avec succès.',
+            showConfirmButton: false,  // Ne pas afficher le bouton OK
+            timer: 3000  // Afficher le message pendant 3 secondes
+        });
+    } else if (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: error,
+            confirmButtonText: 'OK'
+        });
+    }
+});
+</script>
+
+                        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                         <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var destinationSelect = document.getElementById('destination-select');
+        var missionSelect = document.getElementById('mission-select');
+
+        var missionsByDestination = {
+            'tom': [
+                'Déchargement',
+                'Livraison'
+            ],
+            // Ajoute d'autres destinations et missions si nécessaire
+        };
+
+    });
+</script>
+
+<script>
+    function actualiserListeCamions() {
+        var select = $('#camion-select');
+        var selectedValue = select.val();
+
+        $.ajax({
+            url: "{% url 'fetch_camion_sacherie' %}", // Remplacez par l'URL de votre endpoint
+            method: 'GET',
+            success: function (data) {
+                select.empty();
+                select.append('<option value="" data-type="" data-transporteur="" data-immatriculation=""></option>');
+
+                data.forEach(function (camion) {
+                    select.append('<option value="' + camion.id_cam + '" data-type="' + camion.type + '" data-transporteur="' + camion.transporteur + '" data-immatriculation="' + camion.immatriculation + '">' + camion.immatriculation + '</option>');
                 });
-            } else if (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: error,
-                    confirmButtonText: 'OK'
-                });
+
+                select.val(selectedValue);
+            },
+            error: function (xhr, status, error) {
+                console.error('Erreur lors de la récupération des camions:', error);
             }
         });
-    </script>
+    }
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var destinationSelect = document.getElementById('destination-select');
-            var missionSelect = document.getElementById('mission-select');
+function actualiserListeCamionsVrac() {
+    var select = $('#camionvrac-select');
+    var selectedValue = select.val();
 
-            var missionsByDestination = {
-                'tom': [
-                    'Déchargement',
-                    'Livraison'
-                ],
-                // Ajoute d'autres destinations et missions si nécessaire
-            };
+    $.ajax({
+        url: "{% url 'fetch_camion' %}", // Remplacez par l'URL de votre endpoint
+        method: 'GET',
+        success: function (data) {
+            select.empty();
+            select.append('<option value="" data-type="" data-transporteurvrac=""></option>');
 
+            data.forEach(function (camion) {
+                if (camion.type === 'VRAC') {
+                    select.append('<option value="' + camion.id_cam + '" data-type="' + camion.type + '" data-transporteurvrac="' + camion.transporteur + '">' + camion.immatriculation + '</option>');
+                }
+            });
+
+            select.val(selectedValue);
+            // Déclenche l'événement change pour mettre à jour le transporteur
+            select.trigger('change');
+        },
+        error: function (xhr, status, error) {
+            console.error('Erreur lors de la récupération des camions vrac:', error);
+        }
+    });
+}
+
+// Ajoutez ce code pour gérer le changement de sélection
+$('#camionvrac-select').on('change', function () {
+    var selectedOption = $(this).find('option:selected');
+    var transporteur = selectedOption.data('transporteurvrac');
+    $('#transporteurvrac').val(transporteur).attr('placeholder', transporteur);
+});
+function actualiserListeClients() {
+    var select = $('#client-select');
+    var selectedValue = select.val();
+
+    $.ajax({
+        url: "{% url 'fetch_client' %}",  // Remplacez par l'URL de votre endpoint
+        method: 'GET',
+        success: function (data) {
+            select.empty();
+            select.append('<option value="" data-telephone=""></option>');
+
+            data.forEach(function (client) {
+                select.append('<option value="' + client.id_client + '" data-telephone="' + client.telephone + '">' + client.fullname + '</option>');
+            });
+
+            select.val(selectedValue);
+        },
+        error: function (xhr, status, error) {
+            console.error('Erreur lors de la récupération des clients:', error);
+        }
+    });
+}
+
+$('#client-select').on('change', function () {
+    var selectedOption = $(this).find('option:selected');
+    var telephone = selectedOption.data('telephone');
+    $('#telephone').val(telephone).attr('placeholder', telephone);
+});
+
+    function actualiserListeChauffeurs() {
+        var select = $('#chauffeur-select');
+        var selectedValue = select.val();
+
+        $.ajax({
+            url: "{% url 'fetch_chauffeur' %}", // Remplacez par l'URL de votre endpoint
+            method: 'GET',
+            success: function (data) {
+                select.empty();
+                select.append('<option value="" data-permis=""></option>');
+
+                data.forEach(function (chauffeur) {
+                    select.append('<option value="' + chauffeur.id_chauffeur + '" data-permis="' + chauffeur.permis + '">' + chauffeur.fullname + '</option>');
+                });
+
+                select.val(selectedValue);
+            },
+            error: function (xhr, status, error) {
+                console.error('Erreur lors de la récupération des chauffeurs:', error);
+            }
         });
-    </script>
+    }
 
-    <script>
-        function actualiserListeCamions() {
-            var select = $('#camion-select');
-            var selectedValue = select.val();
+    function actualiserListeTransitaires() {
+       var selectrep = $('#transitairerep-select');
+        var select = $('#transitaire-select');  // Updated to match the correct ID
+        var selectedValue = select.val();
+        var selectedValuerep = selectrep.val();
 
-            $.ajax({
-                url: "{% url 'fetch_camion_sacherie' %}", // Remplacez par l'URL de votre endpoint
-                method: 'GET',
-                success: function (data) {
-                    select.empty();
-                    select.append('<option value="" data-type="" data-transporteur="" data-immatriculation=""></option>');
+        $.ajax({
+            url: "{% url 'fetch_transitaire' %}",
+            method: 'GET',
+            success: function (data) {
+                console.log(data);
+                select.empty();
+                select.append('<option value="" data-fullname=""></option>');
 
-                    data.forEach(function (camion) {
-                        select.append('<option value="' + camion.id_cam + '" data-type="' + camion.type + '" data-transporteur="' + camion.transporteur + '" data-immatriculation="' + camion.immatriculation + '">' + camion.immatriculation + '</option>');
-                    });
+                data.forEach(function (transitaire) {
+                    select.append('<option value="' + transitaire.id_transit + '" data-teltransitaire="' + transitaire.telephone + '">' + transitaire.fullname + '</option>');
+                    selectrep.append('<option value="' + transitaire.id_transit + '" data-teltransitrep="' + transitaire.telephone + '">' + transitaire.fullname + '</option>');
+                });
 
-                    select.val(selectedValue);
-                },
-                error: function (xhr, status, error) {
-                    console.error('Erreur lors de la récupération des camions:', error);
-                }
-            });
-        }
-
-        function actualiserListeCamionsVrac() {
-            var select = $('#camionvrac-select');
-            var selectedValue = select.val();
-
-            $.ajax({
-                url: "{% url 'fetch_camion' %}", // Remplacez par l'URL de votre endpoint
-                method: 'GET',
-                success: function (data) {
-                    select.empty();
-                    select.append('<option value="" data-type="" data-transporteurvrac=""></option>');
-
-                    data.forEach(function (camion) {
-                        if (camion.type === 'VRAC') {
-                            select.append('<option value="' + camion.id_cam + '" data-type="' + camion.type + '" data-transporteurvrac="' + camion.transporteur + '">' + camion.immatriculation + '</option>');
-                        }
-                    });
-
-                    select.val(selectedValue);
-                    // Déclenche l'événement change pour mettre à jour le transporteur
-                    select.trigger('change');
-                },
-                error: function (xhr, status, error) {
-                    console.error('Erreur lors de la récupération des camions vrac:', error);
-                }
-            });
-        }
-
-        // Ajoutez ce code pour gérer le changement de sélection
-        $('#camionvrac-select').on('change', function () {
-            var selectedOption = $(this).find('option:selected');
-            var transporteur = selectedOption.data('transporteurvrac');
-            $('#transporteurvrac').val(transporteur).attr('placeholder', transporteur);
+                select.val(selectedValue);
+                selectrep.val(selectedValuerep);
+            },
+            error: function (xhr, status, error) {
+                console.error('Erreur lors de la récupération des transitaires:', error);
+            }
         });
+    }
 
-        function actualiserListeClients() {
-            var select = $('#client-select');
-            var selectedValue = select.val();
+    $(document).ready(function () {
+        actualiserListeCamions();
+        actualiserListeCamionsVrac();
+        actualiserListeChauffeurs();
+        actualiserListeTransitaires();
+         actualiserListeClients()
+        setInterval(actualiserListeClients, 5000);
+        setInterval(actualiserListeTransitaires, 5000);
+        setInterval(actualiserListeCamions, 5000); // 20000 ms = 20 secondes
+        setInterval(actualiserListeChauffeurs, 5000);
+  // 20000 ms = 20 secondes
 
-            $.ajax({
-                url: "{% url 'fetch_client' %}",  // Remplacez par l'URL de votre endpoint
-                method: 'GET',
-                success: function (data) {
-                    select.empty();
-                    select.append('<option value="" data-telephone=""></option>');
+        // Fonction pour filtrer les camions en fonction de la destination sélectionnée
+        $('#destination-select').on('change', function () {
+            var destination = $(this).val();
+            var options = $('#camion-select option');
+            var optionsVrac = $('#camionvrac-select option');
 
-                    data.forEach(function (client) {
-                        select.append('<option value="' + client.id_client + '" data-telephone="' + client.telephone + '">' + client.fullname + '</option>');
-                    });
+            // Réinitialisation des champs Camion, Type et Transporteur
+            $('#camion-select').val('');
+            $('#type').val('');
+            $('#telephonetransit').val('');
+            $('#transporteur').val(''); // Correction du champ Transporteur
+             $('#remorque').val(''); // Réinitialiser remorque
 
-                    select.val(selectedValue);
-                },
-                error: function (xhr, status, error) {
-                    console.error('Erreur lors de la récupération des clients:', error);
-                }
-            });
-        }
-
-        $('#client-select').on('change', function () {
-            var selectedOption = $(this).find('option:selected');
-            var telephone = selectedOption.data('telephone');
-            $('#telephone').val(telephone).attr('placeholder', telephone);
-        });
-
-        function actualiserListeChauffeurs() {
-            var select = $('#chauffeur-select');
-            var selectedValue = select.val();
-
-            $.ajax({
-                url: "{% url 'fetch_chauffeur' %}", // Remplacez par l'URL de votre endpoint
-                method: 'GET',
-                success: function (data) {
-                    select.empty();
-                    select.append('<option value="" data-permis=""></option>');
-
-                    data.forEach(function (chauffeur) {
-                        select.append('<option value="' + chauffeur.id_chauffeur + '" data-permis="' + chauffeur.permis + '">' + chauffeur.fullname + '</option>');
-                    });
-
-                    select.val(selectedValue);
-                },
-                error: function (xhr, status, error) {
-                    console.error('Erreur lors de la récupération des chauffeurs:', error);
-                }
-            });
-        }
-
-        function actualiserListeTransitaires() {
-            var selectrep = $('#transitairerep-select');
-            var select = $('#transitaire-select');  // Updated to match the correct ID
-            var selectedValue = select.val();
-            var selectedValuerep = selectrep.val();
-
-            $.ajax({
-                url: "{% url 'fetch_transitaire' %}",
-                method: 'GET',
-                success: function (data) {
-                    console.log(data);
-                    select.empty();
-                    select.append('<option value="" data-fullname=""></option>');
-
-                    data.forEach(function (transitaire) {
-                        select.append('<option value="' + transitaire.id_transit + '" data-teltransitaire="' + transitaire.telephone + '">' + transitaire.fullname + '</option>');
-                        selectrep.append('<option value="' + transitaire.id_transit + '" data-teltransitrep="' + transitaire.telephone + '">' + transitaire.fullname + '</option>');
-                    });
-
-                    select.val(selectedValue);
-                    selectrep.val(selectedValuerep);
-                },
-                error: function (xhr, status, error) {
-                    console.error('Erreur lors de la récupération des transitaires:', error);
-                }
-            });
-        }
-
-        $(document).ready(function () {
-            actualiserListeCamions();
-            actualiserListeCamionsVrac();
-            actualiserListeChauffeurs();
-            actualiserListeTransitaires();
-            actualiserListeClients()
-            setInterval(actualiserListeClients, 2000);
-            setInterval(actualiserListeTransitaires, 2000);
-            setInterval(actualiserListeCamions, 2000); // 20000 ms = 20 secondes
-            setInterval(actualiserListeChauffeurs, 2000);
-            setInterval(actualiserListeCamionsVrac, 2000); // 20000 ms = 20 secondes
-
-            // Fonction pour filtrer les camions en fonction de la destination sélectionnée
-            $('#destination-select').on('change', function () {
-                var destination = $(this).val();
-                var options = $('#camion-select option');
-                var optionsVrac = $('#camionvrac-select option');
-
-                // Réinitialisation des champs Camion, Type et Transporteur
-                $('#camion-select').val('');
-                $('#type').val('');
-                $('#telephonetransit').val('');
-                $('#transporteur').val(''); // Correction du champ Transporteur
-                $('#remorque').val(''); // Réinitialiser remorque
-
-                optionsVrac.each(function () {
-                    var option = $(this);
-                    var type = option.data('type');
+            optionsVrac.each(function () {
+                var option = $(this);
+                var type = option.data('type');
                     option.css('display', (type === 'VRAC') ? 'block' : 'none');
 
-                });
-            });
-
-            // Fonction pour afficher les détails du camion sélectionné
-            $('#camion-select').on('change', function () {
-                var selectedOption = $(this).find('option:selected');
-                var type = selectedOption.data('type');
-                var transporteur = selectedOption.data('transporteur');
-                var immatriculation = selectedOption.data('immatriculation');
-                $('#type').val(type); // Mise à jour du select pour le type
-                $('#transporteur').val(transporteur); // Mise à jour du champ Transporteur
-                $('#permis').val(''); // Réinitialiser le permis
-
-                // Mise à jour du champ Remorque
-                if (type === 'SEMI-REMORQUE') {
-                    $('#remorque').val(immatriculation);
-                } else {
-                    $('#remorque').val(immatriculation);
-                }
-            });
-
-            // Fonction pour afficher les détails du permis du chauffeur sélectionné
-            $('#chauffeur-select').on('change', function () {
-                var selectedOption = $(this).find('option:selected');
-                var permis = selectedOption.data('permis');
-                $('#permis').val(permis);
-            });
-
-            // Fonction pour afficher le téléphone du transitaire sélectionné
-            $('#transitaire-select').on('change', function () {
-                var selectedOption = $(this).find('option:selected');
-                var transitaire = selectedOption.data('teltransitaire');
-                $('#telephonetransit').attr('placeholder', transitaire); // Assurez-vous que l'ID est correct
-            });
-// Fonction pour afficher le téléphone du représentant sélectionné
-            $('#transitairerep-select').on('change', function () {
-                var selectedOption = $(this).find('option:selected');
-                var transitaire = selectedOption.data('teltransitrep'); // Assurez-vous que la clé est correcte
-                $('#telephonetransitrep').attr('placeholder', transitaire);
-            });
-
-
-            // Fonction pour mettre à jour les options du select de destination final
-            document.getElementById('destination-select').addEventListener('change', function () {
-                var destination = this.value;
-                var destinationFinalSelect = document.getElementById('destination-final-select');
-
-                // Clear current options
-                destinationFinalSelect.innerHTML = '';
-
-                // Define the options based on the selected destination
-                var options = [];
-
-                if (destination === '') {
-                    options = [
-                        {value: 'hangar-a', text: 'Hangar A'},
-                        {value: 'hangar-b', text: 'Hangar B'},
-                        {value: 'hangar-c', text: 'Hangar C'},
-                        {value: 'hangar-d', text: 'Hangar D'},
-                        {value: 'hangar-g', text: 'Hangar G'},
-                        {value: 'hangar-h', text: 'Hangar H'}
-                    ];
-                } else if (destination === 'zud') {
-                    options = [
-                        {value: 'zud', text: 'ZUD'}
-                    ];
-                } else if (destination === 'cmaicd') {
-                    options = [
-                        {value: 'cmaicd', text: 'CMA-ICD'}
-                    ];
-                } else if (destination === 'transexpress') {
-                    options = [
-                        {value: 'hangar-e', text: 'Hangar E'}
-                    ];
-                } else if (destination === 'its') {
-                    options = [
-                        {value: 'hangar-f', text: 'Hangar F'}
-                    ];
-                }
-
-
-                // Populate the destination final select
-                options.forEach(function (option) {
-                    var opt = document.createElement('option');
-                    opt.value = option.value;
-                    opt.textContent = option.text;
-                    destinationFinalSelect.appendChild(opt);
-                });
             });
         });
-    </script>
+
+        // Fonction pour afficher les détails du camion sélectionné
+        $('#camion-select').on('change', function () {
+            var selectedOption = $(this).find('option:selected');
+            var type = selectedOption.data('type');
+            var transporteur = selectedOption.data('transporteur');
+            var immatriculation = selectedOption.data('immatriculation');
+            $('#type').val(type); // Mise à jour du select pour le type
+            $('#transporteur').val(transporteur); // Mise à jour du champ Transporteur
+            $('#permis').val(''); // Réinitialiser le permis
+
+            // Mise à jour du champ Remorque
+            if (type === 'SEMI-REMORQUE') {
+                $('#remorque').val(immatriculation); 
+            } else {
+                $('#remorque').val(immatriculation); 
+            }
+        });
+
+        // Fonction pour afficher les détails du permis du chauffeur sélectionné
+        $('#chauffeur-select').on('change', function () {
+            var selectedOption = $(this).find('option:selected');
+            var permis = selectedOption.data('permis');
+            $('#permis').val(permis);
+        });
+
+        // Fonction pour afficher le téléphone du transitaire sélectionné
+        $('#transitaire-select').on('change', function () {
+    var selectedOption = $(this).find('option:selected');
+    var transitaire = selectedOption.data('teltransitaire');
+    $('#telephonetransit').attr('placeholder', transitaire); // Assurez-vous que l'ID est correct
+});
+// Fonction pour afficher le téléphone du représentant sélectionné
+$('#transitairerep-select').on('change', function () {
+    var selectedOption = $(this).find('option:selected');
+    var transitaire = selectedOption.data('teltransitrep'); // Assurez-vous que la clé est correcte
+    $('#telephonetransitrep').attr('placeholder', transitaire);
+});
 
 
-    </div>
-    </div>
+        // Fonction pour mettre à jour les options du select de destination final
+        document.getElementById('destination-select').addEventListener('change', function () {
+            var destination = this.value;
+            var destinationFinalSelect = document.getElementById('destination-final-select');
 
-    </div>
-    </div>
+            // Clear current options
+            destinationFinalSelect.innerHTML = '';
+
+            // Define the options based on the selected destination
+            var options = [];
+
+if (destination === 'tom') {
+    options = [
+        { value: 'hangar-a', text: 'Hangar A' },
+        { value: 'hangar-b', text: 'Hangar B' },
+        { value: 'hangar-c', text: 'Hangar C' },
+        { value: 'hangar-d', text: 'Hangar D' },
+        { value: 'hangar-g', text: 'Hangar G' },
+        { value: 'hangar-h', text: 'Hangar H' }
+    ];
+} else if (destination === 'zud') {
+    options = [
+        { value: 'zud', text: 'ZUD' }
+    ];
+} else if (destination === 'cmaicd') {
+    options = [
+        { value: 'cmaicd', text: 'CMA-ICD' }
+    ];
+} else if (destination === 'transexpress') {
+    options = [
+        { value: 'hangar-e', text: 'Hangar E' }
+    ];
+} else if (destination === 'its') {
+    options = [
+        { value: 'hangar-f', text: 'Hangar F' }
+    ];
+}
+
+    
+
+            // Populate the destination final select
+            options.forEach(function (option) {
+                var opt = document.createElement('option');
+                opt.value = option.value;
+                opt.textContent = option.text;
+                destinationFinalSelect.appendChild(opt);
+            });
+        });
+    });
+</script>
+
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
 
 
     </div>
@@ -766,7 +690,7 @@
     </div>
 
 
-    <div class="modal fade" id="myModalajoutcamionvrac" class="modal fade" tabindex="-1" role="dialog"
+<div class="modal fade" id="myModalajoutcamionvrac" class="modal fade" tabindex="-1" role="dialog"
          aria-labelledby="editModalLabel" aria-hidden="true">
 
         <div class="modal-dialog" role="document">
@@ -815,46 +739,46 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        $(document).ready(function () {
-            $('#submit-ajout-camion').click(function () {
-                $.ajax({
-                    url: $('#form-ajout-camion').attr('action'),
-                    type: 'POST',
-                    data: $('#form-ajout-camion').serialize(),
-                    success: function (response) {
-                        if (response.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Effectué',
-                                text: 'Le camion a été ajouté avec succès!',
-                                timer: 1500,  // Le message disparaît automatiquement après 1,5 seconde
-                                showConfirmButton: false
-                            }).then(() => {
-                                $('#myModalajoutcamion').modal('hide');
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Erreur',
-                                text: 'Une erreur est survenue lors de l\'ajout du camion.',
-                                confirmButtonText: 'OK'
-                            });
-                        }
-                    },
-                    error: function (xhr, status, error) {
+    $(document).ready(function () {
+        $('#submit-ajout-camion').click(function () {
+            $.ajax({
+                url: $('#form-ajout-camion').attr('action'),
+                type: 'POST',
+                data: $('#form-ajout-camion').serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Effectué',
+                            text: 'Le camion a été ajouté avec succès!',
+                            timer: 1500,  // Le message disparaît automatiquement après 1,5 seconde
+                            showConfirmButton: false
+                        }).then(() => {
+                            $('#myModalajoutcamion').modal('hide');
+                        });
+                    } else {
                         Swal.fire({
                             icon: 'error',
                             title: 'Erreur',
-                            text: 'Erreur AJAX: ' + error,
+                            text: 'Une erreur est survenue lors de l\'ajout du camion.',
                             confirmButtonText: 'OK'
                         });
                     }
-                });
+                },
+                error: function (xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Erreur AJAX: ' + error,
+                        confirmButtonText: 'OK'
+                    });
+                }
             });
         });
-    </script>
+    });
+</script>
     <!--#####################Modale chauffeur########################--->
-    <script>
+ <script>
         $(document).ready(function () {
             $('#submit-ajout-camionvrac').click(function () {
                 $.ajax({
@@ -889,7 +813,7 @@
     <!--#####################Transiatirer########################--->
 
     <!-- pour chauffeur -->
-    <div class="modal fade" id="myModalajoutchauffeur" class="modal fade" tabindex="-1" role="dialog"
+        <div class="modal fade" id="myModalajoutchauffeur" class="modal fade" tabindex="-1" role="dialog"
          aria-labelledby="editModalLabel" aria-hidden="true">
 
         <div class="modal-dialog" role="document">
@@ -908,18 +832,17 @@
                             <label for="fullname">Prenom & Nom</label><br>
                             <input type="text" id="fullnamechauffeur" name="fullname" required class="form-control">
                         </div>
-                        <div class="form-group">
+                          <div class="form-group">
                             <label for="fullname">Permis</label><br>
-                            <input type="text" id="permischauffeur" name="permis" required class="form-control">
+                            <input type="text"  id="permischauffeur" name="permis" required class="form-control">
                         </div>
                         <div class="form-group">
                             <label for="fullname">Date D'expiration</label><br>
-                            <input type="date" id="datepermischauffeur" name="date_exp_permis" required
-                                   class="form-control">
+                            <input type="date"  id="datepermischauffeur" name="date_exp_permis" required class="form-control">
                         </div>
                         <div class="form-group">
                             <label for="telephone">Telephone</label><br>
-                            <input type="tel" id="telephonechauffeur" name="telephone" required class="form-control">
+                            <input type="tel"  id="telephonechauffeur" name="telephone" required class="form-control">
                         </div>
 
                     </form>
@@ -963,46 +886,46 @@
             });
         });
     </script>
-    <!-- script pour chauffeur -->
+<!-- script pour chauffeur -->
     <script>
-        $(document).ready(function () {
-            $('#submit-ajout-chauffeur').click(function () {
-                $.ajax({
-                    url: $('#form-ajout-chauffeur').attr('action'),
-                    type: 'POST',
-                    data: $('#form-ajout-chauffeur').serialize(),
-                    success: function (response) {
-                        if (response.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Effectué',
-                                text: 'Le chauffeur a été ajouté avec succès!',
-                                timer: 1500,  // Le message disparaît automatiquement après 1,5 seconde
-                                showConfirmButton: false
-                            }).then(() => {
-                                $('#myModalajoutchauffeur').modal('hide');
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Erreur',
-                                text: 'Une erreur est survenue lors de l\'ajout du chauffeur.',
-                                confirmButtonText: 'OK'
-                            });
-                        }
-                    },
-                    error: function (xhr, status, error) {
+    $(document).ready(function () {
+        $('#submit-ajout-chauffeur').click(function () {
+            $.ajax({
+                url: $('#form-ajout-chauffeur').attr('action'),
+                type: 'POST',
+                data: $('#form-ajout-chauffeur').serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Effectué',
+                            text: 'Le chauffeur a été ajouté avec succès!',
+                            timer: 1500,  // Le message disparaît automatiquement après 1,5 seconde
+                            showConfirmButton: false
+                        }).then(() => {
+                            $('#myModalajoutchauffeur').modal('hide');
+                        });
+                    } else {
                         Swal.fire({
                             icon: 'error',
                             title: 'Erreur',
-                            text: 'Erreur AJAX: ' + error,
+                            text: 'Une erreur est survenue lors de l\'ajout du chauffeur.',
                             confirmButtonText: 'OK'
                         });
                     }
-                });
+                },
+                error: function (xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Erreur AJAX: ' + error,
+                        confirmButtonText: 'OK'
+                    });
+                }
             });
         });
-    </script>
+    });
+</script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
@@ -1036,7 +959,7 @@
 
 
 
-    <div class="modal fade" id="myModalajoutclient" class="modal fade" tabindex="-1" role="dialog"
+   <div class="modal fade" id="myModalajoutclient" class="modal fade" tabindex="-1" role="dialog"
          aria-labelledby="editModalLabel" aria-hidden="true">
 
         <div class="modal-dialog" role="document">
@@ -1057,7 +980,7 @@
                         </div>
                         <div class="form-group">
                             <label for="telephone">Telephone</label><br>
-                            <input type="tel" id="telephoneclient" name="telephone" required class="form-control">
+                            <input type="tel"  id="telephoneclient" name="telephone" required class="form-control">
                         </div>
 
                     </form>
@@ -1072,45 +995,45 @@
     </div>
 
 
-    <script>
-        $(document).ready(function () {
-            $('#submit-ajout-client').click(function () {
-                $.ajax({
-                    url: $('#form-ajout-client').attr('action'),
-                    type: 'POST',
-                    data: $('#form-ajout-client').serialize(),
-                    success: function (response) {
-                        if (response.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Effectué',
-                                text: 'Le chauffeur a été ajouté avec succès!',
-                                timer: 1500,  // Le message disparaît automatiquement après 1,5 seconde
-                                showConfirmButton: false
-                            }).then(() => {
-                                $('#myModalajoutclient').modal('hide');
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Erreur',
-                                text: 'Une erreur est survenue lors de l\'ajout du chauffeur.',
-                                confirmButtonText: 'OK'
-                            });
-                        }
-                    },
-                    error: function (xhr, status, error) {
+<script>
+$(document).ready(function () {
+        $('#submit-ajout-client').click(function () {
+            $.ajax({
+                url: $('#form-ajout-client').attr('action'),
+                type: 'POST',
+                data: $('#form-ajout-client').serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Effectué',
+                            text: 'Le chauffeur a été ajouté avec succès!',
+                            timer: 1500,  // Le message disparaît automatiquement après 1,5 seconde
+                            showConfirmButton: false
+                        }).then(() => {
+                            $('#myModalajoutclient').modal('hide');
+                        });
+                    } else {
                         Swal.fire({
                             icon: 'error',
                             title: 'Erreur',
-                            text: 'Erreur AJAX: ' + error,
+                            text: 'Une erreur est survenue lors de l\'ajout du chauffeur.',
                             confirmButtonText: 'OK'
                         });
                     }
-                });
+                },
+                error: function (xhr, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Erreur AJAX: ' + error,
+                        confirmButtonText: 'OK'
+                    });
+                }
             });
         });
-    </script>
+    });
+</script>
 
 
 
