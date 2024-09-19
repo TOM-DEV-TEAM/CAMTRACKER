@@ -297,7 +297,6 @@ def ajout_observation(request):
         except Exception as e:
             error_message = str(e)
             return redirect(f"/index_controller/{user_id}?error={error_message}")
-
 ################################### AJOUT OBSERVATION #########################################
 def liste_camion(request, id):
  user = Utilisateurs.objects.get(id_user=id)

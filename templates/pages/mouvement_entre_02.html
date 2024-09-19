@@ -95,6 +95,7 @@
            <table id="mouvements-table" class="table table-hover" style="margin-top: 15px;">
     <thead class="thead-light">
         <tr>
+            <th scope="col" class="d-md-table-cell">#</th>
             <th scope="col" class="d-md-table-cell">Zone Entrée</th>
             <th scope="col" class="d-md-table-cell">Date Entrée</th>
             <th scope="col" class="d-md-table-cell">Camion</th>
@@ -110,6 +111,18 @@
         {% if mouvements %}
             {% for mouvement in mouvements %}
                 <tr>
+                    <td>{% if mouvement.camion.type == 'SEMI-REMORQUE' or mouvement.camion.type == 'VRAC' %}
+                        <a class="label theme-bg text-white f-12"  class="btn btn-info btn-lg"
+                                   data-id="${mouvement_list.id_mvt}"
+                                   data-immat="${camionvoyage}"
+                                   data-utilisateur-id="${textContent}"
+                                   href="#!"
+                                   data-toggle="modal"
+                                   data-target="#editModal">
+                                   LIAISON
+                                </a>
+                        {% endif %}
+                            </td></td>
                     <td>{{ mouvement.zone_entree }}</td>
                     <td>{{ mouvement.date_entree }}</td>
                     <td>{{ mouvement.camion.immatriculation }}</td>
