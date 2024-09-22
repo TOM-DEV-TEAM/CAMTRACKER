@@ -102,7 +102,6 @@
                         <th scope="col" class="d-md-table-cell">Date Entrée</th>
                         <th scope="col" class="d-md-table-cell">Camion</th>
                         <th scope="col" class="d-md-table-cell">Type</th>
-
                         <th scope="col" class="d-md-table-cell">Transporteur</th>
                         <th scope="col" class="d-md-table-cell">Conteneur 1</th>
                         <th scope="col" class="d-md-table-cell">Type</th>
@@ -113,6 +112,12 @@
                         <th scope="col" class="d-md-table-cell">Destination</th>
                         <th scope="col" class="d-md-table-cell">Chauffeur</th>
                         <th scope="col" class="d-md-table-cell">Permis</th>
+                        <th scope="col" class="d-md-table-cell">Client</th>
+                        <th scope="col" class="d-md-table-cell">Téléphone</th>
+                        <th scope="col" class="d-md-table-cell">Transitaire</th>
+                        <th scope="col" class="d-md-table-cell">Téléphone</th>
+                        <th scope="col" class="d-md-table-cell">Representant</th>
+                        <th scope="col" class="d-md-table-cell">Téléphone</th>
                         <th scope="col" class="d-md-table-cell">Statut</th>
                     </tr>
                     </thead>
@@ -120,20 +125,44 @@
                     {% if mouvements %}
                         {% for mouvement in mouvements %}
                             <tr>
-                                <td>{% if mouvement.camion.type == 'SEMI-REMORQUE' or mouvement.camion.type == 'VRAC' %}
-                                    <a class="label theme-bg text-white f-12" class="btn btn-info btn-lg"
-                                       data-id="${mouvement_list.id_mvt}"
-                                       data-immat="${camionvoyage}"
-                                       data-utilisateur-id="{{ util.id_user }}}"
-                                       data-numcont1="{{ mouvement.conteneur1 }}"
-                                       data-numcont2="{{ mouvement.conteneur2 }}"
-                                       data-numcont2="{{ mouvement.conteneur3 }}"
-                                       data.idcli="{{ mouvement.client.id_client }}"
+                                <td>{% if mouvement.camion.type == 'VRAC' %}
+                                    <a class="label theme-bg text-white f-12 btn btn-info btn-lg"
+                                       data-id_mvt="{{ mouvement.id_mvt }}"
+                                       data-typecam="{{ mouvement.camion.type }}"
+                                       data-utilisateur-id="{{ util.id_user }}"
+                                       data-numcont1="{{ mouvement.numconteneur1 }}"
+                                       data-typecont1="{{ mouvement.typeconteneur1 }}"
+                                       data-numcont2="{{ mouvement.numconteneur2 }}"
+                                       data-typecont2="{{ mouvement.typeconteneur2 }}"
+                                       data-numcont3="{{ mouvement.numconteneur3 }}"
+                                       data-typecont3="{{ mouvement.typeconteneur3 }}"
+                                       data-client="{{ mouvement.client.id_client }}"
+                                       data-transitaire="{{ mouvement.transitaire.id_transit }}"
+                                       data-representant="{{ mouvement.representant.id_transit }}"
                                        href="#!"
                                        data-toggle="modal"
-                                       data-target="#myModal">
+                                       data-target="#myModal1">
                                         LIAISON
                                     </a>
+                                {% elif  mouvement.camion.type == 'SEMI-REMORQUE' %}
+                                    <a class="label theme-bg text-white f-12 btn btn-info btn-lg"
+                                       data-id_mvt="{{ mouvement.id_mvt }}"data-typecam="{{ mouvement.camion.type }}"
+                                       data-utilisateur-id="{{ util.id_user }}"
+                                  data-numcont1="{{ mouvement.numconteneur1 }}"
+                                       data-typecont1="{{ mouvement.typeconteneur1 }}"
+                                       data-numcont2="{{ mouvement.numconteneur2 }}"
+                                       data-typecont2="{{ mouvement.typeconteneur2 }}"
+                                       data-numcont3="{{ mouvement.numconteneur3 }}"
+                                       data-typecont3="{{ mouvement.typeconteneur3 }}"
+                                       data-client="{{ mouvement.client.id_client }}"
+                                       data-transitaire="{{ mouvement.transitaire.id_transit }}"
+                                       data-representant="{{ mouvement.representant.id_transit }}"
+                                       href="#!"
+                                       data-toggle="modal"
+                                       data-target="#myModal2">
+                                        LIAISON
+                                    </a>
+
                                 {% endif %}
                                 </td>
                                 </td>
@@ -151,6 +180,12 @@
                                 <td>{{ mouvement.destination }}</td>
                                 <td>{{ mouvement.chauffeur.fullname }}</td>
                                 <td>{{ mouvement.chauffeur.permis }}</td>
+                                <td>{{ mouvement.client.fullname }}</td>
+                                <td>{{ mouvement.client.telephone }}</td>
+                                <td>{{ mouvement.transitaire.fullname }}</td>
+                                <td>{{ mouvement.transitaire.telephone }}</td>
+                                <td>{{ mouvement.representant.fullname }}</td>
+                                <td>{{ mouvement.representant.telephone }}</td>
                                 <td>
                                     {% if mouvement.statut_entree == 0 %}
                                         Vide
@@ -187,7 +222,7 @@
              role="dialog"
              aria-labelledby="editModalLabel" aria-hidden="true">
 
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="editModalLabel">Entrée Camion: ZUD</h5>
@@ -439,7 +474,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="datetime-input">Date et Heure</label>
+                                        <label for="datetime-input">Date Validité</label>
                                         <input type="datetime-local" name="date_validite" id="datetime-input"
                                                class="form-control form-control-lg"
                                                required/>
@@ -459,6 +494,501 @@
             </div>
         </div>
     </div>
+
+    <!-- FORMULAIRE MYMODAL 1 -->
+    <div class="modal fade" id="myModal1" tabindex="-1" role="dialog" aria-labelledby="editModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content" style="overflow-y: auto;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Entrée Camion: ZUD</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{% url 'liaisonmouvement0' util.id_user %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form.non_field_errors }}
+                        <input type="hidden" id="id_mvt" name="id_mvt">
+                        <input type="hidden" value="SEMI-REMORQUE" name="typecam">
+                        <input type="hidden" name="client" id="client-select1">
+                        <input type="hidden" name="representant" id="representant-select1">
+                        <input type="hidden" name="transitaire" id="transitaire-select1">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="zone" id="option-nord" value="Nord"
+                                   autocomplete="off" checked>
+                            <label class="btn btn-outline-primary custom-checked" for="option-nord">Nord</label>
+                            <input type="radio" class="btn-check" name="zone" id="option-sud" value="Sud"
+                                   autocomplete="off">
+                            <label class="btn btn-outline-primary" for="option-sud">Sud</label>
+                        </div>
+                        <input type="hidden" name="destination" value="zud">
+                        <input type="hidden" name="entite" value="zud">
+
+                        <div class="form-row">
+                            <div class="col-md-3 mb-3">
+                                <label for="camion-select1">Camion</label>
+                                <select name="camion" class="form-control form-control-lg" id="camion-select1" required>
+                                    <option value="" data-type1="" data-transporteur1=""></option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="type1">Type</label>
+                                <input type="text" name="type" id="type1" class="form-control form-control-lg"
+                                       readonly/>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="transporteur1">Transporteur</label>
+                                <input type="text" name="transporteur" id="transporteur1"
+                                       class="form-control form-control-lg" readonly/>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-info btn-block" data-toggle="modal"
+                                        data-target="#myModalajoutcamion">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-4 mb-3">
+                                <label for="chauffeur-select">Chauffeur</label>
+                                <select name="chauffeur" class="form-control form-control-lg" id="chauffeur-select1"
+                                        required>
+                                    <option value="" data-permis1=""></option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="permis">Permis</label>
+                                <input type="text" name="permis" id="permis1" class="form-control form-control-lg"
+                                       readonly/>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-info btn-block" data-toggle="modal"
+                                        data-target="#myModalajoutchauffeur">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Section conteneurs -->
+                        <div class="row" id="conteneurs-div" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="conteneur1">Conteneur 1</label>
+                                    <input type="text" class="form-control form-control-lg" name="numconteneur1"
+                                           id="numconteneur1" placeholder="Entrez le conteneur"/>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="typeconteneur1">Type</label>
+                                    <select name="typeconteneur1" id="typeconteneur1"
+                                            class="form-control form-control-lg">
+                                        <option value="">Sélectionnez un type</option>
+                                        <option value="20">20'</option>
+                                        <option value="40">40'</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="conteneur2-div" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="conteneur2">Conteneur 2</label>
+                                    <input type="text" class="form-control form-control-lg" name="numconteneur2"
+                                           id="numconteneur2" placeholder="Entrez le conteneur">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="typeconteneur2">Type</label>
+                                    <select name="typeconteneur2" id="typeconteneur2"
+                                            class="form-control form-control-lg">
+                                        <option value="">Sélectionnez un type</option>
+                                        <option value="20">20'</option>
+                                        <option value="40">40'</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="remorque">Remorque</label>
+                                    <input id="remorque" type="text" name="remorque"
+                                           class="form-control form-control-lg" placeholder="REMORQUE" required/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="datetime-input">Date Validité</label>
+                                    <input type="datetime-local" name="date_validite" id="datetime-input"
+                                           class="form-control form-control-lg"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group ">
+                            <label>Conteneurs:</label>
+                            <div class="checkbox-inline">
+                                <label>
+                                    <input type="checkbox" name="numcont1" id="numcont1" value="">
+                                    <span id="labelcont1"></span>
+                                </label>
+                            </div>
+                            <div class="checkbox-inline">
+                                <label>
+                                    <input type="checkbox" name="numcont2" id="numcont2" value="">
+                                    <span id="labelcont2"></span>
+                                </label>
+                            </div>
+                            <div class="checkbox-inline">
+                                <label>
+                                    <input type="checkbox" name="numcont3" id="numcont3" value="">
+                                    <span id="labelcont3"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Champs cachés pour stocker les types de conteneurs -->
+                        <input type="hidden" id="typecont1" name="typecont1">
+                        <input type="hidden" id="typecont2" name="typecont2">
+                        <input type="hidden" id="typecont3" name="typecont3">
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                            <button type="submit" class="btn btn-primary" id="submitButton1">Sauvegarder</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- SCRIPT QUI RENVOIE LES DONNES AU MYMODAL 1 -->
+    <script>
+        $(document).ready(function () {
+            $('#myModal1').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget); // Bouton qui a déclenché le modal
+
+                // Récupérer les valeurs des attributs `data-*`
+                var id_mvt = button.data('id_mvt');
+                var typecam = button.data('typecam');
+                var numcont1 = button.data('numcont1');
+                var typecont1 = button.data('typecont1');
+                var numcont2 = button.data('numcont2');
+                var typecont2 = button.data('typecont2');
+                var numcont3 = button.data('numcont3');
+                var typecont3 = button.data('typecont3');
+                var client = button.data('client');
+                var transitaire = button.data('transitaire');
+                var representant = button.data('representant');
+
+                // Assigner les valeurs aux éléments du modal
+                var modal = $(this);
+                modal.find('#id_mvt').val(id_mvt);  // Assignation de la valeur
+                modal.find('#typecam').val(typecam);  // Assignation de la valeur
+                modal.find('#numcont1').val(numcont1);  // Assignation de la valeur
+                modal.find('#typecont1').val(typecont1);  // Assignation de la valeur
+                modal.find('#numcont2').val(numcont2);
+                modal.find('#typecont2').val(typecont2);
+                modal.find('#numcont3').val(numcont3);
+                modal.find('#typecont3').val(typecont3);
+                modal.find('#client-select1').val(client);
+                modal.find('#transitaire-select1').val(transitaire);
+                modal.find('#representant-select1').val(representant);
+
+                // Mettez à jour les labels pour afficher les conteneurs
+                modal.find('#labelcont1').text(numcont1);
+                modal.find('#labelcont2').text(numcont2);
+                modal.find('#labelcont3').text(numcont3);
+                var modal = $(this);
+
+                // Conteneur 1
+                // Conteneur 1
+                // Vérifier si tous les conteneurs sont null
+// Si les trois numéros de conteneurs sont nulles ou undefined, on cache tout
+if ((!numcont1 || numcont1 === 'None') && (!numcont2 || numcont2 === 'None') && (!numcont3 || numcont3 === 'None')) {
+    modal.find('.checkbox-inline').hide(); // Cache tout le bloc si aucun conteneur n'a de valeur
+$('#submitButton1').prop('disabled', true);
+} else {
+    $('#submitButton1').prop('disabled', false);
+    // Conteneur 1
+    if (numcont1 && numcont1 !== 'None') {
+        modal.find('#numcont1').val(numcont1).closest('.checkbox-inline').show();
+    } else {
+        modal.find('#numcont1').closest('.checkbox-inline').hide();
+    }
+
+    // Conteneur 2
+    if (numcont2 && numcont2 !== 'None') {
+        modal.find('#numcont2').val(numcont2).closest('.checkbox-inline').show();
+    } else {
+        modal.find('#numcont2').closest('.checkbox-inline').hide();
+    }
+    // Conteneur 3
+    if (numcont3 && numcont3 !== 'None') {
+        modal.find('#numcont3').val(numcont3).closest('.checkbox-inline').show();
+    } else {
+        modal.find('#numcont3').closest('.checkbox-inline').hide();
+    }
+}
+            });
+        });
+    </script>
+
+    <!-- FORMULAIRE MYMODAL 2 -->
+    <div class="modal fade" id="myModal2" tabindex="-1" role="dialog" aria-labelledby="editModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content" style="overflow-y: auto;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Entrée Camion: ZUD</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">VRAC
+                    <form method="POST" action="{% url 'liaisonmouvement0' util.id_user %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form.non_field_errors }}
+                        <input type="hidden" id="id_mvt" name="id_mvt">
+                        <input type="hidden" value="VRAC" name="typecam">
+                        <input type="hidden" name="client" id="client-select2">
+                        <input type="hidden" name="representant" id="representant-select2">
+                        <input type="hidden" name="transitaire" id="transitaire-select2">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="zone" id="option-nord" value="Nord"
+                                   autocomplete="off" checked>
+                            <label class="btn btn-outline-primary custom-checked" for="option-nord">Nord</label>
+                            <input type="radio" class="btn-check" name="zone" id="option-sud" value="Sud"
+                                   autocomplete="off">
+                            <label class="btn btn-outline-primary" for="option-sud">Sud</label>
+                        </div>
+                        <input type="hidden" name="destination" value="zud">
+                        <input type="hidden" name="entite" value="zud">
+
+                        <div class="form-row">
+                            <div class="col-md-3 mb-3">
+                                <label for="camion-select2">Camion</label>
+                                <select name="camion" class="form-control form-control-lg" id="camion-select2" required>
+                                    <option value="" data-type2="" data-transporteur2=""></option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="type2">Type</label>
+                                <input type="text" name="type" id="type2" class="form-control form-control-lg"
+                                       readonly/>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="transporteur2">Transporteur</label>
+                                <input type="text" name="transporteur" id="transporteur2"
+                                       class="form-control form-control-lg" readonly/>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-info btn-block" data-toggle="modal"
+                                        data-target="#myModalajoutcamion">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-4 mb-3">
+                                <label for="chauffeur-select">Chauffeur</label>
+                                <select name="chauffeur" class="form-control form-control-lg" id="chauffeur-select2"
+                                        required>
+                                    <option value="" data-permis2=""></option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="permis">Permis</label>
+                                <input type="text" name="permis" id="permis2" class="form-control form-control-lg"
+                                       readonly/>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-info btn-block" data-toggle="modal"
+                                        data-target="#myModalajoutchauffeur">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Section conteneurs -->
+                        <!--div class="row" id="conteneurs-div" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="conteneur1">Conteneur 1</label>
+                                    <input type="text" class="form-control form-control-lg" name="numcont1"
+                                           id="numconteneur2" placeholder="Entrez le conteneur"/>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="typeconteneur1">Type</label>
+                                    <select name="typeconteneur1" id="typeconteneur2"
+                                            class="form-control form-control-lg">
+                                        <option value="">Sélectionnez un type</option>
+                                        <option value="20">20'</option>
+                                        <option value="40">40'</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row" id="conteneur2-div" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="conteneur2">Conteneur 2</label>
+                                    <input type="text" class="form-control form-control-lg" name="numconteneur2"
+                                           id="numconteneur2" placeholder="Entrez le conteneur">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="typeconteneur2">Type</label>
+                                    <select name="typeconteneur2" id="typeconteneur2"
+                                            class="form-control form-control-lg">
+                                        <option value="">Sélectionnez un type</option>
+                                        <option value="20">20'</option>
+                                        <option value="40">40'</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div-->
+                        <div class="form-row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="remorque">Remorque</label>
+                                    <input id="remorque" type="text" name="remorque"
+                                           class="form-control form-control-lg" placeholder="REMORQUE" required/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="datetime-input">Date Validité</label>
+                                    <input type="datetime-local" name="date_validite" id="datetime-input"
+                                           class="form-control form-control-lg"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group ">
+                            <label>Conteneurs:</label>
+                            <div class="checkbox-inline">
+                                <label>
+                                    <input type="checkbox" name="numcont1" id="numcont1" value="">
+                                    <span id="labelcont12"></span>
+                                </label>
+                            </div>
+                            <div class="checkbox-inline">
+                                <label>
+                                    <input type="checkbox" name="numcont2" id="numcont2" value="">
+                                    <span id="labelcont22"></span>
+                                </label>
+                            </div>
+                            <div class="checkbox-inline">
+                                <label>
+                                    <input type="checkbox" name="numcont3" id="numcont3" value="">
+                                    <span id="labelcont32"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Champs cachés pour stocker les types de conteneurs -->
+                        <input type="hidden" id="typecont12" name="typecont1">
+                        <input type="hidden" id="typecont22" name="typecont2">
+                        <input type="hidden" id="typecont32" name="typecont3">
+
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                            <button type="submit" id="submitButton" class="btn btn-primary">Sauvegarder</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+     <!-- SCRIPT QUI RENVOIE LES DONNES AU MYMODAL 2-->
+    <script>
+        $(document).ready(function () {
+            $('#myModal2').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget); // Bouton qui a déclenché le modal
+                // Récupérer les valeurs des attributs `data-*`
+                var id_mvt = button.data('id_mvt');
+                var typecam = button.data('typecam');
+                var numcont1 = button.data('numcont1');
+                var typecont1 = button.data('typecont1');
+                var numcont2 = button.data('numcont2');
+                var typecont2 = button.data('typecont2');
+                var numcont3 = button.data('numcont3');
+                var typecont3 = button.data('typecont3');
+                var client = button.data('client');
+                var transitaire = button.data('transitaire');
+                var representant = button.data('representant');
+                // Assigner les valeurs aux éléments du modal
+                var modal = $(this);
+                modal.find('#id_mvt').val(id_mvt);  // Assignation de la valeur
+                modal.find('#typecam').val(typecam);  // Assignation de la valeur
+                modal.find('#numcont12').val(numcont1);  // Assignation de la valeur
+                modal.find('#typecont12').val(typecont1);  // Assignation de la valeur
+                modal.find('#numcont22').val(numcont2);
+                modal.find('#typecont22').val(typecont2);
+                modal.find('#numcont32').val(numcont3);
+                modal.find('#typecont32').val(typecont3);
+                modal.find('#client-select2').val(client);
+                modal.find('#transitaire-select2').val(transitaire);
+                modal.find('#representant-select2').val(representant);
+                // Mettez à jour les labels pour afficher les conteneurs
+                modal.find('#labelcont12').text(numcont1);
+                modal.find('#labelcont22').text(numcont2);
+                modal.find('#labelcont32').text(numcont3);
+                var modal = $(this);
+                // Conteneur 1
+                // Conteneur 1
+               // Conteneur 1
+// Initialiser le bouton comme désactivé
+//$('#submitButton').prop('disabled', true);
+
+// Conteneur 1
+if (numcont1 && numcont1.trim() !== "" && numcont1 !== "None") {
+    modal.find('#numcont1').val(numcont1).closest('.checkbox-inline').show();
+} else {
+    modal.find('#numcont1').closest('.checkbox-inline').hide();
+}
+
+// Conteneur 2
+if (numcont2 && numcont2.trim() !== "" && numcont2 !== "None") {
+    modal.find('#numcont2').val(numcont2).closest('.checkbox-inline').show();
+} else {
+    modal.find('#numcont2').closest('.checkbox-inline').hide();
+}
+
+// Conteneur 3
+if (numcont3 && numcont3.trim() !== "" && numcont3 !== "None") {
+    modal.find('#numcont3').val(numcont3).closest('.checkbox-inline').show();
+} else {
+    modal.find('#numcont3').closest('.checkbox-inline').hide();
+}
+
+// Vérifier si au moins un conteneur a une valeur valide
+if (
+    (numcont1 && numcont1.trim() !== "" && numcont1 !== "None") ||
+    (numcont2 && numcont2.trim() !== "" && numcont2 !== "None") ||
+    (numcont3 && numcont3.trim() !== "" && numcont3 !== "None")
+) {
+    $('#submitButton').prop('disabled', false); // Activer le bouton
+} else {
+    $('#submitButton').prop('disabled', true); // Désactiver le bouton
+}
+
+            });
+        });
+    </script>
+
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
@@ -558,6 +1088,80 @@
             });
         }
 
+        function actualiserListeCamions1() {
+            var select = $('#camion-select1');
+            var typecam = $(this).data('typecam');
+            var selectedValue = select.val();
+
+            $.ajax({
+                url: "{% url 'fetch_camion' %}", // Assurez-vous que cette URL est correcte dans vos urls.py
+                method: 'GET',
+                success: function (data) {
+                    select.empty(); // Vide le menu déroulant
+                    select.append('<option value="" data-type1="" data-transporteur1="" data-immatriculation1=""></option>'); // Option vide
+
+                    // Boucle à travers les camions reçus
+                    data.forEach(function (camion) {
+                        if (camion.type === 'SEMI-REMORQUE') {
+                            select.append('<option value="' + camion.id_cam + '" data-type1="' + camion.type + '" data-transporteur1="' + camion.transporteur + '" data-immatriculation1="' + camion.immatriculation + '">' + camion.immatriculation + '</option>');
+                        }
+                    });
+
+                    select.val(selectedValue); // Réapplique la sélection précédente, si existante
+                },
+                error: function (xhr, status, error) {
+                    console.error('Erreur lors de la récupération des camions:', error);
+                }
+            });
+        }
+        // Mise à jour des champs "type" et "transporteur" lorsque la sélection de camion change
+        $('#camion-select1').on('change', function () {
+            var selectedOption = $(this).find('option:selected');
+
+            // Récupération des valeurs des attributs "data-" de l'option sélectionnée
+            var type = selectedOption.data('type1');
+            var transporteur = selectedOption.data('transporteur1');
+
+            // Mise à jour des champs en fonction de la sélection
+            $('#type1').val(type || '');
+            $('#transporteur1').val(transporteur || '');
+        });
+ function actualiserListeCamions2() {
+            var select = $('#camion-select2');
+            var selectedValue = select.val();
+            $.ajax({
+                url: "{% url 'fetch_camion' %}", // Assurez-vous que cette URL est correcte dans vos urls.py
+                method: 'GET',
+                success: function (data) {
+                    select.empty(); // Vide le menu déroulant
+                    select.append('<option value="" data-type2="" data-transporteur2="" data-immatriculation2=""></option>'); // Option vide
+
+                    // Boucle à travers les camions reçus
+                    data.forEach(function (camion) {
+                        if (camion.type === 'VRAC') {
+                            select.append('<option value="' + camion.id_cam + '" data-type2="' + camion.type + '" data-transporteur2="' + camion.transporteur + '" data-immatriculation2="' + camion.immatriculation + '">' + camion.immatriculation + '</option>');
+                        }
+                    });
+                    select.val(selectedValue); // Réapplique la sélection précédente, si existante
+                },
+                error: function (xhr, status, error) {
+                    console.error('Erreur lors de la récupération des camions:', error);
+                }
+            });
+        }
+        // Mise à jour des champs "type" et "transporteur" lorsque la sélection de camion change
+        $('#camion-select2').on('change', function () {
+            var selectedOption = $(this).find('option:selected');
+
+            // Récupération des valeurs des attributs "data-" de l'option sélectionnée
+            var type = selectedOption.data('type2');
+            var transporteur = selectedOption.data('transporteur2');
+
+            // Mise à jour des champs en fonction de la sélection
+            $('#type2').val(type || '');
+            $('#transporteur2').val(transporteur || '');
+        });
+
         function actualiserListeClients() {
             var select = $('#client-select');
             var selectedValue = select.val();
@@ -644,6 +1248,60 @@
             });
         }
 
+        function actualiserListeChauffeurs1() {
+            var select = $('#chauffeur-select1');
+            var selectedValue = select.val();
+
+            $.ajax({
+                url: "{% url 'fetch_chauffeur' %}", // Remplacez par l'URL de votre endpoint
+                method: 'GET',
+                success: function (data) {
+                    select.empty();
+                    select.append('<option value="" data-permis1=""></option>');
+
+                    data.forEach(function (chauffeur) {
+                        select.append('<option value="' + chauffeur.id_chauffeur + '" data-permis1="' + chauffeur.permis + '">' + chauffeur.fullname + '</option>');
+                    });
+
+                    select.val(selectedValue);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Erreur lors de la récupération des chauffeurs:', error);
+                }
+            });
+            select.on('change', function () {
+                var selectedPermis = $(this).find('option:selected').data('permis1');
+                $('#permis1').val(selectedPermis);
+            });
+
+        }
+  function actualiserListeChauffeurs2() {
+            var select = $('#chauffeur-select2');
+            var selectedValue = select.val();
+
+            $.ajax({
+                url: "{% url 'fetch_chauffeur' %}", // Remplacez par l'URL de votre endpoint
+                method: 'GET',
+                success: function (data) {
+                    select.empty();
+                    select.append('<option value="" data-permis2=""></option>');
+
+                    data.forEach(function (chauffeur) {
+                        select.append('<option value="' + chauffeur.id_chauffeur + '" data-permis2="' + chauffeur.permis + '">' + chauffeur.fullname + '</option>');
+                    });
+
+                    select.val(selectedValue);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Erreur lors de la récupération des chauffeurs:', error);
+                }
+            });
+            select.on('change', function () {
+                var selectedPermis = $(this).find('option:selected').data('permis2');
+                $('#permis2').val(selectedPermis);
+            });
+
+        }
         function actualiserListeTransitaires() {
             var select = $('#transitaire-select');  // Updated to match the correct ID
             var selectedValue = select.val();
@@ -688,8 +1346,12 @@
 
         $(document).ready(function () {
             actualiserListeCamions();
+            actualiserListeCamions1();
+            actualiserListeCamions2();
             actualiserListeCamionsVrac();
             actualiserListeChauffeurs();
+            actualiserListeChauffeurs1();
+            actualiserListeChauffeurs2();
             actualiserListeTransitaires();
             actualiserListeClients();
             actualiserListeRepresentants();
@@ -697,7 +1359,11 @@
             setInterval(actualiserListeRepresentants, 5000);
             setInterval(actualiserListeTransitaires, 5000);
             setInterval(actualiserListeCamions, 5000); // 20000 ms = 20 secondes
+            setInterval(actualiserListeCamions1, 5000); // 20000 ms = 20 secondes
+            setInterval(actualiserListeCamions2, 5000); // 20000 ms = 20 secondes
             setInterval(actualiserListeChauffeurs, 5000);
+            setInterval(actualiserListeChauffeurs1, 5000);
+            setInterval(actualiserListeChauffeurs2, 5000);
             setInterval(actualiserListeCamionsVrac, 5000); // 20000 ms = 20 secondes
 
             // Fonction pour filtrer les camions en fonction de la destination sélectionnée

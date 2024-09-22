@@ -1079,11 +1079,35 @@ def entredecalon_view1(request, id_user):
 
 def entredecalon_view2(request, id_user):
     util = Utilisateurs.objects.get(id_user=id_user)
-    mouvements = Mouvement0.objects.filter(destination__icontains='zud', date_sortie__isnull=True).values(
-        'id_mvt', 'camion_id', 'statut_entree', 'zone_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
-        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'numconteneur1', 'typeconteneur1', 'numconteneur2', 'typeconteneur2',
-        'numconteneur3', 'typeconteneur3','destination'
+    # Récupérer la liste des mouvements actuels qui remplissent les critères
+    mouvements = Mouvement0.objects.filter(
+        destination__icontains='zud',
+        date_sortie__isnull=True
+    ).values(
+        'id_mvt', 'camion_id', 'statut_entree', 'zone_entree', 'statut_sortie', 'chauffeur_id', 'remorque',
+        'date_entree', 'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'numconteneur1', 'typeconteneur1',
+        'numconteneur2', 'typeconteneur2', 'numconteneur3', 'typeconteneur3', 'destination', 'client_id',
+        'transitaire_id', 'representant_id'
     )
+
+    # Parcourir chaque mouvement
+    for mouvement in mouvements:
+        # Vérifier si numconteneur1 est déjà présent dans d'autres mouvements
+        if Mouvement0.objects.filter(numconteneur1=mouvement['numconteneur1']).exclude(
+                id_mvt=mouvement['id_mvt']).exists():
+            mouvement['numconteneur1'] = None  # Affecter à null si le conteneur est déjà affecté
+
+        # Vérifier si numconteneur2 est déjà présent dans d'autres mouvements
+        if Mouvement0.objects.filter(numconteneur2=mouvement['numconteneur2']).exclude(
+                id_mvt=mouvement['id_mvt']).exists():
+            mouvement['numconteneur2'] = None  # Affecter à null si le conteneur est déjà affecté
+
+        # Vérifier si numconteneur3 est déjà présent dans d'autres mouvements
+        if Mouvement0.objects.filter(numconteneur3=mouvement['numconteneur3']).exclude(
+                id_mvt=mouvement['id_mvt']).exists():
+            mouvement['numconteneur3'] = None  # Affecter à null si le conteneur est déjà affecté
+
+    # Convertir les résultats en liste si nécessaire
     mouvement_list = list(mouvements)
 
     for mouvement in mouvement_list:
@@ -1096,7 +1120,33 @@ def entredecalon_view2(request, id_user):
             'transporteur': 'Non assigné',
             'type': 'Non assigné'
         }
-
+        # Récupérer les informations du Client
+        client_id = mouvement.get('client_id')
+        client = Client.objects.filter(id_client=client_id).values('id_client', 'fullname', 'telephone'
+                                                                ).first()
+        mouvement['client'] = client if client else {
+            'id_client': None,
+            'fullname': 'Non assigné',
+            'telephone': 'Non assigné'
+        }
+        # Récuperer les informations du transitaire
+        transitaire_id = mouvement.get('transitaire_id')
+        transitaire = Transitaire.objects.filter(id_transit=transitaire_id).values('id_transit', 'fullname', 'telephone'
+                                                                   ).first()
+        mouvement['transitaire'] = transitaire if transitaire else {
+            'id_transit': None,
+            'fullname': 'Non assigné',
+            'telephone': 'Non assigné'
+        }
+        # Récuperer les informations du représentant
+        representant_id = mouvement.get('representant_id')
+        representant = Transitaire.objects.filter(id_transit=representant_id).values('id_transit', 'fullname', 'telephone'
+                                                                                   ).first()
+        mouvement['representant'] = representant if representant else {
+            'id_transit': None,
+            'fullname': 'Non assigné',
+            'telephone': 'Non assigné'
+        }
         # Récupérer les informations du pointeur d'entrée
         user_entre_id = mouvement.get('pointeur_entree_id')
         user_entre = Utilisateurs.objects.filter(id_user=user_entre_id).values('fullname').first()
@@ -2800,6 +2850,83 @@ from django.shortcuts import redirect, get_object_or_404
 from django.utils import timezone
 from .models import *
 from django.http import HttpResponse
+###################### AJOUT LIAISON MOUVEMENT ZUD #########################
+def liaisonmouvement0(request, id_user):
+    util = get_object_or_404(Utilisateurs, id_user=id_user)
+    if request.method == 'POST':
+        try:
+            zone = request.POST.get('zone', '').strip()
+            date_validite = request.POST.get('date_validite', '').strip()
+            conteneur1 = request.POST.get('numcont1', '').strip()
+            type1 = request.POST.get('typecont1', '').strip()
+            conteneur2 = request.POST.get('numcont2', '').strip()
+            type2 = request.POST.get('typecont2', '').strip()
+            conteneur3 = request.POST.get('numcont3', '').strip()
+            remorque = request.POST.get('remorque', '').strip()
+            type3 = request.POST.get('typecont3', '').strip()
+            client = request.POST.get('client', '').strip()
+            chauffeur = request.POST.get('chauffeur', '').strip()
+            transitaire = request.POST.get('transitaire', '').strip()
+            representant = request.POST.get('representant', '').strip()
+            id_mvt1 = request.POST.get('id_mvt', '').strip()  # This is an ID, not an instance
+            typecam = request.POST.get('typecam', '').strip()
+            camion = request.POST.get('camion', '').strip()
+            mouvement_instance = Mouvement0.objects.get(id_mvt=id_mvt1)
+            mouvement0 = Mouvement0.objects.create()
+            if conteneur1:
+                mouvement0.numconteneur1 = conteneur1
+                mouvement0.typeconteneur1 = type1
+            if conteneur2:
+                mouvement0.numconteneur2 = conteneur2
+                mouvement0.typeconteneur2 = type2
+            if conteneur3:
+                mouvement0.numconteneur3 = conteneur3
+                mouvement0.typeconteneur3 = type3
+            mouvement0.marchandise = mouvement_instance.marchandise
+            mouvement0.bl1 = mouvement_instance.bl1
+            mouvement0.bl2 = mouvement_instance.bl2
+            mouvement0.remorque = remorque
+            mouvement0.destination = 'zud'
+            mouvement0.nbrcolis = mouvement_instance.nbrcolis
+            mouvement0.tonnage = mouvement_instance.tonnage
+            mouvement0.date_validite = date_validite
+            mouvement0.navire = mouvement_instance.navire
+            mouvement0.zone = zone
+            mouvement0.date_entree = datetime.now()
+            mouvement0.client_id = client
+            mouvement0.camion_id = camion
+            mouvement0.chauffeur_id = chauffeur
+            mouvement0.transitaire_id = transitaire
+            mouvement0.representant_id = representant
+            mouvement0.save()
+            liaison = Liaison.objects.create()
+            if conteneur1:
+                liaison.conteneur1 = conteneur1
+                liaison.type1 = type1
+            if conteneur2:
+                liaison.conteneur2 = conteneur2
+                liaison.type2 = type2
+            if conteneur3:
+                liaison.conteneur3 = conteneur3
+                liaison.type3 = type3
+            if typecam == 'VRAC':
+                liaison.id_mvt_vrac = mouvement_instance
+                liaison.id_mvt_sm = mouvement0  # Assigning the newly created Mouvement0 instance
+                liaison.save()
+                return redirect(f"/entreedecalog_view2/{util.id_user}?success=true")
+            elif typecam == 'SEMI-REMORQUE':
+                liaison = Liaison.objects.create()
+                liaison.id_mvt_vrac = mouvement0
+                liaison.id_mvt_sm = mouvement_instance
+                liaison.save()
+                return redirect(f"/entreedecalog_view2/{util.id_user}?success=true")
+            return redirect(f"/entreedecalog_view2/{util.id_user}?error=Invalid typecam")
+        except Exception as e:
+            error_message = str(e)
+            return redirect(f"/entreedecalog_view2/{util.id_user}?error={error_message}")
+    return redirect(f"/entreedecalog_view2/{util.id_user}")
+
+    #return render("/")
 ######################### AJOUT MOUVEMENT PARTICULIER #########################
 def ajoutmouvementparticulier(request, id_user):
         util = get_object_or_404(Utilisateurs, id_user=id_user)
@@ -2960,12 +3087,9 @@ def ajoutmouvement0(request, id_user):
             error_message = str(e)
             return redirect(f"/entreedecalog_view/{util.id_user}?error={error_message}")
     else:
-        chauffeurs = Chaffeur.objects.all()
-        camions = Camion.objects.all()
+
         return render(request, 'pages/mouvement_entre_0.html', {
-            'camions': camions,
             'util': util,
-            'chauffeurs': chauffeurs,
         })
 
 

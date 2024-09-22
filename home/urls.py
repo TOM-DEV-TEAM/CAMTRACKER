@@ -137,7 +137,10 @@ urlpatterns = [
     path('liste_mouvements02/', liste_mouvements_02, name='liste_mouvements02'),
     ####################### FETCH DE LA LISTE DES MOUVEMENTS PARTICULIERS #############
     path('liste_mouvementsparticulier/', liste_mouvements_particulier, name='liste_mouvements_particulier'),
+    ############################### AJOUT MOUVEMENT 0 ###########################
     path('ajoutmouvement0/<int:id_user>/', ajoutmouvement0, name='ajoutmouvement0'),
+    ######################## AJOUT LIAISON MOUVEMENT 0 #################
+    path('liaisonmouvement0/<int:id_user>/', liaisonmouvement0, name='liaisonmouvement0'),
     path('ajoutmouvementparticulier/<int:id_user>/', ajoutmouvementparticulier, name='ajoutmouvementparticulier'),
     path('entree_tom/', entree_tom, name='entree_tom'),
 

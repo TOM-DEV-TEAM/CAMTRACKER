@@ -393,6 +393,35 @@ class Mouvement3(models.Model):
 
         def str(self):
             return f"Mouvement3 {self.id_mvt}"
+################## Model de Liaison Du Mouvement du Vrac et du Semi-remorque ######
+class Liaison(models.Model):
+    id_link = models.AutoField(primary_key=True)
+    conteneur1 = models.CharField(max_length=255)
+    conteneur2 = models.CharField(max_length=255, blank=True, null=True)
+    conteneur3 = models.CharField(max_length=255, blank=True, null=True)
+    type1 = models.CharField(max_length=255)
+    type2 = models.CharField(max_length=255, blank=True, null=True)
+    type3 = models.CharField(max_length=255, blank=True, null=True)
+
+    id_mvt_vrac = models.ForeignKey(
+        'Mouvement0',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='linkmouvements_vrac'
+    )
+
+    id_mvt_sm = models.ForeignKey(
+        'Mouvement0',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='linkmouvements_sm'
+    )
+
+    def __str__(self):
+        return f"Liaison: {self.conteneur1}, {self.conteneur2}, {self.conteneur3}"
+
     ################ Model pour la table Réjet ################
 class Rejet(models.Model):
     id_rejet = models.AutoField(primary_key=True)
