@@ -1,14 +1,5 @@
-import math
-from audioop import reverse
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from django.contrib import messages
-from django.db.models import Q
-from django.utils import timezone
-from django.contrib import messages
-from urllib import request
 
-
+from django.contrib import messages
 import pandas as pd
 from admin_datta.utils import JsonResponse
 from django.db import transaction
@@ -2865,7 +2856,7 @@ def liaisonmouvement0(request, id_user):
     util = get_object_or_404(Utilisateurs, id_user=id_user)
     if request.method == 'POST':
         try:
-            zone = request.POST.get('zone', '').strip()
+            zone = request.POST.get('zone')
             date_validite = request.POST.get('date_validite', '').strip()
             conteneur1 = request.POST.get('numcont1', '').strip()
             type1 = request.POST.get('typecont1', '').strip()
@@ -2921,7 +2912,7 @@ def liaisonmouvement0(request, id_user):
             mouvement0.tonnage = mouvement_instance.tonnage
             mouvement0.date_validite = date_validite
             mouvement0.navire = mouvement_instance.navire
-            mouvement0.zone = zone
+            mouvement0.zone_entree = zone
             mouvement0.date_entree = datetime.now()
             mouvement0.client_id = client
             mouvement0.camion_id = camion
@@ -5473,77 +5464,143 @@ def export_camions(request):
     return HttpResponseBadRequest()
 
 
+from openpyxl import Workbook
+from openpyxl.styles import Font, Border, Side, Alignment
+from openpyxl.utils import get_column_letter
 
 def export_mouvement0(request):
     if request.method == 'POST':
         # Récupérer les données des mouvements
-        mouvements = Mouvement0.objects.filter(
-            date_entree__isnull=False,
-            date_sortie__isnull=False
-        ).values(
-            'id_mvt', 'chauffeur_id', 'camion_id', 'statut_entree', 'statut_sortie',
+        mouvements = Mouvement0.objects.all().values(
+            'id_mvt', 'chauffeur_id', 'camion_id', 'statut_entree', 'statut_sortie', 'zone_entree', 'zone_sortie',
             'remorque', 'date_entree', 'pointeur_entree_id', 'date_sortie', 'pointeur_sortie_id'
         )
 
         mouvement_list = list(mouvements)
+
         for mouvement in mouvement_list:
-            ################# STATUT ENTREE TEXT ###########
-            if mouvement['statut_entree']== 0:
-                mouvement['statut_entree'] = 'NON CHARGE'
-            elif mouvement['statut_entree'] == 1 :
-                mouvement['statut_entree'] = 'NON CHARGE'
+            # Traduire le statut d'entrée
+            statut_entree = mouvement.get('statut_entree', None)
+            if statut_entree == 0:
+                mouvement['statut_entree_label'] = 'Vide'
+            elif statut_entree == 1:
+                mouvement['statut_entree_label'] = 'Partielle'
+            elif statut_entree == 2:
+                mouvement['statut_entree_label'] = 'Plein'
             else:
-                mouvement['statut_entree'] = 'Vide'
-                ################# STATUT SORTIE TEXT ###########
-            if mouvement['statut_sortie'] == 0:
-                 mouvement['statut_sortie'] = 'NON CHARGE'
-            elif mouvement['statut_sortie'] == 1:
-                 mouvement['statut_sortie'] = 'NON CHARGE'
+                mouvement['statut_entree_label'] = 'Inconnu'
+
+            # Traiter les autres champs
+            camion_id = mouvement.get('camion_id', None)
+            if camion_id:
+                camion = Camion.objects.get(id_cam=camion_id)
+                mouvement['transporteur'] = camion.transporteur or 'Non Assigné'
+                mouvement['type'] = camion.type or 'Non Assigné'
+                mouvement['immatriculation'] = camion.immatriculation or 'Non Assigné'
             else:
-                 mouvement['statut_sortie'] = 'Vide'
-            ############## CAMION #####################
-            camion_id = mouvement['camion_id']
-            camion = Camion.objects.get(id_cam=camion_id)
-            mouvement['transporteur'] = camion.transporteur
-            mouvement['type'] = camion.type
-            mouvement['immatriculation'] = camion.immatriculation
-            ################### CHAUFFEUR ###################
-            chauffeur_id = mouvement['chauffeur_id']
-            chauffeur = Chaffeur.objects.get(id_chauffeur=chauffeur_id)
-            mouvement['chauffeur_name'] = chauffeur.fullname
-            mouvement['permis'] = chauffeur.permis
-            ################## POINTEUR ENTREE ##############
-            pointeur_entree_id = mouvement['pointeur_entree_id']
-            Pointeur_entree = Utilisateurs.objects.get(id_user=pointeur_entree_id)
-            mouvement['pointeur_entree_name'] = Pointeur_entree.fullname
-            ################## POINTEUR SORTIE ##############
-            pointeur_sortie_id = mouvement['pointeur_sortie_id']
-            Pointeur_sortie = Utilisateurs.objects.get(id_user=pointeur_sortie_id)
-            mouvement['pointeur_sortie_name'] = Pointeur_sortie.fullname
+                mouvement['transporteur'] = 'Non Assigné'
+                mouvement['type'] = 'Non Assigné'
+                mouvement['immatriculation'] = 'Non Assigné'
+
+            chauffeur_id = mouvement.get('chauffeur_id', None)
+            if chauffeur_id:
+                chauffeur = Chaffeur.objects.get(id_chauffeur=chauffeur_id)
+                mouvement['chauffeur_name'] = chauffeur.fullname or 'Non Assigné'
+                mouvement['permis'] = chauffeur.permis or 'Non Assigné'
+            else:
+                mouvement['chauffeur_name'] = 'Non Assigné'
+                mouvement['permis'] = 'Non Assigné'
+
+            pointeur_entree_id = mouvement.get('pointeur_entree_id', None)
+            if pointeur_entree_id:
+                pointeur_entree = Utilisateurs.objects.get(id_user=pointeur_entree_id)
+                mouvement['pointeur_entree_name'] = pointeur_entree.fullname or 'Non Assigné'
+            else:
+                mouvement['pointeur_entree_name'] = 'Non Assigné'
+
+            pointeur_sortie_id = mouvement.get('pointeur_sortie_id', None)
+            if pointeur_sortie_id:
+                pointeur_sortie = Utilisateurs.objects.get(id_user=pointeur_sortie_id)
+                mouvement['pointeur_sortie_name'] = pointeur_sortie.fullname or 'Non Assigné'
+            else:
+                mouvement['pointeur_sortie_name'] = 'Non Assigné'
+
+            # Assurer que les zones sont non nulles
+            mouvement['zone_entree'] = mouvement.get('zone_entree', 'Non Assigné')
+            mouvement['zone_sortie'] = mouvement.get('zone_sortie', 'Non Assigné')
+            mouvement['remorque'] = mouvement.get('remorque', 'Non Assigné')
+            mouvement['date_entree'] = str(mouvement.get('date_entree', 'Non Assigné'))
+            mouvement['date_sortie'] = str(mouvement.get('date_sortie', 'Non Assigné'))
+
         # Créer un nouveau workbook Excel
         wb = Workbook()
         ws = wb.active
         ws.title = "Camions"
-        ws.append([
-            "Statut Entree", "Statut Sortie", "Camion", "Transporteur", "Type", "Remorque",
-            "Chauffeur", "Permis", "Date Entrée", "Pointeur Entrée", "Date Sortie", "Pointeur Sortie"
-        ])
-        for mouvement in mouvement_list:
-            ws.append([
-                mouvement['statut_entree'], mouvement['statut_sortie'], mouvement['immatriculation'],
-                mouvement['transporteur'], mouvement['type'], mouvement['remorque'],
-                mouvement['chauffeur_name'], mouvement['permis'], str(mouvement['date_entree']),
-                mouvement['pointeur_entree_name'], str(mouvement['date_sortie']), mouvement['pointeur_sortie_name']
-            ])
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="mouvements.xlsx"'
 
+        # Titre du rapport en grandes lettres
+        ws.merge_cells('A1:L1')
+        ws['A1'] = "RAPPORT DKLOG"
+        ws['A1'].font = Font(size=20, bold=True)
+        ws['A1'].alignment = Alignment(horizontal='center')
+
+        # Tête du tableau
+        headers = [
+            "Zone Entree", "Zone Sortie", "Statut Entree", "Camion", "Transporteur", "Type", "Remorque",
+            "Chauffeur", "Permis", "Date Entrée", "Pointeur Entrée", "Date Sortie", "Pointeur Sortie"
+        ]
+        ws.append(headers)
+
+        # Appliquer du style aux en-têtes
+        header_font = Font(bold=True, size=12)
+        header_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+
+        for col_num, header in enumerate(headers, 1):
+            col_letter = get_column_letter(col_num)
+            ws[f"{col_letter}2"].font = header_font
+            ws[f"{col_letter}2"].border = header_border
+            ws[f"{col_letter}2"].alignment = Alignment(horizontal='center')
+
+        # Ajouter les données dans les lignes suivantes
+        data_font = Font(size=11)
+        data_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+
+        for row_idx, mouvement in enumerate(mouvement_list, start=3):
+            ws.append([
+                mouvement['zone_entree'], mouvement['zone_sortie'], mouvement['statut_entree_label'],
+                mouvement['immatriculation'], mouvement['transporteur'], mouvement['type'],
+                mouvement['remorque'], mouvement['chauffeur_name'], mouvement['permis'],
+                mouvement['date_entree'], mouvement['pointeur_entree_name'], mouvement['date_sortie'],
+                mouvement['pointeur_sortie_name']
+            ])
+
+            # Appliquer les styles de bordure et de police à chaque cellule de la ligne
+            for col_num in range(1, 14):
+                col_letter = get_column_letter(col_num)
+                cell = ws[f"{col_letter}{row_idx}"]
+                cell.font = data_font
+                cell.border = data_border
+
+        # Ajuster la largeur des colonnes pour qu'elles soient plus lisibles
+        for col_num, _ in enumerate(headers, 1):
+            ws.column_dimensions[get_column_letter(col_num)].width = 15
+
+        # Préparer la réponse HTTP
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="RAPPORT_DKLOG.xlsx"'
         wb.save(response)
         return response
-
     else:
         return HttpResponseBadRequest()
-
 
 
 def export_mouvement2(request):
@@ -6669,8 +6726,6 @@ def liste_modifspar(request):
     }
     return JsonResponse(response_data)
 ###################### REDIRECTION DES MESSAGES ERREUR #################
-from django.shortcuts import render
-
 def handle_errors(request, exception=None, template_name="pages/404.html", status_code=500):
     """
     Vue générique pour afficher une page d'erreur.
@@ -6679,7 +6734,6 @@ def handle_errors(request, exception=None, template_name="pages/404.html", statu
         'code': status_code,  # Le code d'erreur comme 404, 500, etc.
         'message': '',
     }
-
     if status_code == 404:
         context['message'] = "Oups ! La page que vous cherchez n'existe pas."
     elif status_code == 403:
@@ -6688,5 +6742,4 @@ def handle_errors(request, exception=None, template_name="pages/404.html", statu
         context['message'] = "Erreur interne du serveur."
     elif status_code == 400:
         context['message'] = "Mauvaise requête."
-
     return render(request, template_name, context, status=status_code)
