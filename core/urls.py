@@ -16,7 +16,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework.authtoken.views import obtain_auth_token # <-- NEW
+from django.conf.urls import handler404
 
+import home
+
+handler404 = lambda request, exception: home.views.handle_errors(request, exception, status_code=404)
+handler500 = lambda request: home.views.handle_errors(request, status_code=500)
+handler403 = lambda request, exception: home.views.handle_errors(request, exception, status_code=403)
+handler400 = lambda request, exception: home.views.handle_errors(request, exception, status_code=400)
 urlpatterns = [
     path('', include('home.urls')),
     path("admin/", admin.site.urls),

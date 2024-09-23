@@ -1,27 +1,6 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
-<style>
-    .btn-outline-primary.custom-checked {
-        background-color: #00FFFF; /* Bleu clair */
-        color: white; /* Texte blanc pour contraste */
-        border-color: #00ffff;
-    }
 
-    .btn-outline-primary {
-        border-color: #00FFFF; /* Bordure bleu clair */
-        color: #00FFFF; /* Texte bleu clair */
-    }
-</style>
-<script>
-    // Ajout d'un événement pour modifier l'apparence des boutons sélectionnés
-    const radios = document.querySelectorAll('input[name="zone"]');
-    radios.forEach(radio => {
-        radio.addEventListener('change', function () {
-            document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('custom-checked'));
-            document.querySelector(`label[for="${this.id}"]`).classList.add('custom-checked');
-        });
-    });
-</script>
 {% block breadcrumbs %}{% endblock breadcrumbs %}
 {% block content %}
 
@@ -109,6 +88,10 @@
                         <th scope="col" class="d-md-table-cell">Type</th>
                         <th scope="col" class="d-md-table-cell">Conteneur 3</th>
                         <th scope="col" class="d-md-table-cell">Type</th>
+                        <th scope="col" class="d-md-table-cell">Conteneur 4</th>
+                        <th scope="col" class="d-md-table-cell">Type</th>
+                        <th scope="col" class="d-md-table-cell">Conteneur 5</th>
+                        <th scope="col" class="d-md-table-cell">Type</th>
                         <th scope="col" class="d-md-table-cell">Destination</th>
                         <th scope="col" class="d-md-table-cell">Chauffeur</th>
                         <th scope="col" class="d-md-table-cell">Permis</th>
@@ -136,6 +119,10 @@
                                        data-typecont2="{{ mouvement.typeconteneur2 }}"
                                        data-numcont3="{{ mouvement.numconteneur3 }}"
                                        data-typecont3="{{ mouvement.typeconteneur3 }}"
+                                       data-numcont4="{{ mouvement.numconteneur4 }}"
+                                       data-typecont4="{{ mouvement.typeconteneur4 }}"
+                                       data-numcont5="{{ mouvement.numconteneur5 }}"
+                                       data-typecont5="{{ mouvement.typeconteneur5 }}"
                                        data-client="{{ mouvement.client.id_client }}"
                                        data-transitaire="{{ mouvement.transitaire.id_transit }}"
                                        data-representant="{{ mouvement.representant.id_transit }}"
@@ -177,6 +164,10 @@
                                 <td>{{ mouvement.typeconteneur2|default:"Non Assigné" }}</td>
                                 <td>{{ mouvement.numconteneur3|default:"Non Assigné" }}</td>
                                 <td>{{ mouvement.typeconteneur3|default:"Non Assigné" }}</td>
+                                <td>{{ mouvement.numconteneur4|default:"Non Assigné" }}</td>
+                                <td>{{ mouvement.typeconteneur4|default:"Non Assigné" }}</td>
+                                <td>{{ mouvement.numconteneur5|default:"Non Assigné" }}</td>
+                                <td>{{ mouvement.typeconteneur5|default:"Non Assigné" }}</td>
                                 <td>{{ mouvement.destination }}</td>
                                 <td>{{ mouvement.chauffeur.fullname }}</td>
                                 <td>{{ mouvement.chauffeur.permis }}</td>
@@ -239,14 +230,19 @@
                             </div>
                             {% csrf_token %}
                             {{ form.non_field_errors }}
-                            <div class="btn-group" role="group">
-                                <input type="radio" class="btn-check" name="zone" id="option-nord" value="Nord"
-                                       autocomplete="off" checked>
-                                <label class="btn btn-outline-primary custom-checked" for="option-nord">Nord</label>
-                                <input type="radio" class="btn-check" name="zone" id="option-sud" value="Sud"
-                                       autocomplete="off">
-                                <label class="btn btn-outline-primary" for="option-sud">Sud</label>
-                            </div>
+
+            <div class="form-group">
+                <label for="bd" class="form-label">Zone</label><br>
+                <div class="form-check form-check-inline">
+                    <input value="Sud" type="radio" name="zone"  checked required class="form-check-input">
+                    <label for="bdOui" class="form-check-label">Sud</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input value="Nord" type="radio" name="zone"  required class="form-check-input">
+                    <label for="bdNon" class="form-check-label">Nord</label>
+                </div>
+            </div>
+
                             <input type="hidden" name="destination" value="zud">
                             <input type="hidden" name="entite" value="zud">
                             <div class="form-row">
@@ -377,11 +373,51 @@
                                                 class="form-control form-control-lg">
                                             <option value="">Sélectionnez un type</option>
                                             <option value="20">20'</option>
+                                            <option value="40">40'</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
-
+  <div class="row" id="conteneur4-div" style="display: none;">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="conteneur4">Conteneur 4</label>
+                                        <input type="text" class="form-control form-control-lg" name="numconteneur4"
+                                               id="numconteneur4" placeholder="Entrez le conteneur">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="typeconteneur4">Type</label>
+                                        <select name="typeconteneur4" id="typeconteneur4"
+                                                class="form-control form-control-lg">
+                                            <option value="">Sélectionnez un type</option>
+                                            <option value="20">20'</option>
+                                            <option value="40">40'</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row" id="conteneur5-div" style="display: none;">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="conteneur5">Conteneur 5</label>
+                                        <input type="text" class="form-control form-control-lg" name="numconteneur5"
+                                               id="numconteneur5" placeholder="Entrez le conteneur">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="typeconteneur5">Type</label>
+                                        <select name="typeconteneur5" id="typeconteneur5"
+                                                class="form-control form-control-lg">
+                                            <option value="">Sélectionnez un type</option>
+                                            <option value="20">20'</option>
+                                            <option value="40">40'</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                             <!-------------------Ajouter Transitaire -------------------------->
                             <div class="form-row">
                                 <div class="col-md-4 mb-3">
@@ -511,18 +547,21 @@
                         {% csrf_token %}
                         {{ form.non_field_errors }}
                         <input type="hidden" id="id_mvt" name="id_mvt">
-                        <input type="hidden" value="SEMI-REMORQUE" name="typecam">
+                        <input type="hidden" value="VRAC" name="typecam">
                         <input type="hidden" name="client" id="client-select1">
                         <input type="hidden" name="representant" id="representant-select1">
                         <input type="hidden" name="transitaire" id="transitaire-select1">
-                        <div class="btn-group" role="group">
-                            <input type="radio" class="btn-check" name="zone" id="option-nord" value="Nord"
-                                   autocomplete="off" checked>
-                            <label class="btn btn-outline-primary custom-checked" for="option-nord">Nord</label>
-                            <input type="radio" class="btn-check" name="zone" id="option-sud" value="Sud"
-                                   autocomplete="off">
-                            <label class="btn btn-outline-primary" for="option-sud">Sud</label>
-                        </div>
+                    <div class="form-group">
+                <label for="bd" class="form-label">Zone</label><br>
+                <div class="form-check form-check-inline">
+                    <input value="Sud" type="radio" name="zone"  checked required class="form-check-input">
+                    <label for="bdOui" class="form-check-label">Sud</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input value="Nord" type="radio" name="zone"  required class="form-check-input">
+                    <label for="bdNon" class="form-check-label">Nord</label>
+                </div>
+            </div>
                         <input type="hidden" name="destination" value="zud">
                         <input type="hidden" name="entite" value="zud">
 
@@ -653,11 +692,25 @@
                                     <span id="labelcont3"></span>
                                 </label>
                             </div>
+                            <div class="checkbox-inline">
+                                <label>
+                                    <input type="checkbox" name="numcont4" id="numcont4" value="">
+                                    <span id="labelcont4"></span>
+                                </label>
+                            </div>
+                            <div class="checkbox-inline">
+                                <label>
+                                    <input type="checkbox" name="numcont5" id="numcont5" value="">
+                                    <span id="labelcont5"></span>
+                                </label>
+                            </div>
                         </div>
                         <!-- Champs cachés pour stocker les types de conteneurs -->
                         <input type="hidden" id="typecont1" name="typecont1">
                         <input type="hidden" id="typecont2" name="typecont2">
                         <input type="hidden" id="typecont3" name="typecont3">
+                        <input type="hidden" id="typecont4" name="typecont4">
+                        <input type="hidden" id="typecont5" name="typecont5">
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
                             <button type="submit" class="btn btn-primary" id="submitButton1">Sauvegarder</button>
@@ -682,6 +735,10 @@
                 var typecont2 = button.data('typecont2');
                 var numcont3 = button.data('numcont3');
                 var typecont3 = button.data('typecont3');
+                  var numcont4 = button.data('numcont4');
+                var typecont4 = button.data('typecont4');
+                  var numcont5 = button.data('numcont5');
+                var typecont5 = button.data('typecont5');
                 var client = button.data('client');
                 var transitaire = button.data('transitaire');
                 var representant = button.data('representant');
@@ -696,6 +753,10 @@
                 modal.find('#typecont2').val(typecont2);
                 modal.find('#numcont3').val(numcont3);
                 modal.find('#typecont3').val(typecont3);
+                modal.find('#numcont4').val(numcont4);
+                modal.find('#typecont4').val(typecont4);
+                modal.find('#numcont5').val(numcont5);
+                modal.find('#typecont5').val(typecont5);
                 modal.find('#client-select1').val(client);
                 modal.find('#transitaire-select1').val(transitaire);
                 modal.find('#representant-select1').val(representant);
@@ -704,13 +765,15 @@
                 modal.find('#labelcont1').text(numcont1);
                 modal.find('#labelcont2').text(numcont2);
                 modal.find('#labelcont3').text(numcont3);
+                modal.find('#labelcont4').text(numcont4);
+                modal.find('#labelcont5').text(numcont5);
                 var modal = $(this);
 
                 // Conteneur 1
                 // Conteneur 1
                 // Vérifier si tous les conteneurs sont null
 // Si les trois numéros de conteneurs sont nulles ou undefined, on cache tout
-if ((!numcont1 || numcont1 === 'None') && (!numcont2 || numcont2 === 'None') && (!numcont3 || numcont3 === 'None')) {
+if ((!numcont1 || numcont1 === 'None') && (!numcont2 || numcont2 === 'None') && (!numcont3 || numcont3 === 'None') && (!numcont4 || numcont4 === 'None') && (!numcont5 || numcont5 === 'None')) {
     modal.find('.checkbox-inline').hide(); // Cache tout le bloc si aucun conteneur n'a de valeur
 $('#submitButton1').prop('disabled', true);
 } else {
@@ -734,6 +797,18 @@ $('#submitButton1').prop('disabled', true);
     } else {
         modal.find('#numcont3').closest('.checkbox-inline').hide();
     }
+    // Conteneur 4
+    if (numcont4 && numcont4 !== 'None') {
+        modal.find('#numcont4').val(numcont4).closest('.checkbox-inline').show();
+    } else {
+        modal.find('#numcont4').closest('.checkbox-inline').hide();
+    }
+    // Conteneur 5
+    if (numcont5 && numcont5 !== 'None') {
+        modal.find('#numcont5').val(numcont5).closest('.checkbox-inline').show();
+    } else {
+        modal.find('#numcont5').closest('.checkbox-inline').hide();
+    }
 }
             });
         });
@@ -750,23 +825,26 @@ $('#submitButton1').prop('disabled', true);
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">VRAC
+                <div class="modal-body">
                     <form method="POST" action="{% url 'liaisonmouvement0' util.id_user %}" enctype="multipart/form-data">
                         {% csrf_token %}
                         {{ form.non_field_errors }}
                         <input type="hidden" id="id_mvt" name="id_mvt">
-                        <input type="hidden" value="VRAC" name="typecam">
+                        <input type="hidden" value="SEMI-REMORQUE" name="typecam">
                         <input type="hidden" name="client" id="client-select2">
                         <input type="hidden" name="representant" id="representant-select2">
                         <input type="hidden" name="transitaire" id="transitaire-select2">
-                        <div class="btn-group" role="group">
-                            <input type="radio" class="btn-check" name="zone" id="option-nord" value="Nord"
-                                   autocomplete="off" checked>
-                            <label class="btn btn-outline-primary custom-checked" for="option-nord">Nord</label>
-                            <input type="radio" class="btn-check" name="zone" id="option-sud" value="Sud"
-                                   autocomplete="off">
-                            <label class="btn btn-outline-primary" for="option-sud">Sud</label>
-                        </div>
+                    <div class="form-group">
+                <label for="bd" class="form-label">Zone</label><br>
+                <div class="form-check form-check-inline">
+                    <input value="Sud" type="radio" name="zone"  checked required class="form-check-input">
+                    <label for="bdOui" class="form-check-label">Sud</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input value="Nord" type="radio" name="zone"  required class="form-check-input">
+                    <label for="bdNon" class="form-check-label">Nord</label>
+                </div>
+            </div>
                         <input type="hidden" name="destination" value="zud">
                         <input type="hidden" name="entite" value="zud">
 
@@ -1387,18 +1465,79 @@ if (
                     toggleConteneurFields(type);
                 });
             });
+    function toggleConteneurFields(type) {
+    $('#conteneurs-div').hide();
+    $('#conteneurs-div .row').hide();
 
-            function toggleConteneurFields(type) {
-                if (type === 'SEMI-REMORQUE' || type === 'VRAC') {
-                    $('#conteneurs-div').show();
-                    $('#inputsforangards2').show();
-                    $('#inputsforangards1').show();
+    if (type === 'VRAC' || type === 'SEMI-REMORQUE') {
+        $('#conteneurs-div').show();
+
+        const maxSize = (type === 'SEMI-REMORQUE') ? 60 : 100;
+
+        function updateConteneurDisplay() {
+
+            let totalSize = 0;
+            let conteneurCount = 0;
+
+            // Calculer la taille totale et le nombre de conteneurs sélectionnés
+            $('select[name^="typeconteneur"]').each(function () {
+                const size = parseInt($(this).val()) || 0;
+                totalSize += size;
+
+                if (size > 0) {
+                    conteneurCount++;
+                }
+            });
+
+            // Afficher ou masquer les champs de conteneurs
+            for (let i = 1; i <= maxSize/20; i++) {
+
+                const conteneurDiv = $(`#conteneur${i}-div`);
+                const conteneurTypeInput = $(`#typeconteneur${i}`);
+
+                if (totalSize < maxSize && i <= conteneurCount + 1) {
+                    conteneurDiv.show();
+
+                    const remainingSpace = maxSize - totalSize;
+                    if (remainingSpace < 40) {
+                        conteneurTypeInput.find('option[value="40"]').hide();
+                    } else {
+                        conteneurTypeInput.find('option[value="40"]').show();
+                    }
                 } else {
-                    $('#conteneurs-div').hide();
-                    $('#inputsforangards2').hide();
-                    $('#inputsforangards1').hide();
+                   // conteneurDiv.hide();
                 }
             }
+
+            // Alerte si la taille totale dépasse la limite
+            if (totalSize > maxSize) {
+                alert(`La taille totale ne doit pas dépasser ${maxSize}.`);
+            }
+        }
+
+        $('select[name^="typeconteneur"]').on('change', updateConteneurDisplay);
+        updateConteneurDisplay();
+    }
+}
+
+            //function toggleConteneurFields(type) {
+
+              //  if (type === 'SEMI-REMORQUE' ) {
+
+                //    $('#conteneurs-div').show();
+                  //  $('#inputsforangards2').show();
+                    //$('#inputsforangards1').show();
+                //} else  if (type === 'VRAC' ) {
+                  //  $('#conteneurs-div').show();
+                   // $('#inputsforangards2').show();
+                   // $('#inputsforangards1').show();
+                //} else {
+                  //  $('#conteneurs-div').hide();
+                    //$('#inputsforangards2').hide();
+                    //$('#inputsforangards1').hide();
+                //}
+
+            //}
 
             // Fonction pour afficher ou masquer le deuxième conteneur en fonction du type du premier conteneur
             // Événement de changement pour le sélecteur de camion
@@ -1406,6 +1545,8 @@ if (
                 var selectedOption = $(this).find('option:selected');
                 var type = selectedOption.data('type');
                 // Mise à jour des champs
+
+
                 $('#type').val(type);
                 $('#transporteur').val(selectedOption.data('transporteur'));
                 $('#remorque').val(selectedOption.data('immatriculation'));

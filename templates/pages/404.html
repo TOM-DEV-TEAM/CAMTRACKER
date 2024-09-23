@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ code }} - Erreur | CamTracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: #e3f2fd; /* Couleur de fond par défaut */
+        }
+
+        /* Effet de dégradé animé */
+        .bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(270deg, #bbdefb, #e3f2fd, #90caf9, #bbdefb);
+            background-size: 400% 400%;
+            animation: gradient 10s ease infinite;
+            z-index: 0;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9); /* Blanc semi-transparent */
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            z-index: 1; /* Au-dessus de l'animation de fond */
+        }
+
+        h1 {
+            font-size: 4.5rem;
+            margin-bottom: 20px;
+            color: #1976d2; /* Bleu foncé */
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            color: #f44336; /* Rouge pour l'erreur */
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin: 10px 0;
+            color: #555; /* Couleur de texte */
+        }
+
+        .icon {
+            font-size: 6rem;
+            color: #f44336; /* Rouge */
+            margin-bottom: 20px;
+        }
+
+        a {
+            text-decoration: none;
+            color: #ffffff; /* Blanc */
+            background-color: #2196f3; /* Bleu vif */
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.3s;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        a:hover {
+            background-color: #1976d2; /* Bleu foncé au survol */
+            transform: scale(1.05);
+        }
+
+        /* Section pour le message publicitaire */
+        .footer {
+            margin-top: 50px;
+            font-size: 0.9rem;
+            color: #666; /* Gris */
+        }
+
+        .footer span {
+            font-weight: bold;
+            color: #1976d2; /* Bleu foncé */
+        }
+    </style>
+</head>
+<body>
+    <div class="bg"></div>
+    <div class="container">
+        <i class="fas fa-exclamation-triangle icon"></i>
+        <h1>CamTracker</h1>
+        <h2>{{ code }}</h2>
+        <p>{{ message }}</p>
+        <p>Nous sommes désolés pour la gêne occasionnée.</p>
+        <p>Si l'erreur persiste, veuillez contacter l'administrateur.</p>
+        <a href="/seconnecter/">Retour à la page d'accueil</a>
+
+        <!-- Publicité discrète -->
+        <div class="footer">
+            <p>Made with ❤️ by <span>TOM MEDLOG</span></p>
+        </div>
+    </div>
+</body>
+</html>

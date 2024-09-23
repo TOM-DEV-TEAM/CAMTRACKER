@@ -1,10 +1,13 @@
 import math
 from audioop import reverse
-
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.contrib import messages
 from django.db.models import Q
 from django.utils import timezone
 from django.contrib import messages
 from urllib import request
+
 
 import pandas as pd
 from admin_datta.utils import JsonResponse
@@ -13,6 +16,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from admin_datta.forms import LoginForm
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import  authenticate, login
+#from numpy import error_message
 from openpyxl.workbook import Workbook
 from .forms import MouvementForm, ChauffeurForm, CamionForm, TransitaireForm, ClientForm, VehiculeForm
 def index(request,id):
@@ -1086,7 +1090,7 @@ def entredecalon_view2(request, id_user):
     ).values(
         'id_mvt', 'camion_id', 'statut_entree', 'zone_entree', 'statut_sortie', 'chauffeur_id', 'remorque',
         'date_entree', 'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'numconteneur1', 'typeconteneur1',
-        'numconteneur2', 'typeconteneur2', 'numconteneur3', 'typeconteneur3', 'destination', 'client_id',
+        'numconteneur2', 'typeconteneur2', 'numconteneur3', 'typeconteneur3', 'numconteneur4', 'typeconteneur4', 'numconteneur5', 'typeconteneur5','destination', 'client_id',
         'transitaire_id', 'representant_id'
     )
 
@@ -1106,6 +1110,12 @@ def entredecalon_view2(request, id_user):
         if Mouvement0.objects.filter(numconteneur3=mouvement['numconteneur3']).exclude(
                 id_mvt=mouvement['id_mvt']).exists():
             mouvement['numconteneur3'] = None  # Affecter à null si le conteneur est déjà affecté
+        if Mouvement0.objects.filter(numconteneur4=mouvement['numconteneur4']).exclude(
+                id_mvt=mouvement['id_mvt']).exists():
+            mouvement['numconteneur4'] = None  # Affecter à null si le conteneur est déjà affecté
+        if Mouvement0.objects.filter(numconteneur5=mouvement['numconteneur5']).exclude(
+                id_mvt=mouvement['id_mvt']).exists():
+            mouvement['numconteneur5'] = None  # Affecter à null si le conteneur est déjà affecté
 
     # Convertir les résultats en liste si nécessaire
     mouvement_list = list(mouvements)
@@ -2862,10 +2872,15 @@ def liaisonmouvement0(request, id_user):
             conteneur2 = request.POST.get('numcont2', '').strip()
             type2 = request.POST.get('typecont2', '').strip()
             conteneur3 = request.POST.get('numcont3', '').strip()
+            conteneur4 = request.POST.get('numcont4', '').strip()
+            conteneur5 = request.POST.get('numcont5', '').strip()
             remorque = request.POST.get('remorque', '').strip()
             type3 = request.POST.get('typecont3', '').strip()
+            type4 = request.POST.get('typecont4', '').strip()
+            type5 = request.POST.get('typecont5', '').strip()
             client = request.POST.get('client', '').strip()
             chauffeur = request.POST.get('chauffeur', '').strip()
+            max_size = 0
             transitaire = request.POST.get('transitaire', '').strip()
             representant = request.POST.get('representant', '').strip()
             id_mvt1 = request.POST.get('id_mvt', '').strip()  # This is an ID, not an instance
@@ -2876,12 +2891,27 @@ def liaisonmouvement0(request, id_user):
             if conteneur1:
                 mouvement0.numconteneur1 = conteneur1
                 mouvement0.typeconteneur1 = type1
+                max_size+= int(type1) or 0
             if conteneur2:
                 mouvement0.numconteneur2 = conteneur2
                 mouvement0.typeconteneur2 = type2
+                max_size += int(type2) or 0
             if conteneur3:
                 mouvement0.numconteneur3 = conteneur3
                 mouvement0.typeconteneur3 = type3
+                max_size += int(type3) or 0
+            if conteneur4:
+                mouvement0.numconteneur4 = conteneur4
+                mouvement0.typeconteneur4 = type4
+                max_size += int(type4) or 0
+            if conteneur5:
+                mouvement0.numconteneur5 = conteneur5
+                mouvement0.typeconteneur5 = type5
+                max_size += int(type5) or 0
+            if typecam == 'VRAC' and max_size > 60:
+                error_message = 'Taille maximum dépassée !!!'
+                messages.error(request, error_message)
+                return redirect(f'/entreedecalog_view2/{id_user}?error={error_message}')
             mouvement0.marchandise = mouvement_instance.marchandise
             mouvement0.bl1 = mouvement_instance.bl1
             mouvement0.bl2 = mouvement_instance.bl2
@@ -2909,6 +2939,12 @@ def liaisonmouvement0(request, id_user):
             if conteneur3:
                 liaison.conteneur3 = conteneur3
                 liaison.type3 = type3
+            if conteneur4:
+                liaison.conteneur4 = conteneur4
+                liaison.type4 = type4
+                if conteneur3:
+                    liaison.conteneur5 = conteneur5
+                    liaison.type5 = type5
             if typecam == 'VRAC':
                 liaison.id_mvt_vrac = mouvement_instance
                 liaison.id_mvt_sm = mouvement0  # Assigning the newly created Mouvement0 instance
@@ -2979,6 +3015,10 @@ def ajoutmouvement0(request, id_user):
             typeconteneur2 = request.POST.get('typeconteneur2')
             numconteneur3 = request.POST.get('numconteneur3')
             typeconteneur3 = request.POST.get('typeconteneur3')
+            numconteneur4 = request.POST.get('numconteneur4')
+            typeconteneur4 = request.POST.get('typeconteneur4')
+            numconteneur5 = request.POST.get('numconteneur5')
+            typeconteneur5 = request.POST.get('typeconteneur5')
             bl1 = request.POST.get('bl1')
             bl2 = request.POST.get('bl2')
             nbrcolis = request.POST.get('nbrcolis') or 0
@@ -2996,6 +3036,10 @@ def ajoutmouvement0(request, id_user):
                 typeconteneur2=typeconteneur2,
                 numconteneur3=numconteneur3,
                 typeconteneur3=typeconteneur3,
+                numconteneur4=numconteneur4,
+                typeconteneur4=typeconteneur4,
+                numconteneur5=numconteneur5,
+                typeconteneur5=typeconteneur5,
                 bl1=bl1,
                 zone_entree = zone,
                 date_validite=date_validite,
@@ -3069,6 +3113,10 @@ def ajoutmouvement0(request, id_user):
                     mouvement.typeconteneur2 = typeconteneur3
                     mouvement.numconteneur3 = numconteneur3
                     mouvement.typeconteneur3 = typeconteneur3
+                    mouvement.numconteneur4 = numconteneur4
+                    mouvement.typeconteneur4 = typeconteneur4
+                    mouvement.numconteneur5 = numconteneur5
+                    mouvement.typeconteneur5 = typeconteneur5
                     mouvement.transitaire_id = transitaire_id
                     mouvement.representant_id = representant_id
                     mouvement.navire = navire
@@ -6620,3 +6668,25 @@ def liste_modifspar(request):
         # Inclure l'ID de l'utilisateur dans la réponse JSON
     }
     return JsonResponse(response_data)
+###################### REDIRECTION DES MESSAGES ERREUR #################
+from django.shortcuts import render
+
+def handle_errors(request, exception=None, template_name="pages/404.html", status_code=500):
+    """
+    Vue générique pour afficher une page d'erreur.
+    """
+    context = {
+        'code': status_code,  # Le code d'erreur comme 404, 500, etc.
+        'message': '',
+    }
+
+    if status_code == 404:
+        context['message'] = "Oups ! La page que vous cherchez n'existe pas."
+    elif status_code == 403:
+        context['message'] = "Désolé, vous n'avez pas accès à cette page."
+    elif status_code == 500:
+        context['message'] = "Erreur interne du serveur."
+    elif status_code == 400:
+        context['message'] = "Mauvaise requête."
+
+    return render(request, template_name, context, status=status_code)
