@@ -6,106 +6,152 @@
 {% block content %}
 
     <!-- [ rating list ] end-->
-     <div class="container mt-12 ">
+    <div class="container mt-12 ">
 
-                 <nav class="navbar navbar-light bg-light">
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between w-100" id="navbarNav">
-           <form action="/export_mouvement0/" method="post">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-success">Extraire vers Excel</button>
-          </form>
+        <nav class="navbar navbar-light bg-light">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between w-100" id="navbarNav">
+                    <button type="submit" class="btn btn-success" data-toggle="modal" data-target="#myModal">
+                        Extraction
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div class="modal fade" id="myModal" style="overflow-y: auto;" role="dialog" class="modal fade " tabindex="-1"
+             role="dialog"
+             aria-labelledby="editModalLabel" aria-hidden="true">
+
+            <div class="modal-dialog " role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">RAPPORT DES MOUVEMENTS</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                       <form action="/export_mouvement0/" method="post">
+                            {% csrf_token %}
+                            <div style="display: flex; gap: 20px;">
+                            <div>
+                                <label for="date_debut">Date Début:</label><br>
+                                <input type="datetime-local" id="date_debut" name="date_debut" required>
+                            </div>
+                            <div>
+                                <label for="date_fin">Date Fin:</label><br>
+                                <input type="datetime-local" id="date_fin" name="date_fin" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="submit" class="btn btn-primary" value="Valider">
+                            <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
+                        </div>
+
+
+                       </form>                        <script>
+                            document.querySelector('.btn-primary').addEventListener('click', function (event) {
+                                const dateDebut = new Date(document.getElementById('date_debut').value);
+                                const dateFin = new Date(document.getElementById('date_fin').value);
+
+                                if (dateDebut >= dateFin) {
+                                    event.preventDefault(); // Empêche la soumission du formulaire
+                                    alert("La date de début doit être inférieure à la date de fin.");
+                                } 
+                            });
+                        </script>
+
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</nav>
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="/liste_tt_mvt00/{{ util.id_user }}">PLT</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/liste_tt_mvt0/{{ util.id_user }}">ICD TOM</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/liste_tt_mvt01/{{ util.id_user }}">ICD CMA</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/liste_tt_mvt02/{{ util.id_user }}" tabindex="-1">SACHERIE</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/liste_tt_mvt03/{{ util.id_user }}" tabindex="-1">ZUD</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/liste_tt_mvtpar/{{ util.id_user }}" tabindex="-1">PARTICULIER</a>
+        </li>
+    </ul><br>
+    <div class="table-responsive">
+        <div class="text-left">
 
- <ul class="nav nav-tabs" >
-  <li class="nav-item">
-    <a class="nav-link active" aria-current="page" href="/liste_tt_mvt00/{{ util.id_user }}">PLT</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="/liste_tt_mvt0/{{ util.id_user }}">ICD TOM</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="/liste_tt_mvt01/{{ util.id_user }}">ICD CMA</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="/liste_tt_mvt02/{{ util.id_user }}" tabindex="-1" >SACHERIE</a>
-  </li> <li class="nav-item">
-    <a class="nav-link" href="/liste_tt_mvt03/{{ util.id_user }}" tabindex="-1" >ZUD</a>
-  </li>     <li class="nav-item">
-    <a class="nav-link" href="/liste_tt_mvtpar/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
-  </li>
-</ul><br>
-        <div class="table-responsive">
-             <div class="text-left">
+        </div>
 
-</div>
-
-         <table  id="mouvements-table"  class="table table-hover" >
-                 <thead class="thead-light">
-                        <tr>
-
-
-
-                             <th scope="col">Destination</th>
-                            <th scope="col">Camion</th>
-                            <th scope="col">Remorque</th>
-                             <th scope="col">Transporteur </th>
-                            <th scope="col">Chauffeur</th>
-                            <th scope="col">Permis</th>
-                             <th scope="col">Date Entrée </th>
-                            <th scope="col">Pointeur Entrée</th>
-                            <th scope="col">Statut Entree</th>
-
-                            <th scope="col">Date Sortie </th>
-
-                            <th scope="col">Pointeur Sortie</th>
-                            <!--th scope="col">Statut Sortie</th>
-                            <th scope="col">Action</th-->
+        <table id="mouvements-table" class="table table-hover">
+            <thead class="thead-light">
+            <tr>
 
 
+                <th scope="col">Destination</th>
+                <th scope="col">Camion</th>
+                <th scope="col">Remorque</th>
+                <th scope="col">Transporteur</th>
+                <th scope="col">Chauffeur</th>
+                <th scope="col">Permis</th>
+                <th scope="col">Date Entrée</th>
+                <th scope="col">Pointeur Entrée</th>
+                <th scope="col">Statut Entree</th>
+
+                <th scope="col">Date Sortie</th>
+
+                <th scope="col">Pointeur Sortie</th>
+                <!--th scope="col">Statut Sortie</th>
+                <th scope="col">Action</th-->
 
 
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {%  for mouvement in mouvement_list %}
-                            <tr>
-                        <td>{{ mouvement.destination.upper }}</td>
-                        <td>{{ mouvement.camion.immatriculation }}</td>
-                        <td>{{ mouvement.remorque}}</td>
-                        <td>{{ mouvement.camion.transporteur }}</td>
-                        <td>{{ mouvement.chauffeur.fullname }}</td>
-                        <td>{{ mouvement.chauffeur.permis }}</td>
-                        <td>{{ mouvement.date_entree }}</td>
-                        <td>{{ mouvement.user_ert.fullname }}</td>
-                        <td>
-                            {% if mouvement.statut_entree == 0 %}
-                                Vide
-                            {% elif mouvement.statut_entree == 1 %}
-                                Partielle
-                            {% elif mouvement.statut_entree == 2 %}
-                                Plein
-                            {% else %}
-                                Non Assigné
-                            {% endif %}
-                        </td>
-                        <td>{% if mouvement.date_sortie %}
-                                {{ mouvement.date_sortie }}
-                            {% else %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for mouvement in mouvement_list %}
+                <tr>
+                    <td>{{ mouvement.destination.upper }}</td>
+                    <td>{{ mouvement.camion.immatriculation }}</td>
+                    <td>{{ mouvement.remorque }}</td>
+                    <td>{{ mouvement.camion.transporteur }}</td>
+                    <td>{{ mouvement.chauffeur.fullname }}</td>
+                    <td>{{ mouvement.chauffeur.permis }}</td>
+                    <td>{{ mouvement.date_entree }}</td>
+                    <td>{{ mouvement.user_ert.fullname }}</td>
+                    <td>
+                        {% if mouvement.statut_entree == 0 %}
+                            Vide
+                        {% elif mouvement.statut_entree == 1 %}
+                            Partielle
+                        {% elif mouvement.statut_entree == 2 %}
+                            Plein
+                        {% else %}
                             Non Assigné
-                            {% endif %}
-                        </td><td>{{mouvement.user_srt.fullname}}</td>
-                           
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-          </table>
+                        {% endif %}
+                    </td>
+                    <td>{% if mouvement.date_sortie %}
+                        {{ mouvement.date_sortie }}
+                    {% else %}
+                        Non Assigné
+                    {% endif %}
+                    </td>
+                    <td>{{ mouvement.user_srt.fullname }}</td>
+
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
 
 
     </div>
-     </div>
+    </div>
 
 
     <!--<div class="container">
@@ -217,87 +263,95 @@ Inclure les scripts de Bootstrap et jQuery -->
 </script-->
 
     </div>
-  </div>
-
-
-
-    <div class="modal fade" id="editModal" class="modal fade"  tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
-
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editModalLabel">Modifier Mouvement</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-      <div class="modal-body">
-        <form id="editForm" method="POST" action="/modifier_mouvement0/">
-          <input type="hidden" id="mouvementId" name="mouvementId">
-            <input type="hidden" id="id_user" value="{{ util.id_user }}" name="id_user">
-          <!-- Ajoutez les champs de formulaire nécessaires ici -->
-
-             <div class="form-row">
-        <div class="col-md-6 mb-6">
-            <label for="camion">Camion</label>
-            <input type="text" name="camion" id="camion" class="form-control form-control-lg" placeholder="camion" required />
-        </div>
-
-          <div class="col-md-6 mb-6">
-              <label for="camion">Remorque</label>
-            <input type="text" name="remorque"  id="remorque" class="form-control form-control-lg" placeholder="REMORQUE" required />
-
-          </div>
-             </div>
-
-                             <div class="form-row">
-        <div class="col-md-6 mb-6">
-            <label for="camion">Permis</label>
-            <input type="text" name="permis"  id="permis" class="form-control form-control-lg" placeholder="PERMIS" required />
-        </div>
-                                <div class="col-md-6 mb-6">
-            <label for="camion">Chauffeur</label>
-            <input type="text" name="chauffeur" id="chauffeur"  class="form-control form-control-lg"  required />
-        </div>
-                             </div>
-                                <div class="form-row">
-        <div class="col-md-6 mb-6">
-            <label for="camion">Trasporteur</label>
-            <input type="text" name="transporteur"  id="transporteur" class="form-control form-control-lg" required />
-        </div>
-                                  <div class="col-md-6 mb-6">
-            <label for="camion">Destination</label>
-            <input type="text" name="destination"  id="destination" class="form-control form-control-lg"  required />
-        </div>
-                                </div>
-           <div class="form-row">
-        <div class="col-md-6 mb-6">
-                                    <label for="camion">Statut Entree</label>
-                                    <select id="statut_entree" name="statut_entree"  class="form-control form-control-lg"  >
-
-                                        <option value="1">CHARGE</option>
-                                        <option value="0">DECHARGE</option>
-                                    </select>
-                            </div>
-            <div class="col-md-6 mb-6">
-                                    <label for="camion">Statut Sortiessss</label>
-                                    <select  id="statut_sortie" name="statut_sortie"  class="form-control form-control-lg"  >
-
-                                        <option value="1">CHARGE</option>
-                                        <option value="0">DECHARGE</option>
-                                    </select>
-                            </div>
-           </div>
-
-         <div class="modal-footer">
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
-
-         </div></form>
-      </div>
     </div>
-  </div>
-</div>
+
+
+
+    <div class="modal fade" id="editModal" class="modal fade" tabindex="-1" role="dialog"
+         aria-labelledby="editModalLabel" aria-hidden="true">
+
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Modifier Mouvement</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm" method="POST" action="/modifier_mouvement0/">
+                        <input type="hidden" id="mouvementId" name="mouvementId">
+                        <input type="hidden" id="id_user" value="{{ util.id_user }}" name="id_user">
+                        <!-- Ajoutez les champs de formulaire nécessaires ici -->
+
+                        <div class="form-row">
+                            <div class="col-md-6 mb-6">
+                                <label for="camion">Camion</label>
+                                <input type="text" name="camion" id="camion" class="form-control form-control-lg"
+                                       placeholder="camion" required/>
+                            </div>
+
+                            <div class="col-md-6 mb-6">
+                                <label for="camion">Remorque</label>
+                                <input type="text" name="remorque" id="remorque" class="form-control form-control-lg"
+                                       placeholder="REMORQUE" required/>
+
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6 mb-6">
+                                <label for="camion">Permis</label>
+                                <input type="text" name="permis" id="permis" class="form-control form-control-lg"
+                                       placeholder="PERMIS" required/>
+                            </div>
+                            <div class="col-md-6 mb-6">
+                                <label for="camion">Chauffeur</label>
+                                <input type="text" name="chauffeur" id="chauffeur" class="form-control form-control-lg"
+                                       required/>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mb-6">
+                                <label for="camion">Trasporteur</label>
+                                <input type="text" name="transporteur" id="transporteur"
+                                       class="form-control form-control-lg" required/>
+                            </div>
+                            <div class="col-md-6 mb-6">
+                                <label for="camion">Destination</label>
+                                <input type="text" name="destination" id="destination"
+                                       class="form-control form-control-lg" required/>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mb-6">
+                                <label for="camion">Statut Entree</label>
+                                <select id="statut_entree" name="statut_entree" class="form-control form-control-lg">
+
+                                    <option value="1">CHARGE</option>
+                                    <option value="0">DECHARGE</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-6">
+                                <label for="camion">Statut Sortiessss</label>
+                                <select id="statut_sortie" name="statut_sortie" class="form-control form-control-lg">
+
+                                    <option value="1">CHARGE</option>
+                                    <option value="0">DECHARGE</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                            <button type="button" class="btn btn-danger" data-dismiss="modal">Fermer</button>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
 

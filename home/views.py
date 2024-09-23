@@ -2905,6 +2905,7 @@ def liaisonmouvement0(request, id_user):
                 return redirect(f'/entreedecalog_view2/{id_user}?error={error_message}')
             mouvement0.marchandise = mouvement_instance.marchandise
             mouvement0.bl1 = mouvement_instance.bl1
+            mouvement0.pointeur_entree = util.id_user
             mouvement0.bl2 = mouvement_instance.bl2
             mouvement0.remorque = remorque
             mouvement0.destination = 'zud'
@@ -3069,6 +3070,7 @@ def ajoutmouvement0(request, id_user):
                 'camion_id':camion_id,
                 'chauffeur_id':chauffeur_id,
                 'zone_entree' : zone,
+                'date_entree': datetime.now(),
                 'client_id':client_id,
                 'mission': mission,
                 'remorque': remorque,
@@ -5467,11 +5469,13 @@ def export_camions(request):
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side, Alignment
 from openpyxl.utils import get_column_letter
-
+######################## RAPPORT DKLOG ###############"
 def export_mouvement0(request):
     if request.method == 'POST':
+        date_debut = request.POST.get('date_debut')
+        date_fin = request.POST.get('date_fin')
         # Récupérer les données des mouvements
-        mouvements = Mouvement0.objects.all().values(
+        mouvements = Mouvement0.objects.filter(date_entree__range=[date_debut, date_fin]).values(
             'id_mvt', 'chauffeur_id', 'camion_id', 'statut_entree', 'statut_sortie', 'zone_entree', 'zone_sortie',
             'remorque', 'date_entree', 'pointeur_entree_id', 'date_sortie', 'pointeur_sortie_id'
         )
@@ -5589,11 +5593,9 @@ def export_mouvement0(request):
                 cell = ws[f"{col_letter}{row_idx}"]
                 cell.font = data_font
                 cell.border = data_border
-
         # Ajuster la largeur des colonnes pour qu'elles soient plus lisibles
         for col_num, _ in enumerate(headers, 1):
             ws.column_dimensions[get_column_letter(col_num)].width = 15
-
         # Préparer la réponse HTTP
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="RAPPORT_DKLOG.xlsx"'
@@ -5602,148 +5604,395 @@ def export_mouvement0(request):
     else:
         return HttpResponseBadRequest()
 
-
-def export_mouvement2(request):
-    if request.method == 'POST':
-        # Récupérer les données des mouvements
-        mouvements = Mouvement2.objects.filter(
-            date_entree__isnull=False,
-            date_sortie__isnull=False
-        ).values(
-            'id_mvt', 'chauffeur_id', 'camion_id', 'statut_entree', 'statut_sortie',
-            'remorque', 'date_entree', 'pointeur_entree_id', 'date_sortie', 'pointeur_sortie_id','mission'
-        )
-
-        mouvement_list = list(mouvements)
-        for mouvement in mouvement_list:
-            ################# STATUT ENTREE TEXT ###########
-            if mouvement['statut_entree']== 0:
-                mouvement['statut_entree'] = 'NON CHARGE'
-            elif mouvement['statut_entree'] == 1 :
-                mouvement['statut_entree'] = 'NON CHARGE'
-            else:
-                mouvement['statut_entree'] = 'Vide'
-                ################# STATUT SORTIE TEXT ###########
-            if mouvement['statut_sortie'] == 0:
-                 mouvement['statut_sortie'] = 'NON CHARGE'
-            elif mouvement['statut_sortie'] == 1:
-                 mouvement['statut_sortie'] = 'NON CHARGE'
-            else:
-                 mouvement['statut_sortie'] = 'Vide'
-            ############## CAMION #####################
-            camion_id = mouvement['camion_id']
-            camion = Camion.objects.get(id_cam=camion_id)
-            mouvement['transporteur'] = camion.transporteur
-            mouvement['type'] = camion.type
-            mouvement['immatriculation'] = camion.immatriculation
-            ################### CHAUFFEUR ###################
-            chauffeur_id = mouvement['chauffeur_id']
-            chauffeur = Chaffeur.objects.get(id_chauffeur=chauffeur_id)
-            mouvement['chauffeur_name'] = chauffeur.fullname
-            mouvement['permis'] = chauffeur.permis
-            ################## POINTEUR ENTREE ##############
-            pointeur_entree_id = mouvement['pointeur_entree_id']
-            Pointeur_entree = Utilisateurs.objects.get(id_user=pointeur_entree_id)
-            mouvement['pointeur_entree_name'] = Pointeur_entree.fullname
-            ################## POINTEUR SORTIE ##############
-            pointeur_sortie_id = mouvement['pointeur_sortie_id']
-            Pointeur_sortie = Utilisateurs.objects.get(id_user=pointeur_sortie_id)
-            mouvement['pointeur_sortie_name'] = Pointeur_sortie.fullname
-        # Créer un nouveau workbook Excel
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Camions"
-        ws.append([
-            "Statut Entree", "Statut Sortie", "Camion", "Transporteur", "Type", "Remorque",
-            "Chauffeur", "Permis", "Date Entrée", "Pointeur Entrée", "Date Sortie", "Pointeur Sortie", "mission"
-        ])
-        for mouvement in mouvement_list:
-            ws.append([
-                mouvement['statut_entree'], mouvement['statut_sortie'], mouvement['immatriculation'],
-                mouvement['transporteur'], mouvement['type'], mouvement['remorque'],
-                mouvement['chauffeur_name'], mouvement['permis'], str(mouvement['date_entree']),
-                mouvement['pointeur_entree_name'], str(mouvement['date_sortie']), mouvement['pointeur_sortie_name'], mouvement['mission']
-            ])
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="mouvements.xlsx"'
-
-        wb.save(response)
-        return response
-
-    else:
-        return HttpResponseBadRequest()
-
-
+#################### RAPPORT ICD TOM ######################
 def export_mouvement1(request):
     if request.method == 'POST':
         # Récupérer les données des mouvements
-        mouvements = Mouvement2.objects.filter(
-            date_entree__isnull=False,
-            date_sortie__isnull=False
+        date_debut = request.POST.get('date_debut')
+        date_fin = request.POST.get('date_fin')
+        mouvements = Mouvement1.objects.filter(
+            date_entree__range=[date_debut, date_fin]
         ).values(
             'id_mvt', 'chauffeur_id', 'camion_id', 'statut_entree', 'statut_sortie',
-            'remorque', 'date_entree', 'pointeur_entree_id', 'date_sortie', 'pointeur_sortie_id','mission'
+            'zone_entree', 'zone_sortie', 'remorque', 'date_entree', 'pointeur_entree_id',
+            'date_sortie', 'pointeur_sortie_id', 'mission'
         )
 
         mouvement_list = list(mouvements)
         for mouvement in mouvement_list:
-            ################# STATUT ENTREE TEXT ###########
-            if mouvement['statut_entree']== 0:
-                mouvement['statut_entree'] = 'NON CHARGE'
-            elif mouvement['statut_entree'] == 1 :
-                mouvement['statut_entree'] = 'NON CHARGE'
-            else:
-                mouvement['statut_entree'] = 'Vide'
-                ################# STATUT SORTIE TEXT ###########
-            if mouvement['statut_sortie'] == 0:
-                 mouvement['statut_sortie'] = 'NON CHARGE'
-            elif mouvement['statut_sortie'] == 1:
-                 mouvement['statut_sortie'] = 'NON CHARGE'
-            else:
-                 mouvement['statut_sortie'] = 'Vide'
-            ############## CAMION #####################
-            camion_id = mouvement['camion_id']
-            camion = Camion.objects.get(id_cam=camion_id)
-            mouvement['transporteur'] = camion.transporteur
-            mouvement['type'] = camion.type
-            mouvement['immatriculation'] = camion.immatriculation
-            ################### CHAUFFEUR ###################
-            chauffeur_id = mouvement['chauffeur_id']
-            chauffeur = Chaffeur.objects.get(id_chauffeur=chauffeur_id)
-            mouvement['chauffeur_name'] = chauffeur.fullname
-            mouvement['permis'] = chauffeur.permis
-            ################## POINTEUR ENTREE ##############
-            pointeur_entree_id = mouvement['pointeur_entree_id']
-            Pointeur_entree = Utilisateurs.objects.get(id_user=pointeur_entree_id)
-            mouvement['pointeur_entree_name'] = Pointeur_entree.fullname
-            ################## POINTEUR SORTIE ##############
-            pointeur_sortie_id = mouvement['pointeur_sortie_id']
-            Pointeur_sortie = Utilisateurs.objects.get(id_user=pointeur_sortie_id)
-            mouvement['pointeur_sortie_name'] = Pointeur_sortie.fullname
+            # Traitement des champs
+            mouvement['statut_entree'] = (
+                'NON CHARGE' if mouvement['statut_entree'] == 0 else
+                'Partielle' if mouvement['statut_entree'] == 1 else
+                'Plein' if mouvement['statut_entree'] == 2 else
+                'Vide'
+            )
+
+            mouvement['statut_sortie'] = (
+                'NON CHARGE' if mouvement['statut_sortie'] == 0 else
+                'Partielle' if mouvement['statut_sortie'] == 1 else
+                'Plein' if mouvement['statut_sortie'] == 2 else
+                'Vide'
+            )
+
+            camion_id = mouvement.get('camion_id', None)
+            mouvement['transporteur'] = (
+                Camion.objects.get(id_cam=camion_id).transporteur if camion_id else 'Non Assigné'
+            )
+
+            mouvement['type'] = (
+                Camion.objects.get(id_cam=camion_id).type if camion_id else 'Non Assigné'
+            )
+
+            mouvement['immatriculation'] = (
+                Camion.objects.get(id_cam=camion_id).immatriculation if camion_id else 'Non Assigné'
+            )
+
+            chauffeur_id = mouvement.get('chauffeur_id', None)
+            mouvement['chauffeur_name'] = (
+                Chaffeur.objects.get(id_chauffeur=chauffeur_id).fullname if chauffeur_id else 'Non Assigné'
+            )
+
+            mouvement['permis'] = (
+                Chaffeur.objects.get(id_chauffeur=chauffeur_id).permis if chauffeur_id else 'Non Assigné'
+            )
+
+            pointeur_entree_id = mouvement.get('pointeur_entree_id', None)
+            mouvement['pointeur_entree_name'] = (
+                Utilisateurs.objects.get(id_user=pointeur_entree_id).fullname if pointeur_entree_id else 'Non Assigné'
+            )
+
+            pointeur_sortie_id = mouvement.get('pointeur_sortie_id', None)
+            mouvement['pointeur_sortie_name'] = (
+                Utilisateurs.objects.get(id_user=pointeur_sortie_id).fullname if pointeur_sortie_id else 'Non Assigné'
+            )
+
         # Créer un nouveau workbook Excel
         wb = Workbook()
         ws = wb.active
         ws.title = "Camions"
-        ws.append([
-            "Statut Entree", "Statut Sortie", "Camion", "Transporteur", "Type", "Remorque",
-            "Chauffeur", "Permis", "Date Entrée", "Pointeur Entrée", "Date Sortie", "Pointeur Sortie", "mission"
-        ])
-        for mouvement in mouvement_list:
+
+        # Titre du rapport
+        ws.merge_cells('A1:N1')
+        ws['A1'] = "RAPPORT ICD TOM"
+        ws['A1'].font = Font(size=20, bold=True)
+        ws['A1'].alignment = Alignment(horizontal='center')
+
+        # Tête du tableau
+        headers = [
+            "Statut Entree", "Statut Sortie", "Zone Entree", "Zone Sortie", "Camion", "Transporteur", "Type",
+            "Remorque", "Chauffeur", "Permis", "Date Entrée", "Pointeur Entrée", "Date Sortie", "Pointeur Sortie", "Mission"
+        ]
+        ws.append(headers)
+
+        # Appliquer du style aux en-têtes
+        header_font = Font(bold=True, size=12)
+        header_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+
+        for col_num, header in enumerate(headers, 1):
+            col_letter = get_column_letter(col_num)
+            ws[f"{col_letter}2"].font = header_font
+            ws[f"{col_letter}2"].border = header_border
+            ws[f"{col_letter}2"].alignment = Alignment(horizontal='center')
+
+        # Ajouter les données dans les lignes suivantes
+        data_font = Font(size=11)
+        data_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+
+        for row_idx, mouvement in enumerate(mouvement_list, start=3):
             ws.append([
-                mouvement['statut_entree'], mouvement['statut_sortie'], mouvement['immatriculation'],
-                mouvement['transporteur'], mouvement['type'], mouvement['remorque'],
+                mouvement['statut_entree'], mouvement['statut_sortie'], mouvement['zone_entree'] or 'Non Assigné',
+                mouvement['zone_sortie'] or 'Non Assigné', mouvement['immatriculation'],
+                mouvement['transporteur'], mouvement['type'], mouvement['remorque'] or 'Non Assigné',
                 mouvement['chauffeur_name'], mouvement['permis'], str(mouvement['date_entree']),
                 mouvement['pointeur_entree_name'], str(mouvement['date_sortie']), mouvement['pointeur_sortie_name'], mouvement['mission']
             ])
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="mouvements.xlsx"'
 
+            # Appliquer les styles de bordure et de police à chaque cellule de la ligne
+            for col_num in range(1, 15):
+                col_letter = get_column_letter(col_num)
+                cell = ws[f"{col_letter}{row_idx}"]
+                cell.font = data_font
+                cell.border = data_border
+
+        # Ajuster la largeur des colonnes pour qu'elles soient plus lisibles
+        for col_num, _ in enumerate(headers, 1):
+            ws.column_dimensions[get_column_letter(col_num)].width = 15
+
+        # Préparer la réponse HTTP
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Rapport_ICD_TOM.xlsx"'
+        wb.save(response)
+        return response
+    else:
+        return HttpResponseBadRequest()
+######################## RAPPORT SACHERIE #######################
+def export_mouvement2(request):
+    if request.method == 'POST':
+        date_debut = request.POST.get('date_debut')
+        date_fin = request.POST.get('date_fin')
+
+        # Récupérer les données des mouvements avec filtrage par date
+        mouvements = Mouvement2.objects.filter(
+            date_entree__range=[date_debut, date_fin]
+        ).values(
+            'id_mvt', 'chauffeur_id', 'camion_id', 'statut_entree', 'statut_sortie',
+            'zone_entree', 'zone_sortie', 'remorque', 'date_entree', 'pointeur_entree_id',
+            'date_sortie', 'pointeur_sortie_id', 'mission'
+        )
+
+        mouvement_list = list(mouvements)
+        for mouvement in mouvement_list:
+            # Traitement des champs
+            mouvement['statut_entree'] = (
+                'NON CHARGE' if mouvement['statut_entree'] == 0 else
+                'Partielle' if mouvement['statut_entree'] == 1 else
+                'Plein' if mouvement['statut_entree'] == 2 else
+                'Vide'
+            )
+
+            mouvement['statut_sortie'] = (
+                'NON CHARGE' if mouvement['statut_sortie'] == 0 else
+                'Partielle' if mouvement['statut_sortie'] == 1 else
+                'Plein' if mouvement['statut_sortie'] == 2 else
+                'Vide'
+            )
+
+            camion_id = mouvement.get('camion_id', None)
+            mouvement['transporteur'] = (
+                Camion.objects.get(id_cam=camion_id).transporteur if camion_id else 'Non Assigné'
+            )
+
+            mouvement['type'] = (
+                Camion.objects.get(id_cam=camion_id).type if camion_id else 'Non Assigné'
+            )
+
+            mouvement['immatriculation'] = (
+                Camion.objects.get(id_cam=camion_id).immatriculation if camion_id else 'Non Assigné'
+            )
+
+            chauffeur_id = mouvement.get('chauffeur_id', None)
+            mouvement['chauffeur_name'] = (
+                Chaffeur.objects.get(id_chauffeur=chauffeur_id).fullname if chauffeur_id else 'Non Assigné'
+            )
+
+            mouvement['permis'] = (
+                Chaffeur.objects.get(id_chauffeur=chauffeur_id).permis if chauffeur_id else 'Non Assigné'
+            )
+
+            pointeur_entree_id = mouvement.get('pointeur_entree_id', None)
+            mouvement['pointeur_entree_name'] = (
+                Utilisateurs.objects.get(id_user=pointeur_entree_id).fullname if pointeur_entree_id else 'Non Assigné'
+            )
+
+            pointeur_sortie_id = mouvement.get('pointeur_sortie_id', None)
+            mouvement['pointeur_sortie_name'] = (
+                Utilisateurs.objects.get(id_user=pointeur_sortie_id).fullname if pointeur_sortie_id else 'Non Assigné'
+            )
+
+        # Créer un nouveau workbook Excel
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Camions"
+
+        # Titre du rapport
+        ws.merge_cells('A1:N1')
+        ws['A1'] = "RAPPORT SACHERIE"
+        ws['A1'].font = Font(size=20, bold=True)
+        ws['A1'].alignment = Alignment(horizontal='center')
+
+        # Tête du tableau
+        headers = [
+            "Statut Entree", "Statut Sortie", "Zone Entree", "Zone Sortie", "Camion", "Transporteur", "Type",
+            "Remorque", "Chauffeur", "Permis", "Date Entrée", "Pointeur Entrée", "Date Sortie", "Pointeur Sortie", "Mission"
+        ]
+        ws.append(headers)
+
+        # Appliquer du style aux en-têtes
+        header_font = Font(bold=True, size=12)
+        header_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+
+        for col_num, header in enumerate(headers, 1):
+            col_letter = get_column_letter(col_num)
+            ws[f"{col_letter}2"].font = header_font
+            ws[f"{col_letter}2"].border = header_border
+            ws[f"{col_letter}2"].alignment = Alignment(horizontal='center')
+
+        # Ajouter les données dans les lignes suivantes
+        data_font = Font(size=11)
+        data_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+
+        for row_idx, mouvement in enumerate(mouvement_list, start=3):
+            ws.append([
+                mouvement['statut_entree'], mouvement['statut_sortie'],
+                mouvement['zone_entree'] or 'Non Assigné', mouvement['zone_sortie'] or 'Non Assigné',
+                mouvement['immatriculation'], mouvement['transporteur'], mouvement['type'],
+                mouvement['remorque'] or 'Non Assigné', mouvement['chauffeur_name'], mouvement['permis'],
+                str(mouvement['date_entree']), mouvement['pointeur_entree_name'],
+                str(mouvement['date_sortie']), mouvement['pointeur_sortie_name'], mouvement['mission']
+            ])
+
+            # Appliquer les styles de bordure et de police à chaque cellule de la ligne
+            for col_num in range(1, 15):
+                col_letter = get_column_letter(col_num)
+                cell = ws[f"{col_letter}{row_idx}"]
+                cell.font = data_font
+                cell.border = data_border
+
+        # Ajuster la largeur des colonnes pour qu'elles soient plus lisibles
+        for col_num, _ in enumerate(headers, 1):
+            ws.column_dimensions[get_column_letter(col_num)].width = 15
+        # Préparer la réponse HTTP
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Rapport_Sacherie.xlsx"'
+        wb.save(response)
+        return response
+    else:
+        return HttpResponseBadRequest()
+####################### RAPPORT ZUD ##########################
+def export_mouvement3(request):
+    if request.method == 'POST':
+        date_debut = request.POST.get('date_debut')
+        date_fin = request.POST.get('date_fin')
+        # Récupérer les données des mouvements avec filtrage par date
+        mouvements = Mouvement3.objects.filter(
+            date_entree__range=[date_debut, date_fin]
+        ).values(
+            'id_mvt', 'chauffeur_id', 'camion_id', 'statut_entree', 'statut_sortie',
+            'zone_entree', 'zone_sortie', 'remorque', 'date_entree', 'pointeur_entree_id',
+            'date_sortie', 'pointeur_sortie_id', 'mission'
+        )
+        mouvement_list = list(mouvements)
+        for mouvement in mouvement_list:
+            # Traitement des champs
+            mouvement['statut_entree'] = (
+                'NON CHARGE' if mouvement['statut_entree'] == 0 else
+                'Partielle' if mouvement['statut_entree'] == 1 else
+                'Plein' if mouvement['statut_entree'] == 2 else
+                'Vide'
+            )
+            mouvement['statut_sortie'] = (
+                'NON CHARGE' if mouvement['statut_sortie'] == 0 else
+                'Partielle' if mouvement['statut_sortie'] == 1 else
+                'Plein' if mouvement['statut_sortie'] == 2 else
+                'Vide'
+            )
+            camion_id = mouvement.get('camion_id', None)
+            mouvement['transporteur'] = (
+                Camion.objects.get(id_cam=camion_id).transporteur if camion_id else 'Non Assigné'
+            )
+            mouvement['type'] = (
+                Camion.objects.get(id_cam=camion_id).type if camion_id else 'Non Assigné'
+            )
+            mouvement['immatriculation'] = (
+                Camion.objects.get(id_cam=camion_id).immatriculation if camion_id else 'Non Assigné'
+            )
+            chauffeur_id = mouvement.get('chauffeur_id', None)
+            mouvement['chauffeur_name'] = (
+                Chaffeur.objects.get(id_chauffeur=chauffeur_id).fullname if chauffeur_id else 'Non Assigné'
+            )
+            mouvement['permis'] = (
+                Chaffeur.objects.get(id_chauffeur=chauffeur_id).permis if chauffeur_id else 'Non Assigné'
+            )
+            pointeur_entree_id = mouvement.get('pointeur_entree_id', None)
+            mouvement['pointeur_entree_name'] = (
+                Utilisateurs.objects.get(id_user=pointeur_entree_id).fullname if pointeur_entree_id else 'Non Assigné'
+            )
+            pointeur_sortie_id = mouvement.get('pointeur_sortie_id', None)
+            mouvement['pointeur_sortie_name'] = (
+                Utilisateurs.objects.get(id_user=pointeur_sortie_id).fullname if pointeur_sortie_id else 'Non Assigné'
+            )
+        # Créer un nouveau workbook Excel
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Camions"
+
+        # Titre du rapport
+        ws.merge_cells('A1:N1')
+        ws['A1'] = "RAPPORT ZUD"
+        ws['A1'].font = Font(size=20, bold=True)
+        ws['A1'].alignment = Alignment(horizontal='center')
+
+        # Tête du tableau
+        headers = [
+            "Statut Entree", "Statut Sortie", "Zone Entree", "Zone Sortie", "Camion", "Transporteur", "Type",
+            "Remorque", "Chauffeur", "Permis", "Date Entrée", "Pointeur Entrée", "Date Sortie", "Pointeur Sortie", "Mission"
+        ]
+        ws.append(headers)
+
+        # Appliquer du style aux en-têtes
+        header_font = Font(bold=True, size=12)
+        header_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+
+        for col_num, header in enumerate(headers, 1):
+            col_letter = get_column_letter(col_num)
+            ws[f"{col_letter}2"].font = header_font
+            ws[f"{col_letter}2"].border = header_border
+            ws[f"{col_letter}2"].alignment = Alignment(horizontal='center')
+
+        # Ajouter les données dans les lignes suivantes
+        data_font = Font(size=11)
+        data_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+
+        for row_idx, mouvement in enumerate(mouvement_list, start=3):
+            ws.append([
+                mouvement['statut_entree'], mouvement['statut_sortie'],
+                mouvement['zone_entree'] or 'Non Assigné', mouvement['zone_sortie'] or 'Non Assigné',
+                mouvement['immatriculation'], mouvement['transporteur'], mouvement['type'],
+                mouvement['remorque'] or 'Non Assigné', mouvement['chauffeur_name'], mouvement['permis'],
+                str(mouvement['date_entree']), mouvement['pointeur_entree_name'],
+                str(mouvement['date_sortie']), mouvement['pointeur_sortie_name'], mouvement['mission']
+            ])
+
+            # Appliquer les styles de bordure et de police à chaque cellule de la ligne
+            for col_num in range(1, 15):
+                col_letter = get_column_letter(col_num)
+                cell = ws[f"{col_letter}{row_idx}"]
+                cell.font = data_font
+                cell.border = data_border
+
+        # Ajuster la largeur des colonnes pour qu'elles soient plus lisibles
+        for col_num, _ in enumerate(headers, 1):
+            ws.column_dimensions[get_column_letter(col_num)].width = 15
+
+        # Préparer la réponse HTTP
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Rapport_Zud.xlsx"'
         wb.save(response)
         return response
 
     else:
         return HttpResponseBadRequest()
-
 
 def liste_parametrage(request, id):
     user = get_object_or_404(Utilisateurs, id_user=id)

@@ -263,7 +263,7 @@ urlpatterns = [
     path('export_camions/', views.export_camions, name='export_camions'),
     path('export_mouvement0/', views.export_mouvement0, name='export_mouvement0'),
     path('export_mouvement2/', views.export_mouvement2, name='export_mouvement2'),
-    path('export_mouvement1/', views.export_mouvement1, name='export_mouvement1'),
+    path('export_mouvement3/', views.export_mouvement3, name='export_mouvement3'),
     ###Parametrage
     path('parametrage/<int:id>', liste_parametrage, name='listeParametrage'),
     path('ajouter_parametre/', ajouter_parametre, name='ajout_parametre'),
