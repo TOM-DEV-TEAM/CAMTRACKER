@@ -1,4 +1,3 @@
-
 from django.contrib import messages
 import pandas as pd
 from admin_datta.utils import JsonResponse
@@ -19,20 +18,15 @@ def tables(request):
     'segment': 'tables'
   }
   return render(request, "pages/dynamic-tables.html", context)
-
 def detail_mvt(request):
   context = {
     'segment': 'index',
-    # 'products' : Product.objects.all()
   }
   return render(request, "pages/detail.html", context)
-
 def tout_mvt(request):
   tout_mvt=Mouvement1.objects.all()
   ids_camion = set(tout_mvt.values_list('camion_id', flat=True))
   ids_point = set(tout_mvt.values_list('camion_id', flat=True))
-
-  # Ajouter dynamiquement l'attribut 'acces=0' aux documents restreints dans listedoc
   data = []
   for doc in tout_mvt:
     camion=Camion.objects.get(id_cam=doc.camion_id)
@@ -46,11 +40,9 @@ def tout_mvt(request):
       doc.ptr_srt = ptr_srt.nom + ptr_srt.prenom
     else:
       doc.ptr_srt = 'Auncun'
-
   context = {
     'segment': 'index',
     'mvt' : tout_mvt
-    # 'products' : Product.objects.all()
   }
   return render(request, "pages/detail.html", context)
 def mvt_termine(request):
@@ -59,7 +51,6 @@ def mvt_termine(request):
   ids_point = set(tout_mvt.values_list('camion_id', flat=True))
   ids_camion = set(tout_mvt.values_list('camion_id', flat=True))
   ids_point = set(tout_mvt.values_list('camion_id', flat=True))
-
   # Ajouter dynamiquement l'attribut 'acces=0' aux documents restreints dans listedoc
   data = []
   moins_de_30_minutes = []
@@ -78,7 +69,6 @@ def mvt_termine(request):
       moins_de_30_minutes.append(doc)
     else:
       plus_de_30_minutes.append(doc)
-
   context = {
     'segment': 'index',
     'mvt' : tout_mvt,
@@ -87,14 +77,12 @@ def mvt_termine(request):
     # 'products' : Product.objects.all()
   }
   return render(request, "pages/detail.html", context)
-
 def mvt_termine(request):
   tout_mvt_crs=Mouvement1.objects.filter(date_sortie__isnull=True)
   ids_camion = set(tout_mvt.values_list('camion_id', flat=True))
   ids_point = set(tout_mvt.values_list('camion_id', flat=True))
   ids_camion = set(tout_mvt.values_list('camion_id', flat=True))
   ids_point = set(tout_mvt.values_list('camion_id', flat=True))
-
   # Ajouter dynamiquement l'attribut 'acces=0' aux documents restreints dans listedoc
   data = []
   moins_de_30_minutes = []
@@ -115,7 +103,6 @@ def mvt_termine(request):
       moins_de_30_minutes.append(doc)
     else:
       plus_de_30_minutes.append(doc)
-
   context = {
     'segment': 'index',
     'mvt' : tout_mvt,
@@ -124,15 +111,12 @@ def mvt_termine(request):
     # 'products' : Product.objects.all()
   }
   return render(request, "pages/detail.html", context)
-
-
 def fetch_mvt_termine(request):
   tout_mvt_crs=Mouvement1.objects.filter(date_sortie__isnull=False)
   ids_camion = set(tout_mvt.values_list('camion_id', flat=True))
   ids_point = set(tout_mvt.values_list('camion_id', flat=True))
   ids_camion = set(tout_mvt.values_list('camion_id', flat=True))
   ids_point = set(tout_mvt.values_list('camion_id', flat=True))
-
   # Ajouter dynamiquement l'attribut 'acces=0' aux documents restreints dans listedoc
   data = []
   moins_de_30_minutes = []
@@ -1088,22 +1072,25 @@ def entredecalon_view2(request, id_user):
     # Parcourir chaque mouvement
     for mouvement in mouvements:
         # Vérifier si numconteneur1 est déjà présent dans d'autres mouvements
+        mouvement['real_numconteneur1'] = mouvement['numconteneur1']
         if Mouvement0.objects.filter(numconteneur1=mouvement['numconteneur1']).exclude(
                 id_mvt=mouvement['id_mvt']).exists():
             mouvement['numconteneur1'] = None  # Affecter à null si le conteneur est déjà affecté
-
+        mouvement['real_numconteneur2'] = mouvement['numconteneur2']
         # Vérifier si numconteneur2 est déjà présent dans d'autres mouvements
         if Mouvement0.objects.filter(numconteneur2=mouvement['numconteneur2']).exclude(
                 id_mvt=mouvement['id_mvt']).exists():
             mouvement['numconteneur2'] = None  # Affecter à null si le conteneur est déjà affecté
-
+        mouvement['real_numconteneur3'] = mouvement['numconteneur3']
         # Vérifier si numconteneur3 est déjà présent dans d'autres mouvements
         if Mouvement0.objects.filter(numconteneur3=mouvement['numconteneur3']).exclude(
                 id_mvt=mouvement['id_mvt']).exists():
             mouvement['numconteneur3'] = None  # Affecter à null si le conteneur est déjà affecté
+        mouvement['real_numconteneur4'] = mouvement['numconteneur4']
         if Mouvement0.objects.filter(numconteneur4=mouvement['numconteneur4']).exclude(
                 id_mvt=mouvement['id_mvt']).exists():
             mouvement['numconteneur4'] = None  # Affecter à null si le conteneur est déjà affecté
+        mouvement['real_numconteneur5'] = mouvement['numconteneur5']
         if Mouvement0.objects.filter(numconteneur5=mouvement['numconteneur5']).exclude(
                 id_mvt=mouvement['id_mvt']).exists():
             mouvement['numconteneur5'] = None  # Affecter à null si le conteneur est déjà affecté
@@ -1182,8 +1169,63 @@ def entredecalon_view2(request, id_user):
 
 ################################# RENDER MODIFICATIONS DES MOUVEMENTS ###############
 def modif_mvt(request, id_user):
-  util = Utilisateurs.objects.get(id_user=id_user)
-  return render(request, 'pages/modif_mvt.html', {'util': util})
+    util = Utilisateurs.objects.get(id_user=id_user)
+
+    # Récupérer les mouvements filtrés
+    mouvements = Mouvement0.objects.filter(destination__icontains='icd', date_sortie__isnull=True).values(
+        'id_mvt', 'camion_id', 'statut_entree', 'statut_sortie', 'chauffeur_id', 'remorque', 'date_entree',
+        'date_sortie', 'pointeur_sortie_id', 'pointeur_entree_id', 'destination', 'mission', 'client_id'
+    )
+    mouvement_list = list(mouvements)
+
+    # Boucle pour enrichir les données des mouvements
+    for mouvement in mouvement_list:
+        # Récupération des informations du client
+        client_id = mouvement.get('client_id')
+        client = Client.objects.filter(id_client=client_id).values('id_client', 'fullname', 'telephone').first()
+        mouvement['client'] = client if client else {
+            'id_client': None,
+            'fullname': 'Non Assigné',
+            'telephone': 'Non Assigné'
+        }
+
+        # Récupération des informations du camion
+        camion_id = mouvement.get('camion_id')
+        camion = Camion.objects.filter(id_cam=camion_id).values('id_cam', 'immatriculation', 'transporteur', 'type').first()
+        mouvement['camion'] = camion if camion else {
+            'id_cam': None,
+            'immatriculation': 'Non assigné',
+            'transporteur': 'Non assigné',
+            'type': 'Non assigné'
+        }
+
+        # Récupération des informations du pointeur d'entrée
+        user_entre_id = mouvement.get('pointeur_entree_id')
+        user_entre = Utilisateurs.objects.filter(id_user=user_entre_id).values('fullname').first()
+        mouvement['user_ert'] = user_entre if user_entre else {'fullname': 'Non assigné'}
+
+        # Récupération des informations du pointeur de sortie
+        user_sortie_id = mouvement.get('pointeur_sortie_id')
+        user_sortie = Utilisateurs.objects.filter(id_user=user_sortie_id).values('fullname').first() if user_sortie_id else {'fullname': 'null'}
+        mouvement['user_srt'] = user_sortie
+
+        # Récupération des informations du chauffeur
+        chauffeur_id = mouvement.get('chauffeur_id')
+        chauffeur = Chaffeur.objects.filter(id_chauffeur=chauffeur_id).values('id_chauffeur', 'fullname', 'permis').first()
+        mouvement['chauffeur'] = chauffeur if chauffeur else {
+            'id_chauffeur': None,
+            'fullname': 'Non assigné',
+            'permis': 'N/A'
+        }
+
+    # Préparation du contexte pour le rendu
+    context = {
+        'util': util,
+        'mouvement_list': mouvement_list
+    }
+
+    return render(request, 'pages/modif_mvt.html', context)
+
 def modif_mvt1(request, id_user):
       util = Utilisateurs.objects.get(id_user=id_user)
       return render(request, 'pages/modif_mvt1.html', {'util': util})
@@ -1279,14 +1321,22 @@ def fetch_stats0(request, id_user):
     lg_moins = 0
     total_cours = 0
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        try:
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+        except:
+            camion = Camion(
+                id_cam = None,
+                immatriculation = 'Non Assigné',
+                transporteur = 'Non Assigné',
+                type = 'Non Assigné'
+            )
         type = camion.type
         try:
             para = ParametrageDelais.objects.get(entite='dklog', type=type)
             duree_dk = timedelta(minutes=int(para.delais_maximal))
             delais_urg = timedelta(minutes=int(para.delais_urgent))
         except:
-            duree_dk = timedelta(minutes=30)
+            duree_dk = timedelta(minutes=1440)
             delais_urg = timedelta(minutes=20)
         if mvt.date_sortie is None:
             # Mouvements en cours
@@ -1491,10 +1541,8 @@ def fetch_stats2(request, id_user):
         'destination': destination,  # Inclure la variable destination
     })
 ####################### FETCH DASHBORD INFORMATIONS ZUD ###########################
-
 def fetch_stats3(request, id_user):
     maintenant = timezone.now()
-
     # Filtrer les mouvements
     mouvements = (Mouvement3.objects.filter(date_sortie__isnull=True)
                   | Mouvement3.objects.filter(date_sortie__isnull=False))
@@ -1516,7 +1564,6 @@ def fetch_stats3(request, id_user):
         if mvt.date_sortie is None:
             # Mouvements en cours
             total_cours += 1
-
             if mvt.date_entree:
                 pass
             else:
@@ -1532,9 +1579,7 @@ def fetch_stats3(request, id_user):
                 lg_30 += 1
             else:
                 lg_moins += 1
-
     totalter = lg_30 + lg_moins
-
     return JsonResponse({
         'urg': urg,
         'dep': dep,
@@ -2164,7 +2209,6 @@ def tout_mouvementpar(request, id_mvt):
     mouvements = Mouvement8.objects.all().values('id_mvt', 'vehicule_id', 'destination', 'date_entree', 'date_sortie',
                                                  'pointeur_sortie_id', 'pointeur_entree_id')
     mouvement_list = list(mouvements)
-
     for mouvement in mouvement_list:
         # Gestion du vehicule
         vehicule_id = mouvement.get('vehicule_id')
@@ -2879,48 +2923,77 @@ def liaisonmouvement0(request, id_user):
             camion = request.POST.get('camion', '').strip()
             mouvement_instance = Mouvement0.objects.get(id_mvt=id_mvt1)
             mouvement0 = Mouvement0.objects.create()
+            mouvement = Mouvement3.objects.create()
             if conteneur1:
                 mouvement0.numconteneur1 = conteneur1
+                mouvement.numconteneur1 = conteneur1
                 mouvement0.typeconteneur1 = type1
+                mouvement.typeconteneur1 = type1
                 max_size+= int(type1) or 0
             if conteneur2:
                 mouvement0.numconteneur2 = conteneur2
+                mouvement.numconteneur2 = conteneur2
                 mouvement0.typeconteneur2 = type2
+                mouvement.typeconteneur2 = type2
                 max_size += int(type2) or 0
             if conteneur3:
                 mouvement0.numconteneur3 = conteneur3
+                mouvement.numconteneur3 = conteneur3
                 mouvement0.typeconteneur3 = type3
+                mouvement.typeconteneur3 = type3
                 max_size += int(type3) or 0
             if conteneur4:
                 mouvement0.numconteneur4 = conteneur4
+                mouvement.numconteneur4 = conteneur4
                 mouvement0.typeconteneur4 = type4
+                mouvement.typeconteneur4 = type4
                 max_size += int(type4) or 0
             if conteneur5:
                 mouvement0.numconteneur5 = conteneur5
+                mouvement.numconteneur5 = conteneur5
                 mouvement0.typeconteneur5 = type5
+                mouvement.typeconteneur5 = type5
                 max_size += int(type5) or 0
             if typecam == 'VRAC' and max_size > 60:
                 error_message = 'Taille maximum dépassée !!!'
                 messages.error(request, error_message)
                 return redirect(f'/entreedecalog_view2/{id_user}?error={error_message}')
             mouvement0.marchandise = mouvement_instance.marchandise
+            mouvement.marchandise = mouvement_instance.marchandise
             mouvement0.bl1 = mouvement_instance.bl1
-            mouvement0.pointeur_entree = util.id_user
+            mouvement.bl1 = mouvement_instance.bl1
+            mouvement0.pointeur_entree_id = util.id_user
+            mouvement.pointeur_entree_id = util.id_user
             mouvement0.bl2 = mouvement_instance.bl2
+            mouvement.bl2 = mouvement_instance.bl2
             mouvement0.remorque = remorque
+            mouvement.remorque = remorque
             mouvement0.destination = 'zud'
+            mouvement.destination = 'zud'
             mouvement0.nbrcolis = mouvement_instance.nbrcolis
+            mouvement.nbrcolis = mouvement_instance.nbrcolis
             mouvement0.tonnage = mouvement_instance.tonnage
+            mouvement.tonnage = mouvement_instance.tonnage
             mouvement0.date_validite = date_validite
+            mouvement.date_validite = date_validite
             mouvement0.navire = mouvement_instance.navire
+            mouvement.navire = mouvement_instance.navire
             mouvement0.zone_entree = zone
+            mouvement.zone_entree = zone
             mouvement0.date_entree = datetime.now()
+            mouvement.date_entree = datetime.now()
             mouvement0.client_id = client
+            mouvement.client_id = client
             mouvement0.camion_id = camion
+            mouvement.camion_id = camion
             mouvement0.chauffeur_id = chauffeur
+            mouvement.chauffeur_id = chauffeur
             mouvement0.transitaire_id = transitaire
+            mouvement.transitaire_id = transitaire
             mouvement0.representant_id = representant
+            mouvement.representant_id = representant
             mouvement0.save()
+            mouvement.save()
             liaison = Liaison.objects.create()
             if conteneur1:
                 liaison.conteneur1 = conteneur1
@@ -3000,7 +3073,6 @@ def ajoutmouvement0(request, id_user):
             mission = request.POST.get('mission')
             date_validite = request.POST.get('date_validite')
             tonnage = request.POST.get('tonnage') or 0
-
             numconteneur1 = request.POST.get('numconteneur1')
             typeconteneur1 = request.POST.get('typeconteneur1')
             numconteneur2 = request.POST.get('numconteneur2')
@@ -3070,7 +3142,6 @@ def ajoutmouvement0(request, id_user):
                 'camion_id':camion_id,
                 'chauffeur_id':chauffeur_id,
                 'zone_entree' : zone,
-                'date_entree': datetime.now(),
                 'client_id':client_id,
                 'mission': mission,
                 'remorque': remorque,
@@ -3303,7 +3374,17 @@ def fetch_mouvementsdash0(request):
     mouvements = Mouvement0.objects.filter(date_sortie__isnull=True)[:50]
     mouvements_avec_attributs = []
     for mvt in mouvements:
-        camion = Camion.objects.get(id_cam=mvt.camion_id)
+        try:
+            camion = Camion.objects.get(id_cam=mvt.camion_id)
+        except Camion.DoesNotExist:
+            # Si le camion n'existe pas, on crée un camion par défaut
+            camion = Camion(
+                id_cam=None,  # ou vous pouvez laisser `None` si vous ne voulez pas affecter un ID spécifique
+                immatriculation="Non assigné",
+                transporteur="Non assigné",
+                type="Non assigné",
+            )
+
         mvt.cam = camion.immatriculation
 
         try:
@@ -5993,7 +6074,92 @@ def export_mouvement3(request):
 
     else:
         return HttpResponseBadRequest()
+    ############## RAPPORT PARTICULIER ########################
+def export_mouvementpar(request):
+    if request.method == 'POST':
+        date_debut = request.POST.get('date_debut')
+        date_fin = request.POST.get('date_fin')
+        # Récupérer les données des mouvements avec filtrage par date
+        mouvements = Mouvement8.objects.filter(
+            date_entree__range=[date_debut, date_fin]
+        ).values(
+            'id_mvt',
+            'zone_entree', 'zone_sortie', 'vehicule_id', 'date_entree', 'pointeur_entree_id',
+            'date_sortie', 'pointeur_sortie_id'
+        )
+        mouvement_list = list(mouvements)
+        for mouvement in mouvement_list:
+            # Traitement des champs
+            vehicule_id = mouvement.get('vehicule_id', None)
+            mouvement['immatriculation'] = (
+                Vehicule.objects.get(id_veh=vehicule_id).immatriculation if vehicule_id else 'Non Assigné'
+            )
+            pointeur_entree_id = mouvement.get('pointeur_entree_id', None)
+            mouvement['pointeur_entree_name'] = (
+                Utilisateurs.objects.get(id_user=pointeur_entree_id).fullname if pointeur_entree_id else 'Non Assigné'
+            )
+            pointeur_sortie_id = mouvement.get('pointeur_sortie_id', None)
+            mouvement['pointeur_sortie_name'] = (
+                Utilisateurs.objects.get(id_user=pointeur_sortie_id).fullname if pointeur_sortie_id else 'Non Assigné'
+            )
+        # Créer un nouveau workbook Excel
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Vehicules"
+        # Titre du rapport
+        ws.merge_cells('A1:N1')
+        ws['A1'] = "RAPPORT MOUVEMENTS PARTICULIERS"
+        ws['A1'].font = Font(size=20, bold=True)
+        ws['A1'].alignment = Alignment(horizontal='center')
+        # Tête du tableau
+        headers = [
+             "Zone Entree", "Zone Sortie", "Vehicule", "Date Entrée", "Pointeur Entrée", "Date Sortie", "Pointeur Sortie"
+        ]
+        ws.append(headers)
+        # Appliquer du style aux en-têtes
+        header_font = Font(bold=True, size=12)
+        header_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+        for col_num, header in enumerate(headers, 1):
+            col_letter = get_column_letter(col_num)
+            ws[f"{col_letter}2"].font = header_font
+            ws[f"{col_letter}2"].border = header_border
+            ws[f"{col_letter}2"].alignment = Alignment(horizontal='center')
+        # Ajouter les données dans les lignes suivantes
+        data_font = Font(size=11)
+        data_border = Border(
+            left=Side(border_style="thin"),
+            right=Side(border_style="thin"),
+            top=Side(border_style="thin"),
+            bottom=Side(border_style="thin")
+        )
+        for row_idx, mouvement in enumerate(mouvement_list, start=3):
+            ws.append([
+                mouvement['zone_entree'] or 'Non Assigné', mouvement['zone_sortie'] or 'Non Assigné',
+                mouvement['immatriculation'], str(mouvement['date_entree']), mouvement['pointeur_entree_name'],
+                str(mouvement['date_sortie']), mouvement['pointeur_sortie_name']
+            ])
 
+            # Appliquer les styles de bordure et de police à chaque cellule de la ligne
+            for col_num in range(1, 15):
+                col_letter = get_column_letter(col_num)
+                cell = ws[f"{col_letter}{row_idx}"]
+                cell.font = data_font
+                cell.border = data_border
+        # Ajuster la largeur des colonnes pour qu'elles soient plus lisibles
+        for col_num, _ in enumerate(headers, 1):
+            ws.column_dimensions[get_column_letter(col_num)].width = 15
+        # Préparer la réponse HTTP
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Rapport_PARTICULIER.xlsx"'
+        wb.save(response)
+        return response
+    else:
+        return HttpResponseBadRequest()
 def liste_parametrage(request, id):
     user = get_object_or_404(Utilisateurs, id_user=id)
     listeboite = ParametrageDelais.objects.all()
@@ -6157,33 +6323,25 @@ def sortie_zud(request):
 
     else:
         form = SortieForm()
-
     # Assurez-vous que 'mouvement' et 'util' sont définis si vous les utilisez dans le template
     return render(request, 'pages/ajoutsortiedp.html', {'form': form})
-
-
 ###############Gestion zud
 def index_admin_zud(request, id):
     maintenant = timezone.now()
     duree_dk = 30
     delais_urg = 15
-
     ###############Calcul des variable
     mouvements = Mouvement3.objects.filter(date_entree__isnull=False,date_sortie__isnull=True) | Mouvement3.objects.filter(
         date_entree__isnull=False,date_sortie__isnull=False)
-
     urg = 0
     dep = 0
     lg_30 = 0
     lg_moins = 0
     total_cours = 0
-
     mouvements_avec_attributs = []
-
     for mvt in mouvements:
         camion = Camion.objects.get(id_cam=mvt.camion_id)
         mvt.cam = camion.immatriculation
-
         type = camion.type
         try:
             para = ParametrageDelais.objects.get(entite='zud', type=type)
@@ -6196,16 +6354,13 @@ def index_admin_zud(request, id):
         diff = (maintenant - mvt.date_entree).total_seconds() / 60
         mvt.chrono = int(diff)
         duree = float(diff)
-
         if timedelta(minutes=duree) >= duree_dk:
             mvt.etat = 3
         elif timedelta(minutes=duree) < duree_dk and timedelta(minutes=duree) >= delais_urg:
             mvt.etat = 2
         else:
             mvt.etat = 1
-
         mouvements_avec_attributs.append(mvt)
-
         if mvt.date_sortie is None:
             # Mouvements en cours
             total_cours += 1
@@ -6223,18 +6378,13 @@ def index_admin_zud(request, id):
 
     totalter = lg_30 + lg_moins
     mouvements_filtrés = [mvt for mvt in mouvements_avec_attributs if mvt.date_sortie is None][:50]
-
     user = Utilisateurs.objects.get(id_user=id)
     return render(request, 'pages/index_admin_zud.html',
                   {'urg': urg, 'dep': dep, 'lg_30': lg_30, 'lg_mois': lg_moins,
                    'total_cours': total_cours, 'total_ter': totalter, 'mvt': mouvements_filtrés, 'util': user})
-
-
 #util = Utilisateurs.objects.get(id_user=id)
   #camions = Camion.objects.all()
   #return render(request, 'pages/index_entree_zud.html', {'util': util, 'camions': camions})
-
-
 def detail_urgent_zud(request,id):
     maintenant = timezone.now()
     duree_dk = 30
@@ -6242,11 +6392,9 @@ def detail_urgent_zud(request,id):
     mouvements = Mouvement3.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
     mouvements_avec_attributs = []
     mouvements_filtrés = []
-
     for mvt in mouvements:
         camion = Camion.objects.get(id_cam=mvt.camion_id)
         mvt.cam = camion.immatriculation
-
         type = camion.type
         try:
             para = ParametrageDelais.objects.get(entite='zud', type=type)
@@ -6255,7 +6403,6 @@ def detail_urgent_zud(request,id):
         except:
             duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
-
         poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
         mvt.pointeur = poineur.fullname
         mvt.trans = camion.transporteur
@@ -6264,20 +6411,16 @@ def detail_urgent_zud(request,id):
         mvt.chauffeur_name = chauffeur_name.fullname
         if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk:
             mouvements_filtrés.append(mvt)
-
         # Ajoutez l'objet mouvement enrichi à la liste
         # mouvements_avec_attributs.append(mvt)
-
     # Appliquez le filtre après avoir enrichi les objets mouvement
     # mouvements_filtrés = [mvt for mvt in mouvements_avec_attributs if (maintenant - mvt.date_entree) >= delais_urg and (maintenant - mvt.date_entree) < duree_dk]
-
     lg = len(mouvements_filtrés)
     total_encours = len(mouvements)
     if total_encours >= 1:
         pourcentage_urgent = (lg / total_encours) * 100
     else:
         pourcentage_urgent = 0
-
     user = Utilisateurs.objects.get(id_user=id)
     context = {
         'segment': 'index',
@@ -6286,20 +6429,16 @@ def detail_urgent_zud(request,id):
         'pourcentage_urgent': int(pourcentage_urgent),
         'util': user
     }
-
     return render(request, "pages/detail_urgent_zud.html", context)
-
 def detail_depassement_zud(request, id):
     maintenant = timezone.now()
     duree_dk = 30
     delais_urg = 15
     mouvements = Mouvement3.objects.filter(date_entree__isnull=False, date_sortie__isnull=True)
     mouvements_filtrés = []
-
     for mvt in mouvements:
         camion = Camion.objects.get(id_cam=mvt.camion_id)
         mvt.cam = camion.immatriculation
-
         type = camion.type
         try:
             para = ParametrageDelais.objects.get(entite='zud', type=type)
@@ -6318,14 +6457,12 @@ def detail_depassement_zud(request, id):
 
         if (maintenant - mvt.date_entree) > duree_dk:
             mouvements_filtrés.append(mvt)
-
     lg = len(mouvements_filtrés)
     total_encours = len(mouvements)
     if total_encours >= 1:
         pourcentage_depassement = (lg / total_encours) * 100
     else:
         pourcentage_depassement = 0
-
     user = Utilisateurs.objects.get(id_user=id)
     context = {
         'segment': 'index',
@@ -6335,20 +6472,16 @@ def detail_depassement_zud(request, id):
         'pourcentage_depassement': int(pourcentage_depassement),
         'util': user
     }
-
     return render(request, "pages/detail_depassement_zud.html", context)
-
 def detail_plus_30_zud(request, id):
     maintenant = timezone.now()
     duree_dk = 30
     delais_urg = 15
     mouvements = Mouvement3.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
     mouvements_filtrés = []
-
     for mvt in mouvements:
         camion = Camion.objects.get(id_cam=mvt.camion_id)
         mvt.cam = camion.immatriculation
-
         type = camion.type
         try:
             para = ParametrageDelais.objects.get(entite='zud', type=type)
@@ -6357,7 +6490,6 @@ def detail_plus_30_zud(request, id):
         except:
             duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
-
         poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
         mvt.pointeur = poineur.fullname
         poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
@@ -6366,10 +6498,8 @@ def detail_plus_30_zud(request, id):
         mvt.imat = camion.immatriculation
         chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
         mvt.chauffeur_name = chauffeur_name.fullname
-
         if (mvt.date_sortie - mvt.date_entree) > duree_dk:
             mouvements_filtrés.append(mvt)
-
     lg = len(mouvements_filtrés)
     total_plus_30 = len(mouvements)
     if total_plus_30 >= 1:
@@ -6377,7 +6507,6 @@ def detail_plus_30_zud(request, id):
     else:
         pourcentage_plus_30 = 0
     user = Utilisateurs.objects.get(id_user=id)
-
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
@@ -6386,7 +6515,6 @@ def detail_plus_30_zud(request, id):
         'util': user,
         'pourcentage_plus_30': int(pourcentage_plus_30)
     }
-
     return render(request, "pages/detail_plus_30_zud.html", context)
 def detail_moins_30_zud(request, id):
     maintenant = timezone.now()
@@ -6394,11 +6522,9 @@ def detail_moins_30_zud(request, id):
     delais_urg = 15
     mouvements = Mouvement3.objects.filter(date_entree__isnull=False, date_sortie__isnull=False)
     mouvements_filtrés = []
-
     for mvt in mouvements:
         camion = Camion.objects.get(id_cam=mvt.camion_id)
         mvt.cam = camion.immatriculation
-
         type = camion.type
         try:
             para = ParametrageDelais.objects.get(entite='zud', type=type)
@@ -6407,7 +6533,6 @@ def detail_moins_30_zud(request, id):
         except:
             duree_dk = timedelta(minutes=30)
             delais_urg = timedelta(minutes=20)
-
         poineur = Utilisateurs.objects.get(id_user=mvt.pointeur_entree_id)
         mvt.pointeur = poineur.fullname
         poineur_srt = Utilisateurs.objects.get(id_user=mvt.pointeur_sortie_id)
@@ -6416,10 +6541,8 @@ def detail_moins_30_zud(request, id):
         mvt.imat = camion.immatriculation
         chauffeur_name = Chaffeur.objects.get(id_chauffeur=mvt.chauffeur_id)
         mvt.chauffeur_name = chauffeur_name.fullname
-
         if (mvt.date_sortie - mvt.date_entree) <= duree_dk:
             mouvements_filtrés.append(mvt)
-
     lg = len(mouvements_filtrés)
     lg = len(mouvements_filtrés)
     total_moins_30 = len(mouvements)
@@ -6428,7 +6551,6 @@ def detail_moins_30_zud(request, id):
     else:
         pourcentage_moins_30 = 0
     user = Utilisateurs.objects.get(id_user=id)
-
     context = {
         'segment': 'index',
         'mvt': mouvements_filtrés,
@@ -6437,16 +6559,11 @@ def detail_moins_30_zud(request, id):
         'pourcentage_moins_30': int(pourcentage_moins_30),
         'util': user
     }
-
     #return render(request, "pages/detail_depassement_zud.html", context)
     return render(request, "pages/detail_moins_30_zud.html", context)
-
 def tout_mouvement_zud(request, id_mvt):
     user=Utilisateurs.objects.get(id_user=id_mvt)
     return render(request, 'pages/liste_mouvement_admin_zud.html', {'util': user})
-
-
-
 def liste_mouvements_zud(request):
     mouvements = Mouvement3.objects.all().values('id_mvt','mission','camion_id', 'statut_entree', 'statut_sortie','chauffeur_id', 'remorque','date_entree','date_sortie','pointeur_sortie_id','pointeur_entree_id')
     mouvement_list = list(mouvements)
@@ -6463,9 +6580,7 @@ def liste_mouvements_zud(request):
                 # Mettre l'attribut fullname vide
             user_sortie = {'fullname': 'original_name'}
             user_sortie['fullname'] = 'null'
-
             #user_sortie='oo'
-
         mouvement['user_ert'] = user_entre
         mouvement['user_srt'] = user_sortie
         chauffeur_id = mouvement['chauffeur_id']
@@ -6473,7 +6588,6 @@ def liste_mouvements_zud(request):
                                                                               'permis').first()
         mouvement['chauffeur'] = chauffeur
     return JsonResponse(list(mouvement_list), safe=False)
-
 def export_mouvement4(request):
     if request.method == 'POST':
         # Récupérer les données des mouvements
@@ -6992,3 +7106,61 @@ def handle_errors(request, exception=None, template_name="pages/404.html", statu
     elif status_code == 400:
         context['message'] = "Mauvaise requête."
     return render(request, template_name, context, status=status_code)
+def help_render(request, page):
+   # page = request.POST.get('page')
+    if page== 'acceuil':
+        return render(request, 'pages/RAPPORT/acceuil.html')
+    if page == 'active_user':
+        return render(request, 'pages/RAPPORT/activer-utilisateurs.html')
+    if page == 'entree_icd':
+        return render(request, 'pages/RAPPORT/entree-icd.html')
+    if page == 'entree_zud':
+        return render(request, 'pages/RAPPORT/entree-zud.html')
+    if page == 'entree_sacherie':
+        return render(request, 'pages/RAPPORT/entree-sacherie.html')
+    if page == 'entree_par':
+        return render(request, 'pages/RAPPORT/entree-particulier.html')
+    if page == 'liaison_zud':
+        return render(request, 'pages/RAPPORT/entree-zud-liaison.html')
+    if page == 'sortie_icd':
+        return render(request, 'pages/RAPPORT/sortie-icd.html')
+    if page == 'sortie_sacherie':
+        return render(request, 'pages/RAPPORT/sortie-sacherie.html')
+    if page == 'sortie_zud':
+        return render(request, 'pages/RAPPORT/sortie-zud.html')
+    if page == 'sortie_par':
+        return render(request, 'pages/RAPPORT/sortie-particulier.html')
+    if page == 'modif':
+        return render(request, 'pages/RAPPORT/modification.html')
+    if page == 'extraction':
+        return render(request, 'pages/RAPPORT/extraction.html')
+    if page == 'parametrage':
+        return render(request, 'pages/RAPPORT/parametrage.html')
+    if page == 'icd_entree':
+        return render(request, 'pages/RAPPORT/icd-entree-icd.html')
+    if page == 'icd_sortie':
+        return render(request, 'pages/RAPPORT/sortie-icd.html')
+    if page == 'sacherie_entree':
+        return render(request, 'pages/RAPPORT/sacherie-entree-sacherie.html')
+    if page == 'sacherie_sortie':
+        return render(request, 'pages/RAPPORT/sacherie-sortie-sacherie.html')
+    if page == 'zud_entree':
+        return render(request, 'pages/RAPPORT/zud-entree-zud.html')
+    if page == 'zud_sortie':
+        return render(request, 'pages/RAPPORT/zud-sortie-zud.html')
+    if page == 'controle1':
+            return render(request, 'pages/RAPPORT/controle1.html')
+    if page == 'controle2':
+        return render(request, 'pages/RAPPORT/controle2.html')
+    if page == 'ajout_user':
+        return render(request, 'pages/RAPPORT/ajout-utilisateurs.html')
+    if page == 'modif_user':
+        return render(request, 'pages/RAPPORT/modifier-utilisateurs.html')
+    if page == 'active_user':
+        return render(request, 'pages/RAPPORT/active-utilisateurs.html')
+
+
+
+
+
+

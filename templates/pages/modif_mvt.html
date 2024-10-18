@@ -26,7 +26,7 @@
         <!--<p class="label theme-bg text-white f-12"  class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModalajout">Ajouter</p>-->
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
+        <!--script>
             $(document).ready(function () {
                 function fetchMouvements() {
                     $.ajax({
@@ -72,31 +72,58 @@
                 fetchMouvements();
                 setInterval(fetchMouvements, 10000);
             });
-        </script>
+        </script-->
 
         <h3 class="modal-title" id="editModalLabel">Entrée Camions ICD </h3>
         <div class="container  ">
             <div class="table-responsive">
                 <table id="mouvements-table" class="table table-hover" style="margin-top: 15px;">
-                    <thead class="thead-light">
-
-                    <tr>
-                        <th scope="col" class=" d-md-table-cell">Camion</th>
-                        <th scope="col" class=" d-md-table-cell">Type</th>
-                        <th scope="col" class=" d-md-table-cell">Transporteur</th>
-                        <th scope="col" class=" d-md-table-cell">Destination</th>
-                        <th scope="col" class=" d-md-table-cell">Chauffeur</th>
-                        <th scope="col" class=" d-md-table-cell">Permis</th>
-                        <th scope="col" class=" d-md-table-cell">Statut</th>
-                        <th scope="col" class=" d-md-table-cell">Action</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+    <thead class="thead-light">
+        <tr>
+            <th scope="col">Camion</th>
+            <th scope="col">Type</th>
+            <th scope="col">Transporteur</th>
+            <th scope="col">Destination</th>
+            <th scope="col">Chauffeur</th>
+            <th scope="col">Permis</th>
+            <th scope="col">Statut</th>
+            <th scope="col">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for mouvement in mouvement_list %}
+        <tr>
+            <td>{{ mouvement.camion.immatriculation }}</td>
+            <td>{{ mouvement.camion.type }}</td>
+            <td>{{ mouvement.camion.transporteur }}</td>
+            <td style="text-transform: uppercase;">{{ mouvement.destination }}</td>
+            <td>{{ mouvement.chauffeur.fullname }}</td>
+            <td>{{ mouvement.chauffeur.permis }}</td>
+            <td>
+                {% if mouvement.statut_entree == 0 %}
+                    NON CHARGE
+                {% elif mouvement.statut_entree == 1 %}
+                    CHARGE
+                {% elif mouvement.statut_entree == 2 %}
+                    COMPLET
+                {% else %}
+                    Non Assigné
+                {% endif %}
+            </td>
+            <td>
+                <a href="#!" class="label theme-bg text-white f-12" data-toggle="modal" data-target="#myModal"
+                   data-idMvt="{{ mouvement.id_mvt }}" data-perchauf="{{ mouvement.chauffeur.permis }}"
+                   data-telcli="{{ mouvement.client.telephone }}" data-typecam="{{ mouvement.camion.type }}"
+                   data-transcam="{{ mouvement.camion.transporteur }}" data-idcli="{{ mouvement.client.id_client }}"
+                   data-destination="{{ mouvement.destination }}" data-idcam="{{ mouvement.camion.id_cam }}"
+                   data-idchauffeur="{{ mouvement.chauffeur.id_chauffeur }}" data-mission="{{ mouvement.mission }}">
+                    Modifier
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
     </div>
     <!-- Modal pour ajouter un client -->
     <!-- Modal pour l'ajout de Client -->

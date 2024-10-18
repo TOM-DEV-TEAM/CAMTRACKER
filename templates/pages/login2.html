@@ -5,77 +5,67 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACM TRACK</title>
+    <title>CAM TRACK</title>
     <style>
         html {
             background: #6696cc;
         }
-        
+
         .body-content {
-            padding-top: 20vh;
+            padding-top: 10vh; /* Ajustez cette valeur pour monter le formulaire */
         }
-        
+
         .container {
             width: 350px;
-            height: 400px;
+            height: auto;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             margin: auto;
-            border: 2px solid White;
+            border: 2px solid white;
             border-radius: 15px;
             background: white;
+            padding: 20px;
         }
-        
-        .logo {
-            margin-bottom: 15px;
-            margin-top: 0px;
-            padding-top: 0;
-        }
-        
+
         .logo img {
-            height: 75%;
-            width: 75%; /* Ajustez cette valeur en fonction de vos besoins */
-            border-radius: 50%; /* Pour rendre l'image ronde */
-            display: block;
-            margin: 0 auto; /* Pour centrer l'image */
+            max-width: 150%; /* L'image prend la largeur maximale possible sans déborder */
+            max-height: 250px; /* Limitation en hauteur */
+            object-fit: contain; /* Préserve les proportions de l'image */
+            border-radius: 35%; /* Pour rendre l'image ronde */
         }
-        
+
         form {
             display: flex;
             flex-direction: column;
+            width: 100%;
         }
-        
+
         .form-item {
-            margin: 5px;
-            padding-bottom: 10px;
+            margin: 5px 0;
             display: flex;
+            flex-direction: column;
         }
-        
-        .form-item label {
-            display: block;
-            padding: 2px;
-            font-size: 20px;
-            width: 100px;
-        }
-        
+
         .form-item input {
-            width: 320px;
+            width: 100%;
             height: 35px;
             border: 2px solid #e1dede69;
             border-radius: 20px;
             background: #e1dede69;
             color: grey;
+            padding-left: 10px;
         }
-        
+
         .form-btns {
             display: flex;
             flex-direction: column;
             margin: auto;
             padding: 10px 0;
+            width: 100%;
         }
-        
+
         .form-btns button {
             margin: auto;
             font-size: 20px;
@@ -84,28 +74,26 @@
             border-radius: 15px;
             color: white;
             background: #178cc6;
-            width: 280px;
+            width: 100%;
             cursor: pointer;
         }
-        
+
         .options {
             padding-top: 15px;
-            margin: auto;
+            text-align: center;
         }
-        
+
         .options a {
             text-decoration: none;
             color: black;
-            margin: 0 40px;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 15px;
-
         }
+
         .options a:hover {
             color: grey;
- 
         }
-        
+
         p {
             text-align: center;
             font-size: 10px;
@@ -116,47 +104,45 @@
 
 <body>
     <div class="body-content">
-
         <div class="container">
             <div class="logo">
-
-                <!--<img src="https://mindbodyshe.com/wp-content/uploads/2018/07/samples-of-logo-designs-sample-of-company-logo-design-ngo-logo-design-samples.jpg " alt="Company Logo" srcset="">-->
-                 <img class="img-fluid" src="/static/assets/images/logotom.png " alt="Company Logo" srcset="">
+                <img src="/static/assets/images/logotom.png" alt="Company Logo">
             </div>
+
             <div class="login-form">
-                    <form action="/seconnecter/" method="POST">
-        {% csrf_token %}
-        <div class="form-item">
-            <!-- <label for="userName">Username:</label> -->
-            <input type="text" name="email" id="userName" placeholder="VotreEmail">
-        </div>
-        <div class="form-item">
-            <!-- <label for="passWord">Password:</label> -->
-            <input type="password" name="password" id="passWord" placeholder="Mot de Passe">
-        </div>
+                <form action="/seconnecter/" method="POST">
+                    {% csrf_token %}
+                    <div class="form-item">
+                        <input type="text" name="email" placeholder="Login">
+                    </div>
+                    <div class="form-item">
+                        <input type="password" name="password" placeholder="Mot de Passe">
+                    </div>
 
-        {% if messages %}
-        <div class="error-messages" style="color: red">
-            {% for message in messages %}
-                <p>{{ message }}</p>
-            {% endfor %}
-        </div>
-        {% endif %}
+                    {% if messages %}
+                    <div class="error-messages" style="color: red">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
 
-        <div class="form-btns">
-            <button type="submit">Se Connecter</button>
-            <!--<div class="options">
-                <a href="#">Sign Up</a>
-                <a href="#">Forget Password?</a>
-            </div>-->
-        </div>
-    </form>
+                    <div class="form-btns">
+                        <button type="submit">Se Connecter</button>
+                    </div>
+                </form>
+
+                <a href="/help/acceuil" target="_blank" style="float: right; margin-top: 10px;">
+                    <button style="border: none; background: none; cursor: pointer;">
+                        <i class="fas fa-question-circle"></i> Aide
+                    </button>
+                </a>
             </div>
         </div>
     </div>
 
-
-
+    <!-- Inclure Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </body>
 
 </html>

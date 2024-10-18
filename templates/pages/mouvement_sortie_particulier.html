@@ -184,14 +184,17 @@ let textContent = paragraph.textContent;
                 <form id="editForm" method="post" action="{% url 'ajoutsortiepar' %}">
                     {% csrf_token %}
                     {{ form.non_field_errors }}
-                    <div class="btn-group" role="group">
-                                <input type="radio" class="btn-check" name="zone" id="option-nord" value="Nord"
-                                       autocomplete="off" checked>
-                                <label class="btn btn-outline-primary custom-checked" for="option-nord">Nord</label>
-                                <input type="radio" class="btn-check" name="zone" id="option-sud" value="Sud"
-                                       autocomplete="off">
-                                <label class="btn btn-outline-primary" for="option-sud">Sud</label>
-                            </div>
+                         <div class="form-group">
+                <label for="bd" class="form-label">Zone</label><br>
+                <div class="form-check form-check-inline">
+                    <input value="Sud" type="radio" name="zone"  checked required class="form-check-input">
+                    <label for="bdOui" class="form-check-label">Sud</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input value="Nord" type="radio" name="zone"  required class="form-check-input">
+                    <label for="bdNon" class="form-check-label">Nord</label>
+                </div>
+            </div>
                     <!-- Champ caché pour ID Mouvement -->
                     <input type="hidden" id="idMvt" name="id_mvt">
 

@@ -41,6 +41,7 @@ urlpatterns = [
     path('detail_moins_30/<int:id>', detail_moins_30, name='listeCamionud'),
     ###Gestion Connexion
     path('seconnecter/', seconnecter, name='seconnecter'),
+    path('help/<str:page>', help_render, name="helprender"),
     path('', login_page, name='login'),
     ######GESTION DES FETCH SUR LE DASHBOARD  ####################################
     ################### FETCH DASHBOARD PLT ###########################
@@ -264,6 +265,7 @@ urlpatterns = [
     path('export_mouvement0/', views.export_mouvement0, name='export_mouvement0'),
     path('export_mouvement2/', views.export_mouvement2, name='export_mouvement2'),
     path('export_mouvement3/', views.export_mouvement3, name='export_mouvement3'),
+    path('export_mouvementpar/', views.export_mouvementpar, name='export_mouvementpar'),
     ###Parametrage
     path('parametrage/<int:id>', liste_parametrage, name='listeParametrage'),
     path('ajouter_parametre/', ajouter_parametre, name='ajout_parametre'),
