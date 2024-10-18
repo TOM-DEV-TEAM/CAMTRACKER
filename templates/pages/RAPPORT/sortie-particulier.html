@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Camions - Accueil</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        nav {
+            background-color: #34495e;
+            overflow: hidden;
+        }
+        nav a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-size: 17px;
+        }
+        nav a:hover {
+            background-color: #2980b9;
+            color: white;
+        }
+        .hero {
+            background-size: cover;
+            background-position: center;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white; /* Overlay */
+            z-index: 1;
+        }
+        .hero h1, .hero p {
+            z-index: 2; /* Texte au-dessus de l'overlay */
+            color: #34495e; /* Assurer que le texte est bien visible */
+        }
+        .hero h1 {
+            font-size: 50px;
+            margin: 0;
+        }
+        .hero p {
+            font-size: 20px;
+        }
+        .section {
+            padding: 40px;
+            text-align: center;
+        }
+        .section h2 {
+            margin-bottom: 20px;
+        }
+        .feature-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .feature-image {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="acceuil.html">Accueil</a>
+        <!--a href="#features">Fonctionnalités</a>
+        <a href="#about">À propos</a>
+        <a href="#contact">Contact</a-->
+    </nav>
+
+    <!--div class="hero">
+        <h1>Gestion des Entrées</h1>
+        <p>La saisie des entrées des camions varie en fonction de la destination. <br> Parmi les destinations, nous avons notamment les ICD, la Sacherie et la ZUD.</p>
+    </div-->
+
+    <section class="section" id="features">
+        <!--div class="feature-section">
+            <h3>Création d'une entrée</h3>
+            <img src="images/A1.jpg" alt="Gestion des utilisateurs" class="feature-image">
+            <p>Pour créer une entrée, l'utilisateur doit cliquer sur le bouton "Ajouter" situé en haut de l'écran. Un formulaire apparaîtra, présentant les différents champs à remplir.</p>
+        </div-->
+        <div class="feature-section">
+            <h3>Sortie Particulière</h3>
+            <img src="images/B4.jpg" alt="Gestion des entrées" class="feature-image">
+            <p>Pour les effectuer une sortie Particulière, l'utilisateur doit cliquer sur le button "Sortie" qui se trouve sur le mouvement. Ainsi le formulaire precédent apparaîtrait et l'utilisateur validerait la sortie</p></div>
+    
+    </section>
+
+</section>
+
+    <section class="section" id="about">
+        <h2>À propos de notre application</h2>
+        <p>Conçue sous la direction de M. Thiam Habibou, cette application est destinée à la PLT et aux entreprises de logistique afin d'optimiser la gestion de leurs opérations.</p>
+    </section>
+</section>
+    <footer class="footer">
+        <p>&copy; 2024 Gestion des Camions. Tous droits réservés.</p>
+    </footer>
+
+</body>
+</html>

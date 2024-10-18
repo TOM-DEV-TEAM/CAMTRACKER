@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Camions - Accueil</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        nav {
+            background-color: #34495e;
+            overflow: hidden;
+        }
+        nav a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-size: 17px;
+        }
+        nav a:hover {
+            background-color: #2980b9;
+            color: white;
+        }
+        .hero {
+            background-size: cover;
+            background-position: center;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white; /* Overlay */
+            z-index: 1;
+        }
+        .hero h1, .hero p {
+            z-index: 2; /* Texte au-dessus de l'overlay */
+            color: #34495e; /* Assurer que le texte est bien visible */
+        }
+        .hero h1 {
+            font-size: 50px;
+            margin: 0;
+        }
+        .hero p {
+            font-size: 20px;
+        }
+        .section {
+            padding: 40px;
+            text-align: center;
+        }
+        .section h2 {
+            margin-bottom: 20px;
+        }
+        .features {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .feature {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 25%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .feature h3 a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .feature h3 a:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Aide CamTracking</h1>
+        <!--p>Application de gestion des entrées et sorties des camions</p-->
+    </header>
+
+    <!--nav>
+        <a href="acceuil.html">Accueil</a>
+        <a href="#features">Fonctionnalités</a>
+        <a href="#about">À propos</a>
+        <a href="#contact">Contact</a>
+    </nav-->
+
+    <!--div class="hero">
+        <h1>Bienvenue dans l'application de gestion des camions</h1>
+        <p>Suivez, gérez et optimisez vos flottes de camions facilement</p>
+    </div-->
+
+    <section class="section" id="features">
+        <h2>Fonctionnalités principales</h2>
+        <div class="features">
+            <div class="feature">
+                <h3><a href="gestion-utilisateurs.html">Gestion Des Utilisateurs</a></h3>
+                <a href="ajout-utilisateurs.html">Ajouter un utilisateur</a><br>
+                <a href="modifier-utilisateurs.html">Modifier un utilisateur</a><br>
+                <a href="activer-utilisateurs.html">Activer ou désactiver un utilisateur</a>
+            </div>
+            <div class="feature">
+                <h3><a href="gestion-entrees.html"> PLT</a></h3>
+                <a href="entree-icd.html">Entrée pour icd</a><br>
+                <a href="entree-sacherie.html">Entrée pour sacherie</a><br>
+                <a href="entree-zud.html">Entrée pour zud</a><br>
+                <a href="entree-zud-liaison.html">Liason pour zud</a><br>
+                <a href="entree-particulier.html">Entrée particulière</a><br>
+                <a href="sortie-icd.html">Sortie dépuis icd</a><br>
+                <a href="sortie-sacherie.html">Sortie dépuis sacherie</a><br>
+                <a href="sortie-zud.html">Sortie dépuis zud</a><br>
+                <a href="sortie-particulier.html">Sortie particulière</a><br>
+                <a href="modification.html">Modification sur un mouvement</a><br>
+                <a href="extraction.html">Extraction</a><br>
+                <a href="parametrage.html">Parametrage</a><br>
+            </div>
+            <div class="feature">
+                <h3><a href="#statistiques">ICD</a></h3>
+                <a href="icd-entree-icd.html">Entée</a><br>
+                <a href="icd-sortie-icd.html">Sortie</a><br>
+            </div>
+        </div>
+    </section>
+<section class="section">
+    
+    <div class="features" id="feature">
+        <div class="feature">
+            <h3><a href="#statistiques">SACHERIE</a></h3>
+            <a href="sacherie-entree-sacherie.html">Entée</a><br>
+            <a href="sacherie-sortie-sacherie.html">Sortie</a><br>
+        </div>
+        <div class="feature">
+            <h3><a href="#statistiques">ZUD</a></h3>
+            <a href="zud-entree-zud.html">Entée</a><br>
+            <a href="zud-sortie-zud.html">Sortie</a><br>
+        </div>
+        <div class="feature">
+            <h3><a href="#statistiques">CONTROLE</a></h3>
+            <a href="controle1.html">Dans les délais</a><br>
+            <a href="controle2.html">Au delà des délais</a><br>
+        </div>
+    </div>
+</section>
+    <section class="section" id="about">
+        <h2>À propos de notre application</h2>
+        <p>Projet piloté par Mr Thiam Habibou, cette application est conçue pour la PLT et les entreprises de logistique s'y trouvant
+            afin de simplifier la gestion de leurs opérations.</p>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2024 Gestion des Camions. Tous droits réservés.</p>
+    </footer>
+
+</body>
+</html>
