@@ -4,6 +4,8 @@
 {% block breadcrumbs %}{% endblock breadcrumbs %}
 
 {% block content %}
+  <input type="text" id="search-input" style="margin-left: 20px; width:20%" placeholder="Rechercher..." onkeyup="filterTable()" class="form-control" style="margin-bottom: 10px;">
+
  <ul class="nav nav-tabs" style="margin-left: 20px">
 
   <li class="nav-item">
@@ -17,13 +19,35 @@
     <a class="nav-link active" href="/modif_mvtpar/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
   </li>
 </ul><br>
-
+<script>
+    function filterTable() {
+    // Récupérer la valeur du champ de recherche
+    var input = document.getElementById("search-input");
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById("mouvements-table");
+    var tr = table.getElementsByTagName("tr");
+    // Parcourir toutes les lignes du tableau
+    for (var i = 1; i < tr.length; i++) { // Commence à 1 pour ignorer l'en-tête
+        var tdArray = tr[i].getElementsByTagName("td");
+        var rowText = "";
+        // Parcourir toutes les colonnes de chaque ligne
+        for (var j = 0; j < tdArray.length; j++) {
+            rowText += tdArray[j].textContent || tdArray[j].innerText;
+        }
+        // Vérifier si le texte de la ligne correspond à la recherche
+        if (rowText.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+        } else {
+            tr[i].style.display = "none";
+        }
+    }
+}
+</script>
     <!-- [ rating list ] end-->
     <div class="col-xl-8 col-md-12 m-b-30">
         <!--<p class="label theme-bg text-white f-12"  class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModalajout">Ajouter</p>-->
-
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
+        <!--script>
             $(document).ready(function () {
                 function fetchMouvementsParticuliers() {
                     $.ajax({
@@ -54,7 +78,7 @@
                 fetchMouvementsParticuliers();
                 setInterval(fetchMouvementsParticuliers, 10000);
             });
-        </script>
+        </script-->
         <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Écoutez l'événement d'ouverture du modal
@@ -90,6 +114,23 @@
                     </tr>
                     </thead>
                     <tbody>
+                     {% for mouvement in mouvements %}
+        <tr>
+            <td>{{ mouvement.date_entree }}</td>
+            <td>{{ mouvement.vehicule.immatriculation }}</td>
+            <td style="text-transform: uppercase;">{{ mouvement.destination }}</td>
+            <td>
+                <a href="#!" class="label theme-bg text-white f-12"
+                   data-toggle="modal"
+                   data-destination="{{ mouvement.destination }}"
+                   data-idveh="{{ mouvement.vehicule.id_veh }}"
+                   data-idmvt="{{ mouvement.id_mvt }}"
+                   data-target="#myModal">
+                    Modifier
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
                     </tbody>
                 </table>
             </div>

@@ -4,12 +4,37 @@
 {% block breadcrumbs %}{% endblock breadcrumbs %}
 
 {% block content %}
-
     <!-- [ rating list ] end-->
+<script>
+    function filterTable() {
+    // Récupérer la valeur du champ de recherche
+    var input = document.getElementById("search-input");
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById("mouvements-table");
+    var tr = table.getElementsByTagName("tr");
+
+    // Parcourir toutes les lignes du tableau
+    for (var i = 1; i < tr.length; i++) { // Commence à 1 pour ignorer l'en-tête
+        var tdArray = tr[i].getElementsByTagName("td");
+        var rowText = "";
+
+        // Parcourir toutes les colonnes de chaque ligne
+        for (var j = 0; j < tdArray.length; j++) {
+            rowText += tdArray[j].textContent || tdArray[j].innerText;
+        }
+
+        // Vérifier si le texte de la ligne correspond à la recherche
+        if (rowText.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+        } else {
+            tr[i].style.display = "none";
+        }
+    }
+}
+
+</script>
+
      <div class="container mt-12 ">
-
-
-      
         <nav class="navbar navbar-light bg-light">
             <div class="container-fluid">
                 <div class="d-flex justify-content-between w-100" id="navbarNav">

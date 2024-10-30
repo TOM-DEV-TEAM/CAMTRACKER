@@ -23,10 +23,35 @@
     });
 </script>
 {% block breadcrumbs %}{% endblock breadcrumbs %}
-
 {% block content %}
- <ul class="nav nav-tabs" style="margin-left: 20px">
+<script>
+    function filterTable() {
+    // Récupérer la valeur du champ de recherche
+    var input = document.getElementById("search-input");
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById("mouvements-table");
+    var tr = table.getElementsByTagName("tr");
+    // Parcourir toutes les lignes du tableau
+    for (var i = 1; i < tr.length; i++) { // Commence à 1 pour ignorer l'en-tête
+        var tdArray = tr[i].getElementsByTagName("td");
+        var rowText = "";
+        // Parcourir toutes les colonnes de chaque ligne
+        for (var j = 0; j < tdArray.length; j++) {
+            rowText += tdArray[j].textContent || tdArray[j].innerText;
+        }
+        // Vérifier si le texte de la ligne correspond à la recherche
+        if (rowText.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+        } else {
+            tr[i].style.display = "none";
+        }
+    }
+}
+</script>
+<!-- fonction de filtrage par recherche-->
+   <input type="text" id="search-input" style="margin-left: 20px; width:20%" placeholder="Rechercher..." onkeyup="filterTable()" class="form-control" style="margin-bottom: 10px;">
 
+ <ul class="nav nav-tabs" style="margin-left: 20px">
   <li class="nav-item">
     <a class="nav-link " href="/entreedecalog_view/{{ util.id_user }}">ICD</a>
   </li>
@@ -213,13 +238,13 @@ console.log(row);
                                     <option value="SNTT">SNTT</option>
                                     <option value="DEX">DEX</option>
                                     <option value="EMASE">EMASE</option>
-                                    <option value="VISITAIRE">VISITAIRE</option>
-                                    <option value="TRANSITEUR">TRANSITEUR</option>
+                                    <!--option value="VISITAIRE">VISITAIRE</option>
+                                    <option value="TRANSITEUR">TRANSITEUR</option-->
                                     <!--option value="RIVERAIN">RIVERAIN</option-->
-                                    <option value="PERSONNEL DOUANE">PERSONNEL DOUANE</option>
-                                    <option value="PERSONNEL GENDARMERIE">PERSONNEL GENDARMERIE</option>
-                                    <option value="AGS">AGS</option>
-                                    <option value="TAL">TAL</option>
+                                    <option value="DOUANE">DOUANE</option>
+                                    <option value="GENDARMERIE">GENDARMERIE</option>
+                                    <!--option value="AGS">AGS</option>
+                                    <option value="TAL">TAL</option-->
                                 </select>
                             </div>
                             <div class="form-row d-flex">

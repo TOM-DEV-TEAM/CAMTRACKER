@@ -25,7 +25,36 @@
 {% block breadcrumbs %}{% endblock breadcrumbs %}
 
 {% block content %}
+<script>
+    function filterTable() {
+    // Récupérer la valeur du champ de recherche
+    var input = document.getElementById("search-input");
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById("mouvements-table");
+    var tr = table.getElementsByTagName("tr");
 
+    // Parcourir toutes les lignes du tableau
+    for (var i = 1; i < tr.length; i++) { // Commence à 1 pour ignorer l'en-tête
+        var tdArray = tr[i].getElementsByTagName("td");
+        var rowText = "";
+
+        // Parcourir toutes les colonnes de chaque ligne
+        for (var j = 0; j < tdArray.length; j++) {
+            rowText += tdArray[j].textContent || tdArray[j].innerText;
+        }
+
+        // Vérifier si le texte de la ligne correspond à la recherche
+        if (rowText.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+        } else {
+            tr[i].style.display = "none";
+        }
+    }
+}
+
+</script>
+
+   <input type="text" id="search-input" style="margin-left: 20px; width:20%" placeholder="Rechercher..." onkeyup="filterTable()" class="form-control" style="margin-bottom: 10px;">
 
  <ul class="nav nav-tabs" style="margin-left: 20px">
 
@@ -40,56 +69,10 @@
     <a class="nav-link" href="/entreedecalog_particulier/{{ util.id_user }}" tabindex="-1" >PARTICULIER</a>
   </li>
 </ul><br>
-
     <!-- [ rating list ] end-->
     <div class="col-xl-8 col-md-12 m-b-30">
         <!--<p class="label theme-bg text-white f-12"  class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModalajout">Ajouter</p>-->
-
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <!--script>
-            $(document).ready(function () {
-                function fetchMouvements() {
-                    $.ajax({
-                        url: "{% url 'liste_mouvements01' %}",
-                        method: "GET",
-                        success: function (data) {
-                            var tableBody = $('#mouvements-table tbody');
-                            tableBody.empty();
-                            data.forEach(function (mouvement_list) {
-                                var statutText = '';
-                                if (mouvement_list.statut_entree === 0) {
-                                    statutText = 'NON CHARGE';
-                                } else if (mouvement_list.statut_entree === 1) {
-                                    statutText = 'CHARGE';
-                                } else if (mouvement_list.statut_entree === 2) {
-                                    statutText = 'COMPLET';
-                                }else {
-                            statutText='NON ASSIGNE'
-                        }
-                                var row = `
-                            <tr>
-
-                                <td>${mouvement_list.camion.immatriculation}</td>
-<td>${mouvement_list.camion.type}</td>
-<td>${mouvement_list.camion.transporteur}</td>
-
-                                <td style="text-transform: uppercase;">${mouvement_list.destination}</td>
-                                <td>${mouvement_list.chauffeur.permis}</td>
-                                <td>${mouvement_list.chauffeur.fullname}</td>
-                                <td>${statutText}</td>
-
-
-                            </tr>`;
-                                tableBody.append(row);
-                            });
-                        }
-                    });
-                }
-
-                fetchMouvements();
-                setInterval(fetchMouvements, 10000);
-            });
-        </script-->
         <p class="label theme-bg text-white f-12" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"
            style="font-size: large">Ajouter</p>
 
@@ -143,12 +126,9 @@
         {% endif %}
     </tbody>
 </table>
-
             </div>
         </div>
-
     </div>
-
     <div class="container mt-5">
         <!--<h2>Modal Example</h2>
          Trigger the modal with a button
@@ -157,7 +137,6 @@
        Modal -->
         <div class="modal fade" id="myModal" style="overflow-y: auto;" role="dialog" class="modal fade" tabindex="-1" role="dialog"
              aria-labelledby="editModalLabel" aria-hidden="true">
-
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -169,7 +148,6 @@
                     <div class="modal-body">
                         <form method="POST" action="{% url 'ajoutmouvement0' util.id_user %}"
                              enctype="multipart/form-data">
-
                             <div class="text-center mb-4">
                                 <!--<p style="color: #000; font-size: 25px;">ENTREE DK LOG</p>--->
                             </div>

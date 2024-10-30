@@ -27,6 +27,7 @@
 {% block breadcrumbs %}{% endblock breadcrumbs %}
 
 {% block content %}
+   <input type="text" id="search-input" style="margin-left: 20px; width:20%" placeholder="Rechercher..." onkeyup="filterTable()" class="form-control" style="margin-bottom: 10px;">
 
 
     <ul class="nav nav-tabs" style="margin-left: 20px">
@@ -49,50 +50,6 @@
         <!--<p class="label theme-bg text-white f-12"  class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModalajout">Ajouter</p>-->
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <!--script>
-            $(document).ready(function () {
-                function fetchMouvements() {
-                    $.ajax({
-                        url: "{% url 'liste_mouvements0' %}",
-                        method: "GET",
-                        success: function (data) {
-                            var tableBody = $('#mouvements-table tbody');
-                            tableBody.empty();
-                            data.forEach(function (mouvement_list) {
-                                var statutText = '';
-                                if (mouvement_list.statut_entree === 0) {
-                                    statutText = 'NON CHARGE';
-                                } else if (mouvement_list.statut_entree === 1) {
-                                    statutText = 'CHARGE';
-                                } else if (mouvement_list.statut_entree === 2) {
-                                    statutText = 'COMPLET';
-                                }else {
-                                    statutText='Non Assigné';
-                                }
-                                var row = `
-                            <tr>
-
-                                <td>${mouvement_list.camion.immatriculation}</td>
-<td>${mouvement_list.camion.type}</td>
-<td>${mouvement_list.camion.transporteur}</td>
-
-                                <td style="text-transform: uppercase;">${mouvement_list.destination}</td>
-                                <td>${mouvement_list.chauffeur.permis}</td>
-                                <td>${mouvement_list.chauffeur.fullname}</td>
-                                <td>${statutText}</td>
-
-
-                            </tr>`;
-                                tableBody.append(row);
-                            });
-                        }
-                    });
-                }
-
-                fetchMouvements();
-                setInterval(fetchMouvements, 10000);
-            });
-        </script-->
         <p class="label theme-bg text-white f-12" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"
            style="font-size: large">Ajouter</p>
         <h3 class="modal-title" id="editModalLabel">Entrée Camions ICD </h3>
@@ -122,7 +79,7 @@
                                 <td>{{ mouvement.camion.immatriculation }}</td>
                                 <td>{{ mouvement.camion.type }}</td>
                                 <td>{{ mouvement.camion.transporteur }}</td>
-                                <td>{{ mouvement.destination }}</td>
+                                <td>{{ mouvement.destination.upper }}</td>
                                 <td>{{ mouvement.chauffeur.fullname }}</td>
                                 <td>{{ mouvement.chauffeur.permis }}</td>
                                 <td>
@@ -151,7 +108,34 @@
     </div>
     <!-- Modal pour ajouter un client -->
     <!-- Modal pour l'ajout de Client -->
+<script>
+    function filterTable() {
+    // Récupérer la valeur du champ de recherche
+    var input = document.getElementById("search-input");
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById("mouvements-table");
+    var tr = table.getElementsByTagName("tr");
 
+    // Parcourir toutes les lignes du tableau
+    for (var i = 1; i < tr.length; i++) { // Commence à 1 pour ignorer l'en-tête
+        var tdArray = tr[i].getElementsByTagName("td");
+        var rowText = "";
+
+        // Parcourir toutes les colonnes de chaque ligne
+        for (var j = 0; j < tdArray.length; j++) {
+            rowText += tdArray[j].textContent || tdArray[j].innerText;
+        }
+
+        // Vérifier si le texte de la ligne correspond à la recherche
+        if (rowText.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+        } else {
+            tr[i].style.display = "none";
+        }
+    }
+}
+
+</script>
     <script>
         $(document).ready(function () {
             $('#submit-ajout-client').click(function () {

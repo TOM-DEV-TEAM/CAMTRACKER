@@ -66,7 +66,38 @@
                 </div>
             </div>
         </div>
-    </div><ul class="nav nav-tabs" >
+    </div>
+ <input type="text" id="search-input" style="margin-left: 5px; width:20%" placeholder="Rechercher..." onkeyup="filterTable()" class="form-control" style="margin-bottom: 10px;">
+<script>
+    function filterTable() {
+    // Récupérer la valeur du champ de recherche
+    var input = document.getElementById("search-input");
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById("mouvements-table");
+    var tr = table.getElementsByTagName("tr");
+
+    // Parcourir toutes les lignes du tableau
+    for (var i = 1; i < tr.length; i++) { // Commence à 1 pour ignorer l'en-tête
+        var tdArray = tr[i].getElementsByTagName("td");
+        var rowText = "";
+
+        // Parcourir toutes les colonnes de chaque ligne
+        for (var j = 0; j < tdArray.length; j++) {
+            rowText += tdArray[j].textContent || tdArray[j].innerText;
+        }
+
+        // Vérifier si le texte de la ligne correspond à la recherche
+        if (rowText.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+        } else {
+            tr[i].style.display = "none";
+        }
+    }
+}
+
+</script>
+
+<ul class="nav nav-tabs" >
   <li class="nav-item">
     <a class="nav-link " aria-current="page" href="/liste_tt_mvt00/{{ util.id_user }}">PLT</a>
   </li>

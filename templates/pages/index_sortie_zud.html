@@ -1,26 +1,39 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
-
 {% block breadcrumbs %}{% endblock breadcrumbs %}
-
 {% block content %}
+<input type="text" id="search-input" style="margin-left: 20px; width:20%" placeholder="Rechercher..."
+       onkeyup="filterTable()" class="form-control" style="margin-bottom: 10px;">
  <ul class="nav nav-tabs" style="margin-left: 20px">
-
   <li class="nav-item">
-    <a class="nav-link active" href="/index_entree_zud/{{ util.id_user }}">ZUD</a>
+    <a class="nav-link active" href="/index_sortie_zud/{{ util.id_user }}">ZUD</a>
   </li>
 </ul><br>
-
     <!-- [ rating list ] end-->
     <div class="col-xl-8 col-md-12 m-b-30">
-
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    // Fonction pour obtenir la valeur du cookie CSRF
+    var input = document.getElementById("search-input");
+    var fetchInterval;
+    function filterTable() {
+        var filter = input.value.toUpperCase();
+        var table = document.getElementById("mouvements-table");
+        var tr = table.getElementsByTagName("tr");
+        for (var i = 1; i < tr.length; i++) { // Commence à 1 pour ignorer l'en-tête
+            var tdArray = tr[i].getElementsByTagName("td");
+            var rowText = "";
+            for (var j = 0; j < tdArray.length; j++) {
+                rowText += tdArray[j].textContent || tdArray[j].innerText;
+            }
+            if (rowText.toUpperCase().indexOf(filter) > -1) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+    }
     function getCookie(name) {
         let cookieValue = null;
-
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
@@ -33,15 +46,10 @@
         }
         return cookieValue;
     }
-
     const csrftoken = getCookie('csrftoken');
-
-    // Fonction pour déterminer si la méthode de requête est sûre pour CSRF
     function csrfSafeMethod(method) {
         return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
     }
-
-    // Configuration globale des requêtes AJAX pour inclure le jeton CSRF
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
             if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
@@ -49,35 +57,26 @@
             }
         }
     });
-
     // Fonction pour récupérer et afficher les mouvements depuis l'API Django
-    $(document).ready(function() {
-        function fetchMouvements() {
-            let paragraph = document.getElementById('p1');
-
-// Récupérer le texte du paragraphe
-let textContent = paragraph.textContent;
-            $.ajax({
-                 url: "{% url 'liste_mouvements_sortie_zud' id_user=util.id_user %}",  // URL de l'API Django pour récupérer les mouvements
-                method: "GET",
-                success: function(data) {
-                    var tableBody = $('#mouvements-table tbody');
-                    tableBody.empty();
-                    data.mouvements.forEach(function(mouvement_list) {
-
-                        var camionvoyage = mouvement_list.camion.immatriculation ? mouvement_list.camion.immatriculation : 'vide';
-                        var statutText = 'NON ASSIGNE';
-                        if (mouvement_list.statut_sortie === 0) {
-                            statutText = 'DECHARGE';
-                        } else if (mouvement_list.statut_sortie === 1) {
-                            statutText = 'CHARGE';
-                        }
-
-                        var row = `<tr>
-
-
-                           <!-- <td>${statutText}</td>-->
-
+    function fetchMouvements() {
+        let paragraph = document.getElementById('p1');
+        let textContent = paragraph.textContent;
+        $.ajax({
+            url: "{% url 'liste_mouvements_sortie_zud' id_user=util.id_user %}",  // URL de l'API Django pour récupérer les mouvements
+            method: "GET",
+            success: function(data) {
+                var tableBody = $('#mouvements-table tbody');
+                tableBody.empty();
+                data.mouvements.forEach(function(mouvement_list) {
+                    var camionvoyage = mouvement_list.camion.immatriculation ? mouvement_list.camion.immatriculation : 'vide';
+                    var statutText = 'NON ASSIGNE';
+                    if (mouvement_list.statut_sortie === 0) {
+                        statutText = 'DECHARGE';
+                    } else if (mouvement_list.statut_sortie === 1) {
+                        statutText = 'CHARGE';
+                    }
+                 var row = `<tr>
+                    <!-- <td>${statutText}</td>-->
                             <td>${camionvoyage}</td>
                             <td>${mouvement_list.camion.transporteur}</td>
                             <td>${mouvement_list.chauffeur.fullname}</td>
@@ -94,38 +93,50 @@ let textContent = paragraph.textContent;
                                     </a>
                             </td>
                         </tr>`;
-
-                        tableBody.append(row);
-                    });
-
-                    // Ré-attacher le gestionnaire de clic pour le bouton "SORTIE"
-                    tableBody.off('click', '.sortie-dp-btn').on('click', '.sortie-dp-btn', function() {
-                        var idMvt = $(this).data('id');
-                        var utilisateurId = $(this).data('utilisateur-id');
-                        // Redirection vers la page d'ajout de fin de mouvement après avoir cliqué sur "SORTIE"
-                        window.location.href = `/ajoutsortie/${idMvt}/${utilisateurId}`;
-                    });
-                },
-                error: function(xhr, status, error) {
-                    console.error('Erreur de récupération des mouvements:', error);
-                }
-            });
+    tableBody.append(row);
+                });
+                tableBody.off('click', '.sortie-dp-btn').on('click', '.sortie-dp-btn', function() {
+                    var idMvt = $(this).data('id');
+                    var utilisateurId = $(this).data('utilisateur-id');
+                    window.location.href = `/ajoutsortie/${idMvt}/${utilisateurId}`;
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error('Erreur de récupération des mouvements:', error);
+            }
+        });
+    }
+    // Start fetching movements every second
+    function startFetching() {
+        fetchMouvements(); // Fetch immediately
+        fetchInterval = setInterval(fetchMouvements, 1000); // Fetch every second
+    }
+    // Stop fetching movements
+    function stopFetching() {
+        clearInterval(fetchInterval);
+    }
+    // Function to check the value of the input field and control fetching
+    function monitorInput() {
+        if (input.value.trim() === "") {
+            startFetching(); // Start fetching if input is empty
+        } else {
+            stopFetching(); // Stop fetching if input has a value
         }
-
-        fetchMouvements();
-        setInterval(fetchMouvements, 1000);
+    }
+    // Set up event listener to monitor input changes
+    input.addEventListener('input', function() {
+        monitorInput();
+    });
+    $(document).ready(function() {
+        startFetching(); // Automatically start fetching on page load
     });
 </script>
-
-
         <h3 class="modal-title" id="editModalLabel">Sortie Camions  ZUD</h3>
-
         <div class="container  ">
         <div class="table-responsive">
          <table id="mouvements-table" class="table table-striped table-hover">
                     <thead class="thead-light">
                         <tr>
-
                             <th scope="col">Camion</th>
                             <th scope="col">Transporteur </th>
                             <th scope="col">Chauffeur</th>
