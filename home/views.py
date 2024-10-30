@@ -1477,8 +1477,8 @@ def fetch_stats0(request, id_user):
 def fetch_stats(request, id_user):
     maintenant = timezone.now()
     # Filtrer les mouvements
-    mouvements = (Mouvement1.objects.filter(date_sortie__isnull=True).order_by('date_entree')[50]
-                  | Mouvement1.objects.filter(date_sortie__isnull=False).order_by('date_entree')[50])
+    mouvements = (Mouvement1.objects.filter(date_sortie__isnull=True).order_by('date_entree')[:50]
+                  | Mouvement1.objects.filter(date_sortie__isnull=False).order_by('date_entree')[:50])
     urg = 0
     dep = 0
     lg_30 = 0
@@ -1537,8 +1537,8 @@ def fetch_stats1(request, id_user):
     maintenant = timezone.now()
 
     # Filtrer les mouvements
-    mouvements = (Mouvement4.objects.filter(date_sortie__isnull=True).order_by('date_entree')[50]
-                  | Mouvement4.objects.filter(date_sortie__isnull=False).order_by('date_entree')[50])
+    mouvements = (Mouvement4.objects.filter(date_sortie__isnull=True).order_by('date_entree')[:50]
+                  | Mouvement4.objects.filter(date_sortie__isnull=False).order_by('date_entree')[:50])
     urg = 0
     dep = 0
     lg_30 = 0
